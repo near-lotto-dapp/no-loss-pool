@@ -28,5 +28,12 @@ Unlike traditional lotteries where your ticket cost is lost, the JOMO Pool uses 
 * **Wallet Integration:** NEAR Wallet Selector
 * **DeFi Integration:** LiNEAR Protocol Cross-Contract Calls
 
-⚠️ Disclaimer
-This protocol is provided "as is". JOMO Pool is a decentralized application. By using it, you acknowledge that you are responsible for your own funds. Please read the full Terms & Conditions on our website.
+## 📜 License
+
+This project is licensed under the **MIT License**. This means you are free to use, copy, modify, and distribute the code, provided that the original license and copyright notice are included.
+
+For more details, please see the [LICENSE](./LICENSE) file.
+
+---
+**Disclaimer:** *This software is provided "as is", without warranty of any kind. Use at your own risk. The Crypto JOMO team is not responsible for any financial losses incurred through the use of this protocol.*
+
