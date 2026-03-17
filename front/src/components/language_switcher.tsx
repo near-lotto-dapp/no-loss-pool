@@ -1,56 +1,39 @@
-import React from 'react';
-import {Language} from "@/pages/translations";
+import {Language} from "@/pages/translations.ts";
+
 
 interface LanguageSwitcherProps {
     lang: Language;
     setLang: (lang: Language) => void;
 }
 
-export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ lang, setLang }) => {
+export const LanguageSwitcher = ({ lang, setLang }: LanguageSwitcherProps) => {
+    const languages: { code: Language; label: string; flag: string }[] = [
+        { code: 'ua', label: 'UA', flag: '🇺🇦' },
+        { code: 'en', label: 'EN', flag: '🇬🇧' },
+        { code: 'es', label: 'ES', flag: '🇪🇸' },
+    ];
+
     return (
-        <div className="d-flex justify-content-end gap-2 mb-2 pt-2">
-            <button
-                className="btn btn-sm"
-                onClick={() => setLang('en')}
-                style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.3s ease',
-                    backgroundColor: lang === 'en' ? 'rgba(84, 214, 255, 0.2)' : 'transparent',
-                    color: lang === 'en' ? '#54d6ff' : '#838687',
-                    border: lang === 'en' ? '2px solid #54d6ff' : '1px solid rgba(131, 134, 135, 0.3)',
-                    fontWeight: 'bold',
-                    padding: '0',
-                    fontSize: '13px'
-                }}
-            >
-                EN
-            </button>
-            <button
-                className="btn btn-sm"
-                onClick={() => setLang('ua')}
-                style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.3s ease',
-                    backgroundColor: lang === 'ua' ? 'rgba(84, 214, 255, 0.2)' : 'transparent',
-                    color: lang === 'ua' ? '#54d6ff' : '#838687',
-                    border: lang === 'ua' ? '2px solid #54d6ff' : '1px solid rgba(131, 134, 135, 0.3)',
-                    fontWeight: 'bold',
-                    padding: '0',
-                    fontSize: '13px'
-                }}
-            >
-                UA
-            </button>
+        <div className="d-flex justify-content-end mb-4">
+            <div className="btn-group shadow-sm" role="group" style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
+                {languages.map((l) => (
+                    <button
+                        key={l.code}
+                        type="button"
+                        onClick={() => setLang(l.code)}
+                        className={`btn btn-sm px-3 py-2 ${lang === l.code ? 'btn-primary' : 'btn-dark'}`}
+                        style={{
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            backgroundColor: lang === l.code ? '#00b3ff' : '#1a1a1a',
+                            border: 'none',
+                            transition: 'all 0.2s ease'
+                        }}
+                    >
+                        <span className="me-1">{l.flag}</span> {l.label}
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };

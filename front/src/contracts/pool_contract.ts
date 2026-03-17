@@ -1,6 +1,7 @@
 import { JsonRpcProvider } from '@near-js/providers';
 import { parseNearAmount } from '@near-js/utils';
 import { PoolContractId, RpcUrl } from '../config';
+import {WinnerRecord} from "@/components/winners_history.tsx";
 
 const GAS = '300000000000000';
 
@@ -60,6 +61,23 @@ export const poolContract = {
                 total_pending: "0",
                 total_staked: "0"
             };
+        }
+    },
+
+    getWinnersHistory: async (): Promise<WinnerRecord[]> => {
+        try {
+            const res = await provider.query({
+                request_type: 'call_function',
+                account_id: PoolContractId,
+                method_name: 'get_winners_history',
+                args_base64: btoa('{}'),
+                finality: 'optimistic',
+            });
+            const resultBytes = (res as any).result;
+            return JSON.parse(Buffer.from(resultBytes).toString());
+        } catch (error) {
+            console.error("Failed to fetch winners history:", error);
+            return [];
         }
     },
 

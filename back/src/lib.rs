@@ -24,14 +24,6 @@ pub trait LinearInterface {
     fn withdraw_all(&mut self);
 }
 
-// OLD structure used ONLY for migration
-#[near(serializers = ["borsh"])]
-#[derive(Clone)]
-pub struct OldUser {
-    pub active_balance: u128,
-    pub pending_balance: u128,
-}
-
 // NEW structure with unstaking tracking
 #[near(serializers = ["borsh"])]
 #[derive(Clone, Default, Debug, PartialEq)]
@@ -50,6 +42,14 @@ pub struct UserView {
     pub unstake_unlock_time: String, // Stringified for frontend safety
 }
 
+#[near(serializers = ["json", "borsh"])]
+#[derive(Clone)]
+pub struct WinnerRecord {
+    pub account_id: AccountId,
+    pub amount: U128,
+    pub timestamp: u64,
+}
+
 #[near(serializers = ["json"])]
 pub struct PoolInfoView {
     pub total_active: U128,
@@ -65,6 +65,7 @@ pub struct NoLossPool {
     pub total_pending_staked: u128,
     pub owner_id: AccountId,
     pub total_staked_in_linear: u128,
+    pub winners_history: Vec<WinnerRecord>,
 }
 
 #[near]
@@ -77,36 +78,8 @@ impl NoLossPool {
             total_active_staked: 0,
             total_pending_staked: 0,
             total_staked_in_linear: 0,
+            winners_history: vec![],
             owner_id,
-        }
-    }
-
-    // Safely migrates data from v2 to v3 without losing user balances
-    #[private]
-    #[init(ignore_state)]
-    pub fn migrate() -> Self {
-        let old_state: NoLossPool = env::state_read().expect("Failed to read state");
-
-        let mut new_users = IterableMap::new(b"v3".to_vec());
-        let old_users: IterableMap<AccountId, OldUser> = IterableMap::new(b"v2".to_vec());
-
-        // Transfer all old users to the new structure
-        for (account_id, old_user) in old_users.iter() {
-            let new_user = User {
-                active_balance: old_user.active_balance,
-                pending_balance: old_user.pending_balance,
-                unstaking_balance: 0,
-                unstake_unlock_time: 0,
-            };
-            new_users.insert(account_id.clone(), new_user);
-        }
-
-        Self {
-            owner_id: old_state.owner_id,
-            users: new_users,
-            total_active_staked: old_state.total_active_staked,
-            total_pending_staked: old_state.total_pending_staked,
-            total_staked_in_linear: old_state.total_staked_in_linear,
         }
     }
 
@@ -337,6 +310,18 @@ impl NoLossPool {
 
             self.total_active_staked += prize;
             self.total_staked_in_linear = current_linear_balance;
+
+            let record = WinnerRecord {
+                account_id: winner.clone(),
+                amount: U128(winner_prize),
+                timestamp: env::block_timestamp() / 1_000_000,
+            };
+
+            self.winners_history.insert(0, record);
+
+            if self.winners_history.len() > 7 {
+                self.winners_history.pop();
+            }
         }
     }
 
@@ -356,6 +341,10 @@ impl NoLossPool {
             total_pending: U128(self.total_pending_staked),
             total_staked: U128(self.total_staked_in_linear),
         }
+    }
+
+    pub fn get_winners_history(&self) -> Vec<WinnerRecord> {
+        self.winners_history.clone()
     }
 }
 
@@ -445,7 +434,7 @@ mod tests {
         set_context(account.clone(), NearToken::from_yoctonear(1), 0);
         contract.withdraw(U128(NearToken::from_near(4).as_yoctonear()));
 
-        // Fast forward 4 days and claim
+        // Forward 4 days and claim
         let four_days_ns = 4 * 24 * 60 * 60 * 1_000_000_000;
         set_context(account.clone(), NearToken::from_yoctonear(0), four_days_ns);
         contract.claim();
