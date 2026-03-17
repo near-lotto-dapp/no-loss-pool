@@ -15,9 +15,16 @@ jobs:
       - name: Install NEAR CLI
         run: npm install -g near-cli
 
-      - name: Execute Prize Draw
+      - name: Setup Credentials and Execute
         env:
           NEAR_CREDENTIALS: ${{ secrets.NEAR_PRIVATE_KEY }}
-          NEAR_ENV: mainnet
         run: |
-          near contract call-function as-transaction jomo-pool-v2.near draw_winner json-args {} prepaid-gas '100.000 TeraGas' attached-deposit '0 NEAR' sign-as crypto-jomo.near network-config mainnet sign-with-access-key-file <(echo $NEAR_CREDENTIALS)
+          mkdir -p ~/.near-credentials/mainnet
+          
+          echo "$NEAR_CREDENTIALS" > ~/.near-credentials/mainnet/crypto-jomo.near.json
+          
+          echo "Processing new deposits..."
+          near call jomo-pool-v2.near process_draw "{}" --accountId crypto-jomo.near --networkId mainnet --gas 100000000000000
+          
+          echo "Drawing the winner..."
+          near call jomo-pool-v2.near draw_winner "{}" --accountId crypto-jomo.near --networkId mainnet --gas 100000000000000
