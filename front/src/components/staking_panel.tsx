@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNearWallet } from 'near-connect-hooks';
 import { poolContract } from '@/contracts/pool_contract';
-import { PoolContractId } from '@/config';
-import { parseNearAmount, formatNearAmount } from '@near-js/utils';
+import { formatNearAmount } from '@near-js/utils';
 import styles from '@/styles/app.module.css';
 
 import { PoolStats } from './pool_stats';
@@ -102,13 +101,8 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
         if (!amount || isNaN(Number(amount))) return;
         setIsLoading(true);
         try {
-            const depositInYocto = parseNearAmount(amount);
-            await callFunction({
-                contractId: PoolContractId,
-                method: 'deposit',
-                args: {},
-                deposit: depositInYocto || "0"
-            });
+            await poolContract.deposit(callFunction, amount);
+
             await fetchUserBalance();
             await fetchPoolData();
             setAmount("");
@@ -123,13 +117,8 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
         if (!amount || isNaN(Number(amount))) return;
         setIsLoading(true);
         try {
-            const amountInYocto = parseNearAmount(amount);
-            await callFunction({
-                contractId: PoolContractId,
-                method: 'withdraw',
-                args: { amount: amountInYocto },
-                deposit: "1"
-            });
+            await poolContract.withdraw(callFunction, amount);
+
             await fetchUserBalance();
             await fetchPoolData();
             setAmount("");
@@ -143,12 +132,8 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
     const handleClaim = async () => {
         setIsLoading(true);
         try {
-            await callFunction({
-                contractId: PoolContractId,
-                method: 'claim',
-                args: {},
-                deposit: "0"
-            });
+            await poolContract.claim(callFunction);
+
             await fetchUserBalance();
             await fetchPoolData();
         } catch (error) {

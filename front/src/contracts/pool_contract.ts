@@ -1,9 +1,8 @@
-import { Wallet } from '@near-wallet-selector/core';
 import { JsonRpcProvider } from '@near-js/providers';
 import { parseNearAmount } from '@near-js/utils';
 import { PoolContractId, RpcUrl } from '../config';
 
-const GAS = '300000000000000'; // 300 TGas
+const GAS = '300000000000000';
 
 const provider = new JsonRpcProvider({ url: RpcUrl });
 
@@ -84,33 +83,40 @@ export const poolContract = {
         }
     },
 
-    deposit: async (wallet: Wallet, amountInNear: string) => {
-        const depositInYocto = parseNearAmount(amountInNear);
-        if (!depositInYocto) throw new Error("Invalid amount format");
-
-        return await wallet.signAndSendTransaction({
-            receiverId: PoolContractId,
-            actions: [
-                {
-                    type: 'FunctionCall',
-                    params: { methodName: 'deposit', args: {}, gas: GAS, deposit: depositInYocto },
-                } as any,
-            ],
+    claim: async (callFunction: any) => {
+        return await callFunction({
+            contractId: PoolContractId,
+            method: 'claim',
+            args: {},
+            gas: GAS,
+            deposit: '0',
         });
     },
 
-    withdraw: async (wallet: Wallet, amountInNear: string) => {
-        const amountInYocto = parseNearAmount(amountInNear);
-        if (!amountInYocto) throw new Error("Invalid amount format");
+    deposit: async (callFunction: any, amountInNear: string) => {
+        const depositInYocto = parseNearAmount(amountInNear);
+        if (!depositInYocto) throw new Error("Invalid amount");
 
-        return await wallet.signAndSendTransaction({
-            receiverId: PoolContractId,
-            actions: [
-                {
-                    type: 'FunctionCall',
-                    params: { methodName: 'withdraw', args: { amount: amountInYocto }, gas: GAS, deposit: '1' },
-                } as any,
-            ],
+        return await callFunction({
+            contractId: PoolContractId,
+            method: 'deposit',
+            args: {},
+            gas: GAS,
+            deposit: depositInYocto,
         });
-    }
+    },
+
+
+    withdraw: async (callFunction: any, amountInNear: string) => {
+        const amountInYocto = parseNearAmount(amountInNear);
+        if (!amountInYocto) throw new Error("Invalid amount");
+
+        return await callFunction({
+            contractId: PoolContractId,
+            method: 'withdraw',
+            args: { amount: amountInYocto },
+            gas: GAS,
+            deposit: '1',
+        });
+    },
 };
