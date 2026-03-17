@@ -17,11 +17,11 @@ jobs:
 
       - name: Setup Credentials and Execute
         env:
-          NEAR_CREDENTIALS: ${{ secrets.NEAR_PRIVATE_KEY }}
+          RAW_KEY: ${{ secrets.NEAR_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.near-credentials/mainnet
           
-          echo "$NEAR_CREDENTIALS" > ~/.near-credentials/mainnet/crypto-jomo.near.json
+          echo "{\"account_id\":\"crypto-jomo.near\",\"private_key\":\"$RAW_KEY\"}" > ~/.near-credentials/mainnet/crypto-jomo.near.json
           
           echo "Processing new deposits..."
           near call jomo-pool-v2.near process_draw "{}" --accountId crypto-jomo.near --networkId mainnet --gas 100000000000000
