@@ -1,0 +1,23 @@
+name: Scheduled Prize Draw
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  draw:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install NEAR CLI
+        run: npm install -g near-cli
+
+      - name: Execute Prize Draw
+        env:
+          NEAR_CREDENTIALS: ${{ secrets.NEAR_PRIVATE_KEY }}
+          NEAR_ENV: mainnet
+        run: |
+          near contract call-function as-transaction jomo-pool-v2.near draw_winner json-args {} prepaid-gas '100.000 TeraGas' attached-deposit '0 NEAR' sign-as crypto-jomo.near network-config mainnet sign-with-access-key-file <(echo $NEAR_CREDENTIALS)

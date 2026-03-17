@@ -161,19 +161,12 @@ impl NoLossPool {
         );
 
         let mut user = self.users.get(&account_id).cloned().unwrap_or_default();
-
-        self.total_active_staked = self.total_active_staked.saturating_sub(user.active_balance);
-        self.total_pending_staked = self.total_pending_staked.saturating_sub(user.pending_balance);
-
         user.active_balance = active.0;
         user.pending_balance = pending.0;
 
-        self.total_active_staked += user.active_balance;
-        self.total_pending_staked += user.pending_balance;
-
         self.users.insert(account_id.clone(), user);
 
-        near_sdk::log!("Restored balance & updated totals for {}: Active {}, Pending {}", account_id, active.0, pending.0);
+        near_sdk::log!("Restored balance for {}: Active {}, Pending {}", account_id, active.0, pending.0);
     }
 
     // STEP 1: Initiate Unstaking
