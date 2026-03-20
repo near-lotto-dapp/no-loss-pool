@@ -4,18 +4,56 @@ import { poolContract } from '@/contracts/pool_contract';
 import { formatNearAmount } from '@near-js/utils';
 import styles from '@/styles/app.module.css';
 
-import { PoolStats } from './pool_stats';
-
 interface StakingPanelProps {
     t: any;
+    dbTvl?: string | number;
+    dbPrizePool?: string | number;
+    isLoadingDb?: boolean;
 }
 
-export const StakingPanel = ({ t }: StakingPanelProps) => {
-    const { signedAccountId, callFunction, loading } = useNearWallet();
+const useNextDrawTimer = (drawingNowText: string) => {
+    const [drawTimeLeft, setDrawTimeLeft] = useState<string>("...");
+
+    useEffect(() => {
+        const calculateTimeLeft = () => {
+            const now = new Date();
+            const nextSunday = new Date();
+            nextSunday.setUTCHours(23, 59, 59, 999);
+            const daysUntilSunday = (7 - now.getUTCDay()) % 7 || 7;
+            nextSunday.setUTCDate(now.getUTCDate() + daysUntilSunday);
+            const diff = nextSunday.getTime() - now.getTime();
+
+            if (diff > 0) {
+                const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const m = Math.floor((diff / 1000 / 60) % 60);
+                const s = Math.floor((diff / 1000) % 60);
+                setDrawTimeLeft(`${d}d ${h.toString().padStart(2, '0')}h ${m.toString().padStart(2, '0')}m ${s.toString().padStart(2, '0')}s`);
+            } else {
+                setDrawTimeLeft(drawingNowText);
+            }
+        };
+
+        calculateTimeLeft();
+        const timer = setInterval(calculateTimeLeft, 1000);
+        return () => clearInterval(timer);
+    }, [drawingNowText]);
+
+    return drawTimeLeft;
+};
+
+const formatNear = (value: string | number | undefined, decimals: number): string => {
+    if (value === undefined) return "0.00";
+    const num = Number(value);
+    return isNaN(num) ? "0.00" : num.toFixed(decimals);
+};
+
+export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPanelProps) => {
+    // 1. ВИПРАВЛЕНО НА signIn ТА signOut
+    const { signedAccountId, callFunction, loading, signIn, signOut } = useNearWallet();
+
     const [activeBalance, setActiveBalance] = useState<string>("0");
     const [pendingBalance, setPendingBalance] = useState<string>("0");
-    const [currentPrize, setCurrentPrize] = useState<string>("0");
-    const [totalTvl, setTotalTvl] = useState<string>("0");
     const [amount, setAmount] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
@@ -25,6 +63,8 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
     const [unstakingBalance, setUnstakingBalance] = useState<string>("0");
     const [unlockTime, setUnlockTime] = useState<number>(0);
     const [now, setNow] = useState<number>(Date.now());
+
+    const drawTimeLeft = useNextDrawTimer(t.drawingNow || "Draw...");
 
     useEffect(() => {
         fetchPoolData();
@@ -44,23 +84,8 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
     const fetchPoolData = async () => {
         try {
             const poolInfo = await poolContract.getPoolInfo();
-            const linearBalanceStr = await poolContract.getLinearBalance();
-
             const active = BigInt(poolInfo.total_active || "0");
-            const pending = BigInt(poolInfo.total_pending || "0");
-            const stakedOriginal = BigInt(poolInfo.total_staked || "0");
-            const linearCurrent = BigInt(linearBalanceStr || "0");
-            const activeWorkingV = active + pending;
-
-            setTotalTvl(formatNearAmount(activeWorkingV.toString()));
             setTotalActivePool(formatNearAmount(active.toString()));
-
-            let prize = linearCurrent - stakedOriginal;
-            if (prize < 0n) {
-                prize = 0n;
-            }
-            setCurrentPrize(formatNearAmount(prize.toString()));
-
         } catch (error) {
             console.error("Failed to fetch pool info:", error);
         }
@@ -102,7 +127,6 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
         setIsLoading(true);
         try {
             await poolContract.deposit(callFunction, amount);
-
             await fetchUserBalance();
             await fetchPoolData();
             setAmount("");
@@ -118,7 +142,6 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
         setIsLoading(true);
         try {
             await poolContract.withdraw(callFunction, amount);
-
             await fetchUserBalance();
             await fetchPoolData();
             setAmount("");
@@ -133,7 +156,6 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
         setIsLoading(true);
         try {
             await poolContract.claim(callFunction);
-
             await fetchUserBalance();
             await fetchPoolData();
         } catch (error) {
@@ -171,39 +193,67 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
         : 0;
 
     const winChance = Math.min(calculatedChance, 100).toFixed(2);
-
     const isReadyToClaim = now >= unlockTime;
     const timeLeft = getTimeRemaining(unlockTime);
-    const triggerHeaderLogin = () => {
-        const headerLoginBtn = Array.from(document.querySelectorAll('button')).find(
-            btn => btn.innerText.includes('Login') || btn.innerText.includes('Connect') || btn.innerText.includes('Підключити')
-        );
-        if (headerLoginBtn) {
-            headerLoginBtn.click();
-        } else {
-            console.warn("No login button in header");
-        }
-    };
 
     return (
         <div className={styles.center}>
             <div className={`${styles.card} ${styles.stakingCard}`}>
                 <h2 className="text-center mb-4">{t.title}</h2>
 
-                <PoolStats
-                    totalTvl={totalTvl}
-                    currentPrize={currentPrize}
-                    t={t}
-                />
+                <div className="w-100 mb-4">
+                    <div className="text-center mb-4">
+                        <div className="badge bg-dark border border-secondary p-2 mt-2 shadow-sm">
+                            <span className="text-white-50 me-2">{t.nextDrawIn}</span>
+                            <span className="text-info fw-bold font-monospace timer-text" style={{ fontSize: '1.05rem' }}>
+                                {drawTimeLeft}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="bg-dark rounded p-3 mb-4 text-center tvl-card">
+                        <h6 className="text-white-50 mb-2">{t.poolTvl}</h6>
+                        <h3 className="text-success m-0 fw-bold text-glow-success">
+                            {isLoadingDb ? "..." : `${formatNear(dbTvl, 2)} NEAR`}
+                        </h3>
+                        <div className="mt-2 d-flex justify-content-center align-items-center gap-2">
+                            <span className="badge bg-success-subtle text-success border border-success-subtle small">
+                                {t.apyLabel}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="bg-dark rounded p-3 mb-4 text-center border border-warning prize-card">
+                        <h6 className="text-warning mb-1">{t.prizePoolLabel}</h6>
+                        <h4 className="text-warning m-0 fw-bold text-glow-warning">
+                            {isLoadingDb ? "..." : `${formatNear(dbPrizePool, 5)} NEAR`}
+                        </h4>
+                    </div>
+                </div>
 
                 {signedAccountId ? (
                     <div className="d-flex flex-column gap-4">
 
-                        {/* Your Tickets */}
+                        {/* ВІДОБРАЖЕННЯ ГАМАНЦЯ ТА КНОПКА ВИХОДУ */}
+                        <div className="d-flex justify-content-between align-items-center p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            <div className="d-flex align-items-center gap-2 text-truncate me-2">
+                                <i className="bi bi-wallet2 text-info fs-5"></i>
+                                <span className="font-monospace text-white fw-bold text-truncate">
+                                    {signedAccountId}
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => signOut()} // 2. ВИПРАВЛЕНО НА signOut()
+                                className="btn btn-sm btn-outline-secondary text-white-50 border-0 flex-shrink-0"
+                                style={{ fontSize: '0.85rem' }}
+                            >
+                                <i className="bi bi-box-arrow-right me-1"></i> {t.logout || "Logout"}
+                            </button>
+                        </div>
+
                         <div className={`${styles.description} d-flex flex-column gap-2 py-3`}>
                             <h6 className="text-center text-white-50 mb-3">{t.yourTickets}</h6>
 
-                            {/* Active Balance */}
                             <div className="d-flex flex-column flex-sm-row align-items-center justify-content-sm-between w-100 px-3 mb-3 gap-2">
                                 <span className="text-white-50 text-center text-sm-start mb-1 mb-sm-0">
                                     {t.activeBalanceLabel}:
@@ -220,7 +270,6 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
                                 </div>
                             </div>
 
-                            {/* Pending Balance */}
                             <div className="d-flex flex-column flex-sm-row align-items-center justify-content-sm-between w-100 px-3 mb-3 gap-2">
                                 <span className="text-white-50 text-center text-sm-start mb-1 mb-sm-0">
                                     {t.pendingBalanceLabel}:
@@ -232,7 +281,6 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
                                 </div>
                             </div>
 
-                            {/* UNSTAKING & CLAIM */}
                             {Number(unstakingBalance) > 0 && (
                                 <div
                                     className="w-100 mt-3 p-4 d-flex flex-column align-items-center justify-content-center rounded"
@@ -274,7 +322,6 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
                             )}
                         </div>
 
-                        {/* Tabs */}
                         <ul className={`nav nav-pills nav-fill bg-dark rounded p-1 ${styles.tabList}`}>
                             <li className="nav-item">
                                 <button
@@ -294,7 +341,6 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
                             </li>
                         </ul>
 
-                        {/* Entering field */}
                         <div className="form-group position-relative">
                             <label htmlFor="txAmount" className="mb-2 text-white-50">
                                 {activeTab === 'deposit' ? t.depositAmount : t.withdrawAmount}
@@ -335,7 +381,6 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
                             )}
                         </div>
 
-                        {/* Buttons */}
                         <button
                             onClick={activeTab === 'deposit' ? handleDeposit : handleWithdraw}
                             disabled={isButtonDisabled()}
@@ -359,7 +404,7 @@ export const StakingPanel = ({ t }: StakingPanelProps) => {
                             {t.connectToDeposit}
                         </p>
                         <button
-                            onClick={triggerHeaderLogin}
+                            onClick={() => signIn()} // 3. ВИПРАВЛЕНО НА signIn()
                             className={`btn btn-lg w-100 fw-bold text-white ${styles.gradientPrimary}`}
                             style={{ borderRadius: '12px' }}
                         >
