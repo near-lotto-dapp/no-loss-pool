@@ -1,39 +1,74 @@
+import { useState, useEffect, useRef } from 'react';
+import styles from '@/styles/app.module.css';
 import {Language} from "@/pages/translations.ts";
-
 
 interface LanguageSwitcherProps {
     lang: Language;
     setLang: (lang: Language) => void;
 }
 
+const LANGUAGES = [
+    { code: 'ua', label: 'UA', flag: '🇺🇦' },
+    { code: 'en', label: 'EN', flag: '🇬🇧' },
+    { code: 'es', label: 'ES', flag: '🇪🇸' },
+] as const;
+
 export const LanguageSwitcher = ({ lang, setLang }: LanguageSwitcherProps) => {
-    const languages: { code: Language; label: string; flag: string }[] = [
-        { code: 'ua', label: 'UA', flag: '🇺🇦' },
-        { code: 'en', label: 'EN', flag: '🇬🇧' },
-        { code: 'es', label: 'ES', flag: '🇪🇸' },
-    ];
+    const [isOpen, setIsOpen] = useState(false);
+
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const currentLang = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (isOpen && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isOpen]);
+
+    const handleLangChange = (newLang: Language) => {
+        setLang(newLang);
+        setIsOpen(false);
+    };
 
     return (
-        <div className="d-flex justify-content-end mb-4">
-            <div className="btn-group shadow-sm" role="group" style={{ borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)' }}>
-                {languages.map((l) => (
-                    <button
-                        key={l.code}
-                        type="button"
-                        onClick={() => setLang(l.code)}
-                        className={`btn btn-sm px-3 py-2 ${lang === l.code ? 'btn-primary' : 'btn-dark'}`}
-                        style={{
-                            fontSize: '0.85rem',
-                            fontWeight: '600',
-                            backgroundColor: lang === l.code ? '#00b3ff' : '#1a1a1a',
-                            border: 'none',
-                            transition: 'all 0.2s ease'
-                        }}
+        <div className={styles.languageSwitcher} ref={dropdownRef}>
+            <button
+                type="button"
+                className={styles.langDropdownBtn}
+                onClick={() => setIsOpen(!isOpen)}
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+            >
+                <span className="fs-6">{currentLang.flag}</span>
+                <span>{currentLang.label}</span>
+                <span className={`${styles.dropdownArrow} ms-1`}>▼</span>
+            </button>
+
+            <ul className={`${styles.langDropdownMenu} ${isOpen ? styles.showMenu : ''}`} role="listbox">
+                {LANGUAGES.map((item) => (
+                    <li
+                        key={item.code}
+                        role="option"
+                        aria-selected={item.code === lang}
+                        className={`${styles.dropdownItem} ${item.code === lang ? styles.activeLang : ''}`}
+                        onClick={() => handleLangChange(item.code as Language)}
                     >
-                        <span className="me-1">{l.flag}</span> {l.label}
-                    </button>
+                        <span className="fs-5">{item.flag}</span>
+                        <span>{item.label}</span>
+
+                        {item.code === lang && <i className="bi bi-check2 ms-auto text-info"></i>}
+                    </li>
                 ))}
-            </div>
+            </ul>
         </div>
     );
 };

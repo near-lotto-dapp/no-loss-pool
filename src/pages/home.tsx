@@ -37,8 +37,18 @@ export default function Home() {
     }, []);
 
     return (
-        <main className="container mt-0 mb-4">
-            <LanguageSwitcher lang={lang} setLang={setLang}/>
+        <main className="container position-relative mt-0 mb-4">
+            <div
+                className="position-absolute d-flex justify-content-end"
+                style={{
+                    top: '-30px',
+                    right: '15px',
+                    zIndex: 1000,
+                    width: 'fit-content'
+                }}
+            >
+                <LanguageSwitcher lang={lang} setLang={setLang}/>
+            </div>
 
             <StakingPanel
                 t={t}
