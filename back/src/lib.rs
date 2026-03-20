@@ -171,6 +171,8 @@ impl NoLossPool {
             self.total_active_staked -= remainder;
         }
 
+        self.total_staked_in_linear -= withdraw_amount;
+
         // Start the 3-day timer
         user.unstaking_balance = withdraw_amount;
         user.unstake_unlock_time = env::block_timestamp() + UNSTAKE_PERIOD_NS;
@@ -211,6 +213,15 @@ impl NoLossPool {
             );
     }
 
+    pub fn admin_sync_staked_balance(&mut self, amount: U128) {
+        assert_eq!(
+            near_sdk::env::predecessor_account_id(),
+            self.owner_id,
+            "Only owner can sync balance"
+        );
+        self.total_staked_in_linear = amount.0;
+    }
+
     #[private]
     pub fn on_claim_callback(&mut self, account_id: AccountId, amount: U128) {
         // Finally, send the physical NEAR to the user
@@ -241,11 +252,6 @@ impl NoLossPool {
 
         self.total_active_staked += self.total_pending_staked;
         self.total_pending_staked = 0;
-    }
-
-    #[private]
-    pub fn admin_sync_staked_balance(&mut self, amount: U128) {
-        self.total_staked_in_linear = amount.0;
     }
 
     pub fn draw_winner(&mut self) {
