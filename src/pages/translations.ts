@@ -1,5 +1,5 @@
 export type Language = 'ua' | 'en' | 'es';
-
+const apy:string = "~5%";
 export const translations: Record<Language, any> = {
     ua: {
         title: "JOMO No-Loss Pool",
@@ -35,7 +35,7 @@ export const translations: Record<Language, any> = {
         step1: "1. Депозит у пул",
         step1Desc: "Зробіть депозит від 10 NEAR. Ваші кошти — це ваш квиток. Чим більша сума на балансі, тим вищі шанси забрати джекпот.",
         step2: "2. Генерація прибутку",
-        step2Desc: "Усі кошти пулу смарт-контракт відправляє в ліквідний стейкінг LiNEAR, де вони постійно генерують відсотки (~8.4% APY). Тіло депозиту завжди в безпеці.",
+        step2Desc: `Усі кошти пулу смарт-контракт відправляє в ліквідний стейкінг LiNEAR, де вони постійно генерують відсотки (${apy} APY). Тіло депозиту завжди в безпеці.`,
         step3: "3. Розіграш джекпоту",
         step3Desc: "Алгоритм випадково обирає переможця, який забирає 97% від усього накопиченого пулом прибутку. Не виграли? Ви нічого не втрачаєте і берете участь у наступному розіграші!",
         exampleTitle: "Математика успіху (Приклад): 📝",
@@ -71,7 +71,7 @@ export const translations: Record<Language, any> = {
         nextDrawIn: "⏱ До розіграшу:",
         drawingNow: "РОЗІГРАШ...",
         poolTvl: "Загальний пул (TVL)",
-        apyLabel: "~8.4% APY",
+        apyLabel: `${apy} APY`,
         prizePoolLabel: "Поточний призовий фонд",
         yourTickets: "Ваш особистий кабінет",
         withdrawPlaceholder: "Сума виводу",
@@ -119,7 +119,7 @@ export const translations: Record<Language, any> = {
         step1: "1. Deposit into the pool",
         step1Desc: "Make a deposit of at least 10 NEAR. Your funds are your tickets. The larger the balance, the higher the chances of winning the jackpot.",
         step2: "2. Yield Generation",
-        step2Desc: "The smart contract sends all pool funds to LiNEAR liquid staking, where they constantly generate interest (~8.4% APY). Your principal is always safe.",
+        step2Desc: `The smart contract sends all pool funds to LiNEAR liquid staking, where they constantly generate interest (${apy} APY). Your principal is always safe.`,
         step3: "3. Jackpot Draw",
         step3Desc: "An algorithm randomly selects a winner who takes 97% of all yield accumulated by the pool. Didn't win? You lose nothing and participate in the next draw!",
         exampleTitle: "Math of Success (Example): 📝",
@@ -155,7 +155,7 @@ export const translations: Record<Language, any> = {
         nextDrawIn: "⏱ Until draw:",
         drawingNow: "DRAWING...",
         poolTvl: "Total Pool (TVL)",
-        apyLabel: "~8.4% APY",
+        apyLabel: `${apy} APY`,
         prizePoolLabel: "Current Prize Pool",
         yourTickets: "Your Personal Cabinet",
         withdrawPlaceholder: "Amount to withdraw",
@@ -203,7 +203,7 @@ export const translations: Record<Language, any> = {
         step1: "1. Depósito en el pool",
         step1Desc: "Realiza un depósito de al menos 10 NEAR. Tus fondos son tus boletos. Cuanto mayor sea el saldo, mayores serán las posibilidades de ganar el jackpot.",
         step2: "2. Generación de rendimiento",
-        step2Desc: "El contrato inteligente envía todos los fondos del pool al staking líquido de LiNEAR, donde generan intereses constantemente (~8.4% APY). Tu capital siempre está a salvo.",
+        step2Desc: `El contrato inteligente envía todos los fondos del pool al staking líquido de LiNEAR, donde generan intereses constantemente (${apy} APY). Tu capital siempre está a salvo.`,
         step3: "3. Sorteo del Jackpot",
         step3Desc: "Un algoritmo selecciona aleatoriamente a un ganador que se lleva el 97% de todo el rendimiento acumulado por el pool. ¿No ganaste? ¡No pierdes nada y participas en el próximo sorteo!",
         exampleTitle: "Matemáticas del éxito (Ejemplo): 📝",
@@ -239,7 +239,7 @@ export const translations: Record<Language, any> = {
         nextDrawIn: "⏱ Hasta el sorteo:",
         drawingNow: "SORTEANDO...",
         poolTvl: "Pool Total (TVL)",
-        apyLabel: "~8.4% APY",
+        apyLabel: `${apy} APY`,
         prizePoolLabel: "Pozo de premios actual",
         yourTickets: "Tu Panel Personal",
         withdrawPlaceholder: "Cantidad a retirar",

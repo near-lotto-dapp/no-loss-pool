@@ -23,9 +23,7 @@ back/**/target/
 out
 build
 .env*.local
-
-# macOS
-.DS_Store
+.env*
 
 # Editor directories and files
 .vscode/*

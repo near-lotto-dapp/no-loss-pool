@@ -22,7 +22,8 @@
     "qrcode.react": "^4.2.0",
     "react": "^19",
     "react-dom": "^19",
-    "react-router": "^7"
+    "react-router": "^7",
+    "@supabase/supabase-js": "^2.99.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
