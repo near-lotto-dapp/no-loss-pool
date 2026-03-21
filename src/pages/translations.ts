@@ -107,6 +107,11 @@ export const translations: Record<Language, any> = {
         generating: "Завантаження...",
         generateWalletBtn: "Згенерувати гаманець",
         generationError: "Помилка генерації. Спробуйте пізніше.",
+        balance: "Баланс:",
+        depositBtn: "Поповнити",
+        scanToDeposit: "Відскануйте для поповнення",
+        refresh: "Оновити",
+        nearAlert: "⚠️ Надсилайте лише токени протоколу NEAR на цю адресу.",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -214,6 +219,11 @@ export const translations: Record<Language, any> = {
         generating: "Loading...",
         generateWalletBtn: "Generate Wallet",
         generationError: "Failed to generate wallet. Please try again.",
+        balance: "Balance:",
+        depositBtn: "Deposit",
+        scanToDeposit: "Scan to deposit NEAR",
+        refresh: "Refresh",
+        nearAlert: "⚠️ Send only NEAR Protocol tokens to this address."
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -321,5 +331,10 @@ export const translations: Record<Language, any> = {
         generating: "Cargando...",
         generateWalletBtn: "Generar billetera",
         generationError: "Error de generación. Inténtalo más tarde.",
+        balance: "Saldo:",
+        depositBtn: "Depositar",
+        scanToDeposit: "Escanea para depositar",
+        refresh: "Actualizar",
+        nearAlert: "⚠️ Envía solo tokens de NEAR Protocol a esta dirección.",
     }
 };

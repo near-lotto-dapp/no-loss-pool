@@ -59,8 +59,8 @@ export default async function handler(req: any, res: any) {
         };
 
         const [jomoRes, linearRes] = await Promise.all([
-            fetch("https://free.rpc.fastnear.com", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(jomoBody) }),
-            fetch("https://free.rpc.fastnear.com", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(linearBody) })
+            fetch(import.meta.env.VITE_NEAR_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(jomoBody) }),
+            fetch(import.meta.env.VITE_NEAR_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(linearBody) })
         ]);
 
         const jomoData: any = await jomoRes.json();
