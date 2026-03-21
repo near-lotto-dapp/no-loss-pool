@@ -101,6 +101,10 @@ export const translations: Record<Language, any> = {
         welcomeUser: "Вітаємо у вашому кабінеті",
         logoutBtn: "Вийти",
         walletStatus: "Статус гаманця NEAR:",
+        yourWallet: "Ваш NEAR гаманець:",
+        copyBtn: "Копіювати",
+        copiedBtn: "Скопійовано!",
+        generating: "Завантаження...",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -202,6 +206,10 @@ export const translations: Record<Language, any> = {
         welcomeUser: "Welcome to your account",
         logoutBtn: "Log Out",
         walletStatus: "NEAR Wallet Status:",
+        yourWallet: "Your NEAR Wallet:",
+        copyBtn: "Copy",
+        copiedBtn: "Copied!",
+        generating: "Loading...",
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -303,5 +311,9 @@ export const translations: Record<Language, any> = {
         welcomeUser: "Bienvenido a tu panel",
         logoutBtn: "Cerrar sesión",
         walletStatus: "Estado de la billetera NEAR:",
+        yourWallet: "Tu billetera NEAR:",
+        copyBtn: "Copiar",
+        copiedBtn: "¡Copiado!",
+        generating: "Cargando...",
     }
 };

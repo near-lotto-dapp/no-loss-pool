@@ -27,6 +27,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
             let userData;
 
             if (isLogin) {
+                // LOG IN
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password,
@@ -34,16 +35,45 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                 authError = error;
                 userData = data;
             } else {
+                // SIGN UP
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                 });
                 authError = error;
                 userData = data;
+
+                // IF REGISTRATION IS SUCCESSFUL -> GENERATE NEAR WALLET
+                if (data?.user && !error) {
+                    // Show immediate feedback that wallet generation started
+                    setSuccessMsg(t.generatingWallet || "Registration successful! Generating your NEAR wallet...");
+
+                    try {
+                        const response = await fetch('/api/auth/setup-wallet', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                user_id: data.user.id,
+                                email: data.user.email
+                            })
+                        });
+
+                        const walletData = await response.json();
+                        if (!response.ok) {
+                            console.error("Wallet generation API error:", walletData.error);
+                            // We log it but do not throw, so the user can still log in later
+                        } else {
+                            console.log("Wallet successfully created!", walletData);
+                        }
+                    } catch (apiError) {
+                        console.error("Failed to reach wallet setup API:", apiError);
+                    }
+                }
             }
 
             if (authError) throw authError;
 
+            // Final success message if everything went well
             setSuccessMsg(isLogin ? (t.loginSuccess || 'Login successful!') : (t.registerSuccess || 'Registration successful!'));
 
             if (onSuccess && userData?.user) {

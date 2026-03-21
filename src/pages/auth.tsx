@@ -18,14 +18,19 @@ export default function AuthPage() {
     const [user, setUser] = useState<any>(null);
     const [loadingSession, setLoadingSession] = useState(true);
 
+    // New states for wallet fetching and UI feedback
+    const [walletAddress, setWalletAddress] = useState<string | null>(null);
+    const [loadingWallet, setLoadingWallet] = useState(false);
+    const [copied, setCopied] = useState(false);
+
     const t = translations[lang];
 
     useEffect(() => {
         localStorage.setItem('lang', lang);
     }, [lang]);
 
+    // Handle Session
     useEffect(() => {
-        // Отримуємо поточну сесію
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null);
             setLoadingSession(false);
@@ -38,8 +43,53 @@ export default function AuthPage() {
         return () => subscription.unsubscribe();
     }, []);
 
+    // Fetch Wallet Address when user is logged in
+    useEffect(() => {
+        const fetchWallet = async () => {
+            if (user) {
+                setLoadingWallet(true);
+                try {
+                    const { data, error } = await supabase
+                        .from('profiles')
+                        .select('near_account_id')
+                        .eq('id', user.id)
+                        .single();
+
+                    if (data && !error) {
+                        setWalletAddress(data.near_account_id);
+                    }
+                } catch (err) {
+                    console.error("Error fetching wallet:", err);
+                } finally {
+                    setLoadingWallet(false);
+                }
+            } else {
+                setWalletAddress(null);
+            }
+        };
+
+        fetchWallet();
+    }, [user]);
+
+    // Copy to clipboard helper
+    const handleCopy = () => {
+        if (walletAddress) {
+            navigator.clipboard.writeText(walletAddress);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+
     const handleLogout = async () => {
         await supabase.auth.signOut();
+    };
+
+    // Helper to format long hex addresses (e.g., first 8 and last 8 chars)
+    const formatAddress = (address: string) => {
+        if (address.length > 20) {
+            return `${address.slice(0, 10)}...${address.slice(-10)}`;
+        }
+        return address;
     };
 
     return (
@@ -68,11 +118,29 @@ export default function AuthPage() {
                             <h3 className="text-white mb-2">{t.welcomeUser || "Welcome!"}</h3>
                             <p className="text-white-50 mb-4">{user.email}</p>
 
-                            {/* Generated wallet */}
+                            {/* Wallet Display Section */}
                             <div className="p-3 bg-dark rounded mb-4 border border-secondary text-start">
-                                <small className="text-white-50 d-block mb-1">{t.walletStatus || "NEAR Wallet Status:"}</small>
-                                <div className="d-flex justify-content-between align-items-center">
-                                    <span className="text-info fw-bold">In progress...</span>
+                                <small className="text-white-50 d-block mb-2">{t.yourWallet || "Your NEAR Wallet:"}</small>
+
+                                <div className="d-flex justify-content-between align-items-center bg-black p-2 rounded border border-dark">
+                                    {loadingWallet ? (
+                                        <span className="text-secondary">{t.generating || "Loading..."}</span>
+                                    ) : walletAddress ? (
+                                        <>
+                                            <span className="text-info fw-bold font-monospace" style={{ fontSize: '0.9rem' }}>
+                                                {formatAddress(walletAddress)}
+                                            </span>
+                                            <button
+                                                onClick={handleCopy}
+                                                className={`btn btn-sm ${copied ? 'btn-success' : 'btn-outline-secondary'}`}
+                                                style={{ padding: '2px 8px', fontSize: '0.8rem' }}
+                                            >
+                                                {copied ? (t.copiedBtn || "Copied!") : (t.copyBtn || "Copy")}
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <span className="text-warning">Wallet not found</span>
+                                    )}
                                 </div>
                             </div>
 
