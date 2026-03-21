@@ -130,6 +130,12 @@ export const translations: Record<Language, any> = {
         verifyAndEnable: "Підтвердити та увімкнути",
         enter2faCode: "Введіть код 2FA",
         enter2faDesc: "Відкрийте Google Authenticator і введіть ваш 6-значний код.",
+        withdrawSuccess: "Транзакцію успішно надіслано!",
+        withdrawTitle: "Надіслати NEAR",
+        withdrawAddress: "Адреса отримувача NEAR",
+        withdrawMax: "МАКС",
+        copied: "Скопійовано!",
+        sendAssetsBtn: "Надіслати активи",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -260,6 +266,12 @@ export const translations: Record<Language, any> = {
         verifyAndEnable: "Verify & Enable",
         enter2faCode: "Enter 2FA Code",
         enter2faDesc: "Open Google Authenticator and enter your 6-digit code.",
+        withdrawSuccess: "Transaction sent successfully!",
+        withdrawTitle: "Send NEAR",
+        withdrawAddress: "Recipient NEAR Address",
+        withdrawMax: "MAX",
+        sendAssetsBtn: "Send Assets",
+        copied: "Copied!",
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -390,5 +402,11 @@ export const translations: Record<Language, any> = {
         verifyAndEnable: "Verificar y activar",
         enter2faCode: "Introduce el código 2FA",
         enter2faDesc: "Abre Google Authenticator e introduce tu código de 6 dígitos.",
+        withdrawSuccess: "¡Transacción enviada con éxito!",
+        withdrawTitle: "Enviar NEAR",
+        withdrawAddress: "Dirección del destinatario NEAR",
+        withdrawMax: "MÁX",
+        copied: "¡Copiado!",
+        sendAssetsBtn: "Enviar activos",
     }
 };
