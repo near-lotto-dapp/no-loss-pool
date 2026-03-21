@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { poolContract } from '@/contracts/pool_contract';
 import { WinnersHistory, WinnerRecord } from "@/components/winners_history";
 import { usePoolData } from '@/hooks/usePoolData';
+import {Link} from "react-router";
 
 export default function Home() {
     const [lang, setLang] = useState<Language>(() => {
@@ -39,7 +40,7 @@ export default function Home() {
     return (
         <main className="container position-relative mt-0 mb-4">
             <div
-                className="position-absolute d-flex justify-content-end"
+                className="position-absolute d-flex justify-content-end align-items-center gap-3"
                 style={{
                     top: '-30px',
                     right: '15px',
@@ -47,6 +48,15 @@ export default function Home() {
                     width: 'fit-content'
                 }}
             >
+                <Link
+                    to="/auth"
+                    className="btn btn-outline-info fw-bold d-flex align-items-center m-0"
+                    style={{ borderRadius: '8px', padding: '6px 16px', height: '38px' }}
+                >
+                    <i className="bi bi-person-circle me-2"></i>
+                    {t.accountBtn || "Account"}
+                </Link>
+
                 <LanguageSwitcher lang={lang} setLang={setLang}/>
             </div>
 

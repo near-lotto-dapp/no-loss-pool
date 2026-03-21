@@ -1,6 +1,5 @@
 import styles from '@/styles/app.module.css';
 
-// tmp
 export interface WinnerRecord {
     timestamp: number;
     account_id: string;

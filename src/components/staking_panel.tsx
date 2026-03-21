@@ -404,7 +404,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                             {t.connectToDeposit}
                         </p>
                         <button
-                            onClick={() => signIn()} // 3. ВИПРАВЛЕНО НА signIn()
+                            onClick={() => signIn()}
                             className={`btn btn-lg w-100 fw-bold text-white ${styles.gradientPrimary}`}
                             style={{ borderRadius: '12px' }}
                         >

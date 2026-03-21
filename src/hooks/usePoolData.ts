@@ -8,14 +8,13 @@ export const usePoolData = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                // Звертаємося до нашого API на Vercel
                 const response = await fetch('/api/pool-stats');
                 const data = await response.json();
 
                 if (data.tvl !== undefined) setTvl(data.tvl);
                 if (data.prizePool !== undefined) setPrizePool(data.prizePool);
             } catch (error) {
-                console.error("Помилка завантаження статистики:", error);
+                console.error("Error analytics loading: ", error);
             } finally {
                 setIsLoading(false);
             }
@@ -23,7 +22,6 @@ export const usePoolData = () => {
 
         fetchStats();
 
-        // Оновлюємо кожні 30 секунд
         const interval = setInterval(fetchStats, 30000);
         return () => clearInterval(interval);
     }, []);

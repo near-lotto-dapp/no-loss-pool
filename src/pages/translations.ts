@@ -83,7 +83,15 @@ export const translations: Record<Language, any> = {
         calculating: "Прорахунок...",
         footerText: "© 2026 Crypto JOMO. Всі права захищено.",
         smartContract: "Смарт-контракт",
-        githubRepo: "GitHub Репозиторій"
+        githubRepo: "GitHub Репозиторій",
+        createAccount: "Створити акаунт",
+        emailLabel: "Email адреса",
+        emailPlaceholder: "your@email.com",
+        passwordLabel: "Пароль",
+        passwordPlaceholder: "Мінімум 6 символів",
+        registerBtn: "Зареєструватися",
+        registerSuccess: "Реєстрація успішна! Тепер ви можете увійти.",
+        registerError: "Сталася помилка під час реєстрації.",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -167,7 +175,15 @@ export const translations: Record<Language, any> = {
         calculating: "Calculating...",
         footerText: "© 2026 Crypto JOMO. All rights reserved.",
         smartContract: "Smart Contract",
-        githubRepo: "GitHub Repository"
+        githubRepo: "GitHub Repository",
+        createAccount: "Create Account",
+        emailLabel: "Email Address",
+        emailPlaceholder: "your@email.com",
+        passwordLabel: "Password",
+        passwordPlaceholder: "Minimum 6 characters",
+        registerBtn: "Register",
+        registerSuccess: "Registration successful! You can now log in.",
+        registerError: "An error occurred during registration.",
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -251,6 +267,14 @@ export const translations: Record<Language, any> = {
         calculating: "Calculando...",
         footerText: "© 2026 Crypto JOMO. Todos los derechos reservados.",
         smartContract: "Contrato Inteligente",
-        githubRepo: "Repositorio GitHub"
+        githubRepo: "Repositorio GitHub",
+        createAccount: "Crear cuenta",
+        emailLabel: "Dirección de correo electrónico",
+        emailPlaceholder: "your@email.com",
+        passwordLabel: "Contraseña",
+        passwordPlaceholder: "Mínimo 6 caracteres",
+        registerBtn: "Registrarse",
+        registerSuccess: "¡Registro exitoso! Ahora puedes iniciar sesión.",
+        registerError: "Ocurrió un error durante el registro.",
     }
 };
