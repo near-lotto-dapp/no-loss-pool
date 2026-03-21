@@ -94,7 +94,6 @@ export default function AuthPage() {
 
     return (
         <>
-            <Navigation />
 
             <main className="container position-relative mt-0 mb-4" style={{ minHeight: '70vh' }}>
                 <div
