@@ -22,6 +22,28 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
         setError(null);
         setSuccessMsg(null);
 
+        if (!isLogin) {
+            const hasLetter = /[a-zA-Z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            const hasSpecial = /[\W_]/.test(password);
+
+            if (password.length < 8) {
+                setError(t.passLength || "Password must be at least 8 characters long.");
+                setLoading(false);
+                return;
+            }
+            if (!hasLetter || !hasNumber) {
+                setError(t.passAlphanumeric || "Password must contain both letters and numbers.");
+                setLoading(false);
+                return;
+            }
+            if (!hasSpecial) {
+                setError(t.passSpecial || "Password must contain at least one special character (@, $, !, %, *, ?, &).");
+                setLoading(false);
+                return;
+            }
+        }
+
         try {
             let authError;
             let userData;
@@ -45,7 +67,6 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
 
                 // IF REGISTRATION IS SUCCESSFUL -> GENERATE NEAR WALLET
                 if (data?.user && !error) {
-                    // Show immediate feedback that wallet generation started
                     setSuccessMsg(t.generatingWallet || "Registration successful! Generating your NEAR wallet...");
 
                     try {
@@ -61,7 +82,6 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                         const walletData = await response.json();
                         if (!response.ok) {
                             console.error("Wallet generation API error:", walletData.error);
-                            // We log it but do not throw, so the user can still log in later
                         } else {
                             console.log("Wallet successfully created!", walletData);
                         }
@@ -90,7 +110,6 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
     return (
         <div className={styles.center} style={{ minHeight: 'auto', padding: '2rem 0' }}>
             <div className={`${styles.card} ${styles.stakingCard}`}>
-                {/* Dynamic Title */}
                 <h3 className="text-center text-white mb-4">
                     {isLogin ? (t.loginTitle || "Log In") : (t.createAccount || "Create Account")}
                 </h3>
@@ -113,21 +132,23 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                         <input
                             type="password"
                             required
-                            minLength={6}
+                            minLength={8}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             className={`form-control form-control-lg bg-dark text-white border-secondary ${styles.customInput}`}
-                            placeholder={t.passwordPlaceholder || "Minimum 6 characters"}
+                            placeholder={isLogin
+                                ? (t.passwordPlaceholder || "Enter your password")
+                                : (t.newPasswordPlaceholder || "8+ chars, 1 number, 1 special")
+                            }
                         />
                     </div>
 
                     {error && <div className="alert alert-danger py-2 mt-2" style={{ fontSize: '0.9rem' }}>{error}</div>}
                     {successMsg && <div className="alert alert-success py-2 mt-2" style={{ fontSize: '0.9rem' }}>{successMsg}</div>}
 
-                    {/* Dynamic Submit Button */}
                     <button
                         type="submit"
-                        disabled={loading || !email || password.length < 6}
+                        disabled={loading || !email || password.length < 8}
                         className={`btn btn-lg w-100 fw-bold text-white mt-3 ${styles.gradientPrimary}`}
                     >
                         {loading ? (
@@ -138,7 +159,6 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                     </button>
                 </form>
 
-                {/* Mode Switcher (Login <-> Register) */}
                 <div className="text-center mt-4">
                     <span className="text-white-50 me-2">
                         {isLogin ? (t.noAccount || "Don't have an account?") : (t.haveAccount || "Already have an account?")}
@@ -149,6 +169,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                             setIsLogin(!isLogin);
                             setError(null);
                             setSuccessMsg(null);
+                            setPassword('');
                         }}
                         className="btn btn-link text-info p-0 text-decoration-none fw-bold"
                     >

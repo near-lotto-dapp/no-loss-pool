@@ -112,6 +112,10 @@ export const translations: Record<Language, any> = {
         scanToDeposit: "Відскануйте для поповнення",
         refresh: "Оновити",
         nearAlert: "⚠️ Надсилайте лише токени протоколу NEAR на цю адресу.",
+        passLength: "Пароль має містити щонайменше 8 символів.",
+        passAlphanumeric: "Пароль має містити як літери, так і цифри.",
+        passSpecial: "Пароль має містити щонайменше один спеціальний символ (@, $, !, %, *, ?, &).",
+        newPasswordPlaceholder: "8+ символів, 1 цифра, 1 спецсимвол",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -223,7 +227,11 @@ export const translations: Record<Language, any> = {
         depositBtn: "Deposit",
         scanToDeposit: "Scan to deposit NEAR",
         refresh: "Refresh",
-        nearAlert: "⚠️ Send only NEAR Protocol tokens to this address."
+        nearAlert: "⚠️ Send only NEAR Protocol tokens to this address.",
+        passLength: "Password must be at least 8 characters long.",
+        passAlphanumeric: "Password must contain both letters and numbers.",
+        passSpecial: "Password must contain at least one special character (@, $, !, %, *, ?, &).",
+        newPasswordPlaceholder: "8+ chars, 1 number, 1 special",
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -336,5 +344,9 @@ export const translations: Record<Language, any> = {
         scanToDeposit: "Escanea para depositar",
         refresh: "Actualizar",
         nearAlert: "⚠️ Envía solo tokens de NEAR Protocol a esta dirección.",
+        passLength: "La contraseña debe tener al menos 8 caracteres.",
+        passAlphanumeric: "La contraseña debe contener letras y números.",
+        passSpecial: "La contraseña debe contener al menos un carácter especial (@, $, !, %, *, ?, &).",
+        newPasswordPlaceholder: "8+ caracteres, 1 número, 1 carácter especial",
     }
 };
