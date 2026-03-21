@@ -105,6 +105,8 @@ export const translations: Record<Language, any> = {
         copyBtn: "Копіювати",
         copiedBtn: "Скопійовано!",
         generating: "Завантаження...",
+        generateWalletBtn: "Згенерувати гаманець",
+        generationError: "Помилка генерації. Спробуйте пізніше.",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -210,6 +212,8 @@ export const translations: Record<Language, any> = {
         copyBtn: "Copy",
         copiedBtn: "Copied!",
         generating: "Loading...",
+        generateWalletBtn: "Generate Wallet",
+        generationError: "Failed to generate wallet. Please try again.",
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -315,5 +319,7 @@ export const translations: Record<Language, any> = {
         copyBtn: "Copiar",
         copiedBtn: "¡Copiado!",
         generating: "Cargando...",
+        generateWalletBtn: "Generar billetera",
+        generationError: "Error de generación. Inténtalo más tarde.",
     }
 };

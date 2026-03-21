@@ -70,7 +70,36 @@ export default function AuthPage() {
         fetchWallet();
     }, [user]);
 
-    // Copy to clipboard helper
+    const handleGenerateWallet = async () => {
+        if (!user) return;
+        setLoadingWallet(true);
+
+        try {
+            const response = await fetch('/api/auth/setup-wallet', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: user.id,
+                    email: user.email
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.wallet?.accountId) {
+                setWalletAddress(data.wallet.accountId);
+            } else {
+                console.error("Manual generation failed:", data.error);
+                alert(t.generationError || "Failed to generate wallet. Please try again.");
+            }
+        } catch (err) {
+            console.error("Network error during wallet generation:", err);
+            alert(t.generationError || "Network error. Please try again.");
+        } finally {
+            setLoadingWallet(false);
+        }
+    };
+
     const handleCopy = () => {
         if (walletAddress) {
             navigator.clipboard.writeText(walletAddress);
@@ -83,7 +112,6 @@ export default function AuthPage() {
         await supabase.auth.signOut();
     };
 
-    // Helper to format long hex addresses (e.g., first 8 and last 8 chars)
     const formatAddress = (address: string) => {
         if (address.length > 20) {
             return `${address.slice(0, 6)}...${address.slice(-6)}`;
@@ -137,7 +165,15 @@ export default function AuthPage() {
                                             </button>
                                         </>
                                     ) : (
-                                        <span className="text-warning">Wallet not found</span>
+                                        <div className="w-100 text-center">
+                                            <button
+                                                onClick={handleGenerateWallet}
+                                                className="btn btn-sm btn-outline-info fw-bold w-100"
+                                            >
+                                                <i className="bi bi-tools me-2"></i>
+                                                {t.generateWalletBtn || "Generate Wallet"}
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
