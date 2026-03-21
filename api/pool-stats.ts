@@ -63,8 +63,8 @@ export default async function handler(req: any, res: any) {
             fetch("https://free.rpc.fastnear.com", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(linearBody) })
         ]);
 
-        const jomoData = await jomoRes.json();
-        const linearData = await linearRes.json();
+        const jomoData: any = await jomoRes.json();
+        const linearData: any = await linearRes.json();
 
         if (jomoData.error || linearData.error) {
             throw new Error("RPC Error in fetching contract data");
