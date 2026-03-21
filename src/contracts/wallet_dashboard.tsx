@@ -123,6 +123,12 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
         }
     };
 
+    const formatAddress = (address: string) => {
+        if (!address) return '';
+        if (address.length <= 15) return address;
+        return `${address.slice(0, 6)}...${address.slice(-6)}`;
+    };
+
     return (
         <div className="p-4 bg-dark rounded mb-4 border border-secondary text-start position-relative w-100 animate__animated animate__fadeIn">
             <div className="d-flex justify-content-between align-items-center mb-1">
@@ -149,7 +155,7 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                 ) : walletAddress ? (
                     <>
                         <span className="text-info fw-bold font-monospace ps-2" style={{ fontSize: '0.85rem' }}>
-                            {walletAddress.slice(0, 12)}...{walletAddress.slice(-10)}
+                              {formatAddress(walletAddress)}
                         </span>
                         <button onClick={() => { navigator.clipboard.writeText(walletAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className={`btn btn-sm ${copied ? 'btn-success' : 'btn-outline-secondary'}`}>
                             {copied ? (t.copied || "Copied!") : (t.copyBtn || "Copy")}
