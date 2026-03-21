@@ -53,7 +53,7 @@ export default async function handler(req: any, res: any) {
                 request_type: "call_function",
                 finality: "optimistic",
                 account_id: "linear-protocol.near",
-                method_name: "get_account_total_balance",
+                method_name: "get_account_staked_balance",
                 args_base64: Buffer.from(linearArgsStr).toString('base64')
             }
         };
