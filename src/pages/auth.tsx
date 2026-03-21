@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Navigation } from '@/components/navigation';
 import { Footer } from '@/components/footer';
 import { LanguageSwitcher } from '@/components/language_switcher';
 import { AuthForm } from '@/components/auth_form';
