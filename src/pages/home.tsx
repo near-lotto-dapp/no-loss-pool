@@ -53,15 +53,7 @@ export default function Home() {
 
     return (
         <main className="container position-relative mt-0 mb-4">
-            <div
-                className="position-absolute d-flex justify-content-end align-items-center gap-3"
-                style={{
-                    top: '-30px',
-                    right: '15px',
-                    zIndex: 1000,
-                    width: 'fit-content'
-                }}
-            >
+            <div className="w-100 d-flex justify-content-end align-items-center gap-2 mb-3 mt-sm-0 mt-3">
                 <Link
                     to="/auth"
                     className="btn btn-outline-info fw-bold d-flex align-items-center m-0"
@@ -74,8 +66,8 @@ export default function Home() {
                 >
                     <i className="bi bi-person-circle me-2"></i>
                     <span className="text-truncate">
-                            {user ? user.email : (t.accountBtn || "Account")}
-                        </span>
+            {user ? user.email : (t.accountBtn || "Account")}
+        </span>
                 </Link>
 
                 <LanguageSwitcher lang={lang} setLang={setLang}/>

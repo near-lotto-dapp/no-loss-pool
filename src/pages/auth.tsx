@@ -168,10 +168,7 @@ export default function AuthPage() {
         <>
 
             <main className="container position-relative mt-0 mb-4" style={{ minHeight: '70vh' }}>
-                <div
-                    className="position-absolute d-flex justify-content-end align-items-center"
-                    style={{ top: '-45px', right: '15px', zIndex: 1000, width: 'fit-content', height: '38px' }}
-                >
+                <div className="w-100 d-flex justify-content-end align-items-center gap-2 mb-3 mt-sm-0 mt-3">
                     <LanguageSwitcher lang={lang} setLang={setLang}/>
                 </div>
 

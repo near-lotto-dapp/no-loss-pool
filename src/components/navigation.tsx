@@ -1,22 +1,26 @@
 import { Link } from 'react-router';
-import NearLogo from '@/assets/near-logo.svg';
-import styles from '@/styles/app.module.css';
 
 export const Navigation = () => {
-
     return (
-        <nav className="navbar navbar-expand-lg pb-3">
-            <div className="container-fluid">
-                <Link to="/">
-                    <img
-                        src={NearLogo}
-                        alt="NEAR"
-                        width={30}
-                        height={24}
-                        className={styles.logo}
-                    />
-                </Link>
-            </div>
-        </nav>
+        <header className="container pt-4 pb-2">
+            <Link
+                to="/"
+                className="d-inline-flex align-items-center text-decoration-none"
+                style={{ transition: 'opacity 0.2s' }}
+                onMouseOver={(e) => e.currentTarget.style.opacity = '0.8'}
+                onMouseOut={(e) => e.currentTarget.style.opacity = '1'}
+            >
+                <div
+                    className="d-flex justify-content-center align-items-center bg-white rounded text-dark fw-bold me-2"
+                    style={{ width: '36px', height: '36px', fontSize: '1.2rem' }}
+                >
+                    +
+                </div>
+
+                <span className="text-white fw-bold fs-4 m-0">
+                    JOMO <span className="text-info">Pool</span>
+                </span>
+            </Link>
+        </header>
     );
 };
