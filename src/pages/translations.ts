@@ -111,7 +111,7 @@ export const translations: Record<Language, any> = {
         depositBtn: "Поповнити",
         scanToDeposit: "Відскануйте для поповнення",
         refresh: "Оновити",
-        nearAlert: "⚠️ Надсилайте лише токени протоколу NEAR на цю адресу.",
+        nearAlert: "Надсилайте лише токени протоколу NEAR на цю адресу.",
         passLength: "Пароль має містити щонайменше 8 символів.",
         passAlphanumeric: "Пароль має містити як літери, так і цифри.",
         passSpecial: "Пароль має містити щонайменше один спеціальний символ (@, $, !, %, *, ?, &).",
@@ -128,6 +128,8 @@ export const translations: Record<Language, any> = {
         setup2faDesc: "Увімкніть 2FA, щоб отримати доступ до вашого гаманця. Відскануйте вашою Authenticator аплікацією цей QR code.",
         verificationCode: "Код підтвердження",
         verifyAndEnable: "Підтвердити та увімкнути",
+        enter2faCode: "Введіть код 2FA",
+        enter2faDesc: "Відкрийте Google Authenticator і введіть ваш 6-значний код.",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -239,7 +241,7 @@ export const translations: Record<Language, any> = {
         depositBtn: "Deposit",
         scanToDeposit: "Scan to deposit NEAR",
         refresh: "Refresh",
-        nearAlert: "⚠️ Send only NEAR Protocol tokens to this address.",
+        nearAlert: "Send only NEAR Protocol tokens to this address.",
         passLength: "Password must be at least 8 characters long.",
         passAlphanumeric: "Password must contain both letters and numbers.",
         passSpecial: "Password must contain at least one special character (@, $, !, %, *, ?, &).",
@@ -256,6 +258,8 @@ export const translations: Record<Language, any> = {
         setup2faDesc: "Enable 2FA to access your wallet. Scan this QR code with your authenticator app.",
         verificationCode: "Verification Code",
         verifyAndEnable: "Verify & Enable",
+        enter2faCode: "Enter 2FA Code",
+        enter2faDesc: "Open Google Authenticator and enter your 6-digit code.",
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -367,7 +371,7 @@ export const translations: Record<Language, any> = {
         depositBtn: "Depositar",
         scanToDeposit: "Escanea para depositar",
         refresh: "Actualizar",
-        nearAlert: "⚠️ Envía solo tokens de NEAR Protocol a esta dirección.",
+        nearAlert: "Envía solo tokens de NEAR Protocol a esta dirección.",
         passLength: "La contraseña debe tener al menos 8 caracteres.",
         passAlphanumeric: "La contraseña debe contener letras y números.",
         passSpecial: "La contraseña debe contener al menos un carácter especial (@, $, !, %, *, ?, &).",
@@ -384,5 +388,7 @@ export const translations: Record<Language, any> = {
         setup2faDesc: "Activa 2FA para acceder a tu billetera. Escanea este código QR con tu aplicación de autenticación.",
         verificationCode: "Código de verificación",
         verifyAndEnable: "Verificar y activar",
+        enter2faCode: "Introduce el código 2FA",
+        enter2faDesc: "Abre Google Authenticator e introduce tu código de 6 dígitos.",
     }
 };
