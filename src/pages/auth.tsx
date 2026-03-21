@@ -86,7 +86,7 @@ export default function AuthPage() {
     // Helper to format long hex addresses (e.g., first 8 and last 8 chars)
     const formatAddress = (address: string) => {
         if (address.length > 20) {
-            return `${address.slice(0, 10)}...${address.slice(-10)}`;
+            return `${address.slice(0, 6)}...${address.slice(-6)}`;
         }
         return address;
     };

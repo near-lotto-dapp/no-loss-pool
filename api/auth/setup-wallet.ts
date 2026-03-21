@@ -19,7 +19,7 @@ export default async function handler(req: any, res: any) {
 
         const keyPair = KeyPair.fromRandom('ed25519');
         const publicKey = keyPair.getPublicKey().toString();
-        const privateKey = keyPair.toString(); // Це секретний ключ, який дає повний доступ до грошей
+        const privateKey = keyPair.toString();
 
         const publicKeyBytes = keyPair.getPublicKey().data;
         const implicitAccountId = Buffer.from(publicKeyBytes).toString('hex');
