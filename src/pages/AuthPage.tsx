@@ -11,6 +11,34 @@ import { useLanguage } from "@/hooks/useLanguage.ts";
 
 let memoryMfaCache: { factorId: string, qrCode: string, secret: string } | null = null;
 
+const saveMfaCache = (userId: string, data: any) => {
+    memoryMfaCache = data;
+    const key = `mfa_setup_${userId}`;
+    try { sessionStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+};
+
+const getMfaCache = (userId: string) => {
+    if (memoryMfaCache) return memoryMfaCache;
+    const key = `mfa_setup_${userId}`;
+    try {
+        const s = sessionStorage.getItem(key) || localStorage.getItem(key);
+        if (s) {
+            const parsed = JSON.parse(s);
+            memoryMfaCache = parsed;
+            return parsed;
+        }
+    } catch(e) {}
+    return null;
+};
+
+const clearMfaCache = (userId: string) => {
+    memoryMfaCache = null;
+    const key = `mfa_setup_${userId}`;
+    try { sessionStorage.removeItem(key); } catch(e) {}
+    try { localStorage.removeItem(key); } catch(e) {}
+};
+
 export default function AuthPage() {
     const { lang, setLang, t } = useLanguage();
     usePageTitle(t.accountPageTitle || "Account");
@@ -42,6 +70,13 @@ export default function AuthPage() {
         if (!user?.id) return;
 
         const checkMfa = async () => {
+            const cachedSetup = getMfaCache(user.id);
+            if (cachedSetup && cachedSetup.secret) {
+                setMfaSetupData(cachedSetup);
+                setMfaStatus('needs_setup');
+                return;
+            }
+
             setMfaStatus('loading');
             try {
                 const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
@@ -62,33 +97,11 @@ export default function AuthPage() {
 
                 setMfaStatus('needs_setup');
 
-                if (memoryMfaCache) {
-                    setMfaSetupData(memoryMfaCache);
-                    return;
-                }
-
-                const storageKey = `mfa_setup_${user.id}`;
-                try {
-                    const savedStr = localStorage.getItem(storageKey);
-                    if (savedStr) {
-                        const savedData = JSON.parse(savedStr);
-                        if (savedData && savedData.secret) {
-                            memoryMfaCache = savedData;
-                            setMfaSetupData(savedData);
-                            return;
-                        }
-                    }
-                } catch (e) {}
-
                 const unverifiedFactors = factors?.totp?.filter(f => (f.status as string) === 'unverified') || [];
 
                 if (unverifiedFactors.length > 0) {
                     const latestUnverified = unverifiedFactors[unverifiedFactors.length - 1];
-                    setMfaSetupData({
-                        factorId: latestUnverified.id,
-                        qrCode: '',
-                        secret: ''
-                    });
+                    setMfaSetupData({ factorId: latestUnverified.id, qrCode: '', secret: '' });
                     return;
                 }
 
@@ -105,9 +118,7 @@ export default function AuthPage() {
                         qrCode: enrollData.totp.qr_code,
                         secret: enrollData.totp.secret
                     };
-
-                    memoryMfaCache = newSetupData;
-                    localStorage.setItem(storageKey, JSON.stringify(newSetupData));
+                    saveMfaCache(user.id, newSetupData);
                     setMfaSetupData(newSetupData);
                 }
 
@@ -133,8 +144,7 @@ export default function AuthPage() {
             });
             if (verify.error) throw verify.error;
 
-            memoryMfaCache = null;
-            localStorage.removeItem(`mfa_setup_${user.id}`);
+            clearMfaCache(user.id);
 
             setMfaStatus('verified');
             setMfaCode('');
@@ -158,13 +168,14 @@ export default function AuthPage() {
             setMfaStatus('verified');
             setMfaCode('');
         } catch (err) {
-            setMfaError(t.mfaError);
+            setMfaError(t.mfaError || "Invalid code. Try again.");
         } finally {
             setLoadingMfa(false);
         }
     };
 
     const handleGenerateNewQr = async () => {
+        if (!user?.id) return;
         setLoadingMfa(true);
         setMfaError(null);
         try {
@@ -187,8 +198,7 @@ export default function AuthPage() {
                     qrCode: enrollData.totp.qr_code,
                     secret: enrollData.totp.secret
                 };
-                memoryMfaCache = newSetupData;
-                if (user?.id) localStorage.setItem(`mfa_setup_${user.id}`, JSON.stringify(newSetupData));
+                saveMfaCache(user.id, newSetupData);
                 setMfaSetupData(newSetupData);
             }
         } catch (err: any) {
@@ -199,8 +209,8 @@ export default function AuthPage() {
     };
 
     const handleLogout = async () => {
+        if (user?.id) clearMfaCache(user.id);
         await supabase.auth.signOut();
-        memoryMfaCache = null;
         setMfaStatus('loading');
         setMfaError(null);
         setMfaSetupData(null);
@@ -241,7 +251,7 @@ export default function AuthPage() {
                             {mfaStatus === 'loading' && (
                                 <div className="py-4 w-100 text-center">
                                     <div className="spinner-border text-info" role="status"></div>
-                                    <p className="text-white-50 mt-3 small text-center w-100">Verifying security status...</p>
+                                    <p className="text-white-50 mt-3 small text-center w-100">{t.securityStatus}</p>
                                 </div>
                             )}
 
