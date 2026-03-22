@@ -47,48 +47,8 @@ export default function AuthPage() {
                 if (factorsError) throw factorsError;
 
                 const verifiedFactor = factors?.totp?.find(f => (f.status as string) === 'verified');
-                const unverifiedFactors = factors?.totp?.filter(f => (f.status as string) === 'unverified') || [];
 
-                if (!verifiedFactor) {
-                    setMfaStatus('needs_setup');
-
-                    const storageKey = `mfa_setup_${user.id}`;
-                    const savedDataStr = localStorage.getItem(storageKey);
-                    let savedData = null;
-
-                    if (savedDataStr) {
-                        try { savedData = JSON.parse(savedDataStr); } catch (e) {}
-                    }
-
-                    const isSavedValid = savedData && unverifiedFactors.some(f => f.id === savedData.factorId);
-
-                    if (isSavedValid) {
-                        setMfaSetupData(savedData);
-                        return;
-                    }
-
-                    for (const factor of unverifiedFactors) {
-                        await supabase.auth.mfa.unenroll({ factorId: factor.id });
-                    }
-                    await new Promise(res => setTimeout(res, 500));
-
-                    const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
-                        factorType: 'totp',
-                        friendlyName: `JOMO-${Date.now()}`
-                    });
-
-                    if (enrollError) throw enrollError;
-
-                    if (enrollData) {
-                        const newSetupData = {
-                            factorId: enrollData.id,
-                            qrCode: enrollData.totp.qr_code,
-                            secret: enrollData.totp.secret
-                        };
-                        setMfaSetupData(newSetupData);
-                        localStorage.setItem(storageKey, JSON.stringify(newSetupData));
-                    }
-                } else {
+                if (verifiedFactor) {
                     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
                     if (aal?.currentLevel === 'aal1') {
                         setFactorId(verifiedFactor.id);
@@ -96,12 +56,56 @@ export default function AuthPage() {
                     } else {
                         setMfaStatus('verified');
                     }
+                    return;
                 }
+
+                setMfaStatus('needs_setup');
+
+                const storageKey = `mfa_setup_${user.id}`;
+                const savedDataStr = localStorage.getItem(storageKey);
+
+                if (savedDataStr) {
+                    try {
+                        const savedData = JSON.parse(savedDataStr);
+                        if (savedData && savedData.secret) {
+                            setMfaSetupData(savedData);
+                            return;
+                        }
+                    } catch (e) {}
+                }
+
+                const unverifiedFactors = factors?.totp?.filter(f => (f.status as string) === 'unverified') || [];
+                for (const factor of unverifiedFactors) {
+                    await supabase.auth.mfa.unenroll({ factorId: factor.id });
+                }
+
+                await new Promise(res => setTimeout(res, 500));
+
+                const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
+                    factorType: 'totp',
+                    friendlyName: `JOMO-${Date.now()}`
+                });
+
+                if (enrollError) throw enrollError;
+
+                if (enrollData) {
+                    const newSetupData = {
+                        factorId: enrollData.id,
+                        qrCode: enrollData.totp.qr_code,
+                        secret: enrollData.totp.secret
+                    };
+
+                    localStorage.setItem(storageKey, JSON.stringify(newSetupData));
+                    setMfaSetupData(newSetupData);
+                }
+
             } catch (error: any) {
+                console.error("MFA Error:", error);
                 setMfaError(error.message);
                 setMfaStatus('needs_setup');
             }
         };
+
         checkMfa();
     }, [user?.id]);
 
