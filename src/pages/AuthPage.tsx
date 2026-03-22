@@ -5,32 +5,24 @@ import { LanguageSwitcher } from '@/components/language_switcher';
 import { AuthForm } from '@/components/auth_form';
 import { supabase } from '@/utils/supabaseClient';
 import styles from '@/styles/app.module.css';
-import { Language, translations } from "@/pages/translations.ts";
 import { WalletDashboard } from "@/contracts/wallet_dashboard.tsx";
+import {usePageTitle} from "@/hooks/usePageTitle.ts";
+import {useLanguage} from "@/hooks/useLanguage.ts";
 
 export default function AuthPage() {
-    const [lang, setLang] = useState<Language>(() => {
-        if (typeof window !== 'undefined') return (localStorage.getItem('lang') as Language) || 'en';
-        return 'en';
-    });
+    const { lang, setLang, t } = useLanguage();
+    usePageTitle(t.accountPageTitle);
 
     const [user, setUser] = useState<any>(null);
     const [loadingSession, setLoadingSession] = useState(true);
 
     // 2FA
     const [mfaStatus, setMfaStatus] = useState<'loading' | 'needs_setup' | 'needs_challenge' | 'verified'>('loading');
-    const [mfaSetupData, setMfaSetupData] = useState<{ factorId: string, qrCode: string } | null>(null);
+    const [mfaSetupData, setMfaSetupData] = useState<{ factorId: string, qrCode: string, secret: string } | null>(null);
     const [mfaCode, setMfaCode] = useState('');
     const [factorId, setFactorId] = useState('');
     const [loadingMfa, setLoadingMfa] = useState(false);
     const [mfaError, setMfaError] = useState<string | null>(null);
-
-    const t = translations[lang];
-    useEffect(() => {
-        document.title = `${t.accountPageTitle}`;
-    }, [lang]);
-
-    useEffect(() => { localStorage.setItem('lang', lang); }, [lang]);
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -68,7 +60,7 @@ export default function AuthPage() {
                     });
                     if (enrollError) throw enrollError;
                     if (enrollData) {
-                        setMfaSetupData({ factorId: enrollData.id, qrCode: enrollData.totp.qr_code });
+                        setMfaSetupData({ factorId: enrollData.id, qrCode: enrollData.totp.qr_code, secret: enrollData.totp.secret });
                     }
                 } else {
                     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -180,8 +172,38 @@ export default function AuthPage() {
 
                                     {mfaSetupData ? (
                                         <div className="d-flex flex-column align-items-center w-100">
-                                            <div className="bg-white p-3 rounded mb-4 shadow-sm d-inline-block">
+                                            <div className="bg-white p-3 rounded mb-3 shadow-sm d-inline-block">
                                                 <div style={{ display: 'block', lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: mfaSetupData.qrCode }} />
+                                            </div>
+
+                                            <div className="mb-4 text-center w-100">
+                                                <p className="text-white-50 small mb-2" style={{ fontSize: '0.8rem' }}>
+                                                    {t.cantScanCode || "Can't scan? Copy this setup key: "}
+                                                </p>
+                                                <div className="input-group input-group-sm mx-auto shadow-sm" style={{ maxWidth: '280px' }}>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control bg-black text-info text-center font-monospace border-secondary"
+                                                        value={mfaSetupData.secret}
+                                                        readOnly
+                                                        style={{ letterSpacing: '2px', fontSize: '0.9rem' }}
+                                                    />
+                                                    <button
+                                                        className="btn btn-outline-secondary"
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            navigator.clipboard.writeText(mfaSetupData.secret);
+                                                            const icon = e.currentTarget.querySelector('i');
+                                                            if (icon) {
+                                                                icon.className = "bi bi-check2 text-success";
+                                                                setTimeout(() => icon.className = "bi bi-copy", 2000);
+                                                            }
+                                                        }}
+                                                        title={t.copyBtn || "Copy"}
+                                                    >
+                                                        <i className="bi bi-copy"></i>
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <form onSubmit={handleMfaSetupVerify} className="w-100 d-flex flex-column gap-3 align-items-center">

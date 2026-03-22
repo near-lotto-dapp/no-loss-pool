@@ -2,26 +2,18 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Footer } from '@/components/footer';
 import { LanguageSwitcher } from '@/components/language_switcher';
-import { Language, translations } from "@/pages/translations.ts";
 import { supabase } from '@/utils/supabaseClient';
 import { StakingPanel } from '@/components/staking_panel';
 import {WinnerRecord, WinnersHistory} from "@/components/winners_history.tsx";
 import HowItWorks from "@/pages/how_it_works.tsx";
 import About from "@/pages/about.tsx";
 import {poolContract} from "@/contracts/pool_contract.ts";
+import {usePageTitle} from "@/hooks/usePageTitle.ts";
+import {useLanguage} from "@/hooks/useLanguage.ts";
 
 export default function NoLossPoolPage() {
-    const [lang, setLang] = useState<Language>(() => {
-        if (typeof window !== 'undefined') return (localStorage.getItem('lang') as Language) || 'en';
-        return 'en';
-    });
-
-    useEffect(() => { localStorage.setItem('lang', lang); }, [lang]);
-    const t = translations[lang];
-
-    useEffect(() => {
-        document.title = `${t.noLossPageTitle}`;
-    }, [lang]);
+    const { lang, setLang, t } = useLanguage();
+    usePageTitle(t.noLossPageTitle);
 
     const [dbTvl, setDbTvl] = useState<number>(0);
     const [dbPrizePool, setDbPrizePool] = useState<number>(0);

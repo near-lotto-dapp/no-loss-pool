@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Analytics } from "@vercel/analytics/react";
 import LandingPage from './pages/LandingPage';
-import AuthPage from './pages/auth';
+import AuthPage from './pages/AuthPage.tsx';
 import NoLossPoolPage from './pages/NoLossPoolPage';
 
 export default function App() {

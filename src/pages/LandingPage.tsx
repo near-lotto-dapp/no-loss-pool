@@ -2,25 +2,14 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Footer } from '@/components/footer';
 import { LanguageSwitcher } from '@/components/language_switcher';
-import { Language, translations } from "@/pages/translations.ts";
 import {supabase} from "@/utils/supabaseClient.ts";
+import {usePageTitle} from "@/hooks/usePageTitle.ts";
+import {useLanguage} from "@/hooks/useLanguage.ts";
 
 export default function LandingPage() {
-    const [lang, setLang] = useState<Language>(() => {
-        if (typeof window !== 'undefined') return (localStorage.getItem('lang') as Language) || 'en';
-        return 'en';
-    });
-
-    useEffect(() => {
-        localStorage.setItem('lang', lang);
-    }, [lang]);
-
-    const t = translations[lang];
+    const { lang, setLang, t } = useLanguage();
     const [user, setUser] = useState<any>(null);
-
-    useEffect(() => {
-        document.title = `${t.homePageTitle}`;
-    }, [lang]);
+    usePageTitle(t.homePageTitle);
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {

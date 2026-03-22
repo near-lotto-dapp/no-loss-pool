@@ -158,6 +158,7 @@ export const translations: Record<Language, any> = {
         accountPageTitle: "Особистий кабінет | JOMO",
         homePageTitle: "Головна | JOMO",
         noLossPageTitle: "Пул | JOMO",
+        cantScanCode: "Не можете відсканувати? Скопіюйте цей ключ налаштування:",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -317,6 +318,7 @@ export const translations: Record<Language, any> = {
         accountPageTitle: "My Account | JOMO",
         homePageTitle: "Home | JOMO",
         noLossPageTitle: "Pool | JOMO",
+        cantScanCode: "Can't scan? Copy this setup key: ",
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -475,5 +477,6 @@ export const translations: Record<Language, any> = {
         accountPageTitle: "Mi cuenta | JOMO",
         homePageTitle: "Inicio | JOMO",
         noLossPageTitle: "Pool | JOMO",
+        cantScanCode: "¿No puedes escanear? Copia esta clave de configuración:",
     }
 };
