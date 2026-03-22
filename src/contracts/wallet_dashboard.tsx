@@ -27,6 +27,8 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
     const [withdrawError, setWithdrawError] = useState<string | null>(null);
     const [withdrawSuccess, setWithdrawSuccess] = useState(false);
     const [txHash, setTxHash] = useState<string | null>(null);
+    const [addressError, setAddressError] = useState<string | null>(null);
+    const [amountError, setAmountError] = useState<string | null>(null);
 
     const fetchBalance = async (accountId: string, isSilent = false) => {
         if (!isSilent) setLoadingBalance(true);
@@ -123,6 +125,51 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
         }
     };
 
+    const validateNearAddress = (address: string) => {
+        if (!address) {
+            setAddressError(null);
+            return true;
+        }
+
+        if (address.length < 2 || address.length > 64) {
+            setAddressError(t.invalidNearLength);
+            return false;
+        }
+
+        const nearRegex = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
+
+        if (!nearRegex.test(address)) {
+            setAddressError(t.invalidNearFormat);
+            return false;
+        }
+
+        setAddressError(null);
+        return true;
+    };
+
+    const validateAmount = (val: string) => {
+        if (!val) {
+            setAmountError(null);
+            return true;
+        }
+
+        const numVal = parseFloat(val);
+        const maxBalance = parseFloat(balance || '0');
+
+        if (isNaN(numVal) || numVal <= 0) {
+            setAmountError(t.invalidAmountZero);
+            return false;
+        }
+
+        if (numVal > maxBalance) {
+            setAmountError(t.insufficientBalanceError);
+            return false;
+        }
+
+        setAmountError(null);
+        return true;
+    };
+
     const formatAddress = (address: string) => {
         if (!address) return '';
         if (address.length <= 15) return address;
@@ -132,7 +179,7 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
     return (
         <div className="p-4 bg-dark rounded mb-4 border border-secondary text-start position-relative w-100 animate__animated animate__fadeIn">
             <div className="d-flex justify-content-between align-items-center mb-1">
-                <small className="text-white-50">{t.balance || "Balance:"}</small>
+                <small className="text-white-50">{t.balance}</small>
                 <span className="badge bg-dark border border-secondary text-white-50 d-flex align-items-center" style={{ fontSize: '0.7rem' }}>
                     <span className="spinner-grow spinner-grow-sm text-success me-1" style={{ width: '6px', height: '6px' }}></span> Live
                 </span>
@@ -148,7 +195,7 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                 )}
             </div>
 
-            <small className="text-white-50 d-block mb-2 text-center w-100">{t.yourWallet || "Your NEAR Wallet:"}</small>
+            <small className="text-white-50 d-block mb-2 text-center w-100">{t.yourWallet}</small>
             <div className="d-flex justify-content-between align-items-center bg-black p-2 rounded border border-dark mb-4">
                 {loadingWallet ? (
                     <span className="spinner-border spinner-border-sm text-info mx-auto"></span>
@@ -171,62 +218,92 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                     onClick={() => { setShowDeposit(!showDeposit); setShowWithdraw(false); }}
                     className={`btn flex-grow-1 fw-bold ${showDeposit ? 'btn-secondary' : 'btn-info'}`}
                 >
-                    <i className="bi bi-qr-code me-2"></i>{t.depositBtn || "Deposit"}
+                    <i className="bi bi-qr-code me-2"></i>{t.depositBtn}
                 </button>
                 <button
                     onClick={() => { setShowWithdraw(!showWithdraw); setShowDeposit(false); }}
                     className={`btn flex-grow-1 fw-bold ${showWithdraw ? 'btn-secondary' : 'btn-warning'}`}
                 >
-                    <i className="bi bi-send me-2"></i>{t.withdrawBtn || "Withdraw"}
+                    <i className="bi bi-send me-2"></i>{t.withdrawBtn}
                 </button>
             </div>
 
             {showDeposit && walletAddress && (
                 <div className="mt-3 p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn d-flex flex-column align-items-center">
-                    <p className="text-white-50 small mb-3 text-center w-100">{t.scanToDeposit || "Scan to deposit NEAR"}</p>
+                    <p className="text-white-50 small mb-3 text-center w-100">{t.scanToDeposit}</p>
                     <div className="bg-white p-2 d-inline-block rounded mb-2">
                         <QRCode value={walletAddress} size={150} level="M" />
                     </div>
                     <p className="text-warning small m-0 mt-2 text-center w-100 mx-auto" style={{ maxWidth: '250px' }}>
-                        ⚠️ {t.nearAlert || "Send only NEAR Protocol tokens to this address."}
+                        ⚠️ {t.nearAlert}
                     </p>
                 </div>
             )}
 
             {showWithdraw && (
                 <div className="mt-3 p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn">
-                    <h6 className="text-white mb-3 text-center">{t.withdrawTitle || "Send NEAR"}</h6>
+                    <h6 className="text-white mb-3 text-center">{t.withdrawTitle}</h6>
 
-                    <div className="mb-3">
-                        <label className="text-white-50 small mb-1">{t.withdrawAddress || "Recipient NEAR Address"}</label>
+                    {/* address validation */}
+                    <div className="mb-3 text-start">
+                        <label className="text-white-50 small mb-1">{t.withdrawAddress}</label>
                         <input
                             type="text"
-                            className="form-control bg-dark border-secondary text-white font-monospace"
+                            className={`form-control bg-dark text-white font-monospace ${addressError ? 'border-danger' : 'border-secondary'}`}
                             placeholder="example.near"
                             value={withdrawAddress}
-                            onChange={(e) => setWithdrawAddress(e.target.value)}
+                            onChange={(e) => {
+                                const newValue = e.target.value.toLowerCase();
+                                setWithdrawAddress(newValue);
+                                validateNearAddress(newValue);
+                            }}
                         />
+                        {addressError && (
+                            <div className="text-danger small mt-1 animate__animated animate__fadeIn">
+                                <i className="bi bi-exclamation-circle me-1"></i> {addressError}
+                            </div>
+                        )}
                     </div>
 
-                    <div className="mb-3">
-                        <label className="text-white-50 small mb-1">{t.withdrawAmount || "Amount (NEAR)"}</label>
+                    {/* amount validation */}
+                    <div className="mb-3 text-start">
+                        <label className="text-white-50 small mb-1">{t.withdrawAmount}</label>
                         <div className="input-group">
                             <input
                                 type="number"
-                                className="form-control bg-dark border-secondary text-white"
+                                className={`form-control bg-dark text-white ${amountError ? 'border-danger' : 'border-secondary'}`}
                                 placeholder="0.0"
                                 value={withdrawAmount}
-                                onChange={(e) => setWithdrawAmount(e.target.value)}
+                                onChange={(e) => {
+                                    setWithdrawAmount(e.target.value);
+                                    validateAmount(e.target.value);
+                                }}
                             />
-                            <button className="btn btn-outline-secondary" onClick={() => setWithdrawAmount(balance || '0')}>{t.withdrawMax || "MAX"}</button>
+                            <button
+                                className="btn btn-outline-secondary"
+                                onClick={() => {
+                                    const maxAmount = balance || '0';
+                                    setWithdrawAmount(maxAmount);
+                                    validateAmount(maxAmount);
+                                }}
+                            >
+                                {t.withdrawMax}
+                            </button>
                         </div>
+                        {amountError && (
+                            <div className="text-danger small mt-1 animate__animated animate__fadeIn">
+                                <i className="bi bi-exclamation-circle me-1"></i> {amountError}
+                            </div>
+                        )}
                     </div>
 
+                    {/* error from back */}
                     {withdrawError && <div className="alert alert-danger py-2 small text-center">{withdrawError}</div>}
 
+                    {/* success message */}
                     {withdrawSuccess && (
                         <div className="alert alert-success py-3 small text-center animate__animated animate__fadeIn">
-                            <div className="mb-2">🚀 {t.withdrawSuccess || "Transaction sent successfully!"}</div>
+                            <div className="mb-2">🚀 {t.withdrawSuccess}</div>
                             {txHash && (
                                 <a
                                     href={`https://nearblocks.io/txns/${txHash}`}
@@ -242,18 +319,19 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                         </div>
                     )}
 
+                    {/* sent button (blocked if validations were not passed */}
                     <button
                         className="btn btn-warning w-100 fw-bold mt-2"
-                        disabled={loadingWithdraw || !withdrawAddress || !withdrawAmount}
+                        disabled={loadingWithdraw || !withdrawAddress || !withdrawAmount || addressError !== null || amountError !== null}
                         onClick={handleWithdraw}
                     >
-                        {loadingWithdraw ? <span className="spinner-border spinner-border-sm"></span> : (t.sendAssetsBtn || "Send Assets")}
+                        {loadingWithdraw ? <span className="spinner-border spinner-border-sm"></span> : (t.sendAssetsBtn)}
                     </button>
                 </div>
             )}
 
             <button onClick={onLogout} className="btn btn-outline-danger w-100 fw-bold mt-3">
-                <i className="bi bi-box-arrow-right me-2"></i> {t.logoutBtn || "Log Out"}
+                <i className="bi bi-box-arrow-right me-2"></i> {t.logoutBtn}
             </button>
         </div>
     );

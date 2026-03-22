@@ -43,30 +43,49 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
             let userData;
 
             if (isLogin) {
+                // login
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                authError = error; userData = data;
+                authError = error;
+                userData = data;
             } else {
+                // registration
                 const { data, error } = await supabase.auth.signUp({ email, password });
-                authError = error; userData = data;
 
-                if (data?.user && !error) {
-                    setSuccessMsg(t.generatingWallet);
-                    try {
-                        await fetch('/api/auth/setup-wallet', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ user_id: data.user.id, email: data.user.email })
-                        });
-                    } catch (apiError) { console.error("Wallet generation failed:", apiError); }
+                if (error) {
+                    if (error.message.toLowerCase().includes('already registered')) {
+                        throw new Error(t.emailInUse);
+                    }
+                    authError = error;
+                }
+                else if (data?.user && data.user.identities && data.user.identities.length === 0) {
+                    throw new Error(t.emailInUse);
+                }
+                else {
+                    userData = data;
+
+                    if (data?.user) {
+                        setSuccessMsg(t.generatingWallet);
+                        try {
+                            await fetch('/api/auth/setup-wallet', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ user_id: data.user.id, email: data.user.email })
+                            });
+                        } catch (apiError) {
+                            console.error("Wallet generation failed:", apiError);
+                        }
+                    }
                 }
             }
 
             if (authError) throw authError;
 
             setSuccessMsg(isLogin ? (t.loginSuccess) : (t.registerSuccess));
+
             if (onSuccess && userData?.user) {
                 setTimeout(() => onSuccess(userData.user), 1000);
             }
+
         } catch (err: any) {
             console.error("Auth error:", err);
             setError(err.message || "An error occurred");

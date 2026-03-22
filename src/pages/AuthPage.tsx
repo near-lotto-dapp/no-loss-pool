@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
-import { Footer } from '@/components/footer';
-import { AuthForm } from '@/components/auth_form';
-import { supabase } from '@/utils/supabaseClient';
+import {useState, useEffect} from 'react';
+import {Footer} from '@/components/footer';
+import {AuthForm} from '@/components/auth_form';
+import {supabase} from '@/utils/supabaseClient';
 import styles from '@/styles/app.module.css';
-import { WalletDashboard } from "@/contracts/wallet_dashboard.tsx";
-import { usePageTitle } from "@/hooks/usePageTitle.ts";
-import { useLanguage } from "@/hooks/useLanguage.ts";
+import {WalletDashboard} from "@/contracts/wallet_dashboard.tsx";
+import {usePageTitle} from "@/hooks/usePageTitle.ts";
+import {useLanguage} from "@/hooks/useLanguage.ts";
 import {TopNav} from "@/components/top_nav.tsx";
 
 let memoryMfaCache: { factorId: string, qrCode: string, secret: string } | null = null;
@@ -13,8 +13,14 @@ let memoryMfaCache: { factorId: string, qrCode: string, secret: string } | null 
 const saveMfaCache = (userId: string, data: any) => {
     memoryMfaCache = data;
     const key = `mfa_setup_${userId}`;
-    try { sessionStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
-    try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+    try {
+        sessionStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+    }
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+    }
 };
 
 const getMfaCache = (userId: string) => {
@@ -27,19 +33,26 @@ const getMfaCache = (userId: string) => {
             memoryMfaCache = parsed;
             return parsed;
         }
-    } catch(e) {}
+    } catch (e) {
+    }
     return null;
 };
 
 const clearMfaCache = (userId: string) => {
     memoryMfaCache = null;
     const key = `mfa_setup_${userId}`;
-    try { sessionStorage.removeItem(key); } catch(e) {}
-    try { localStorage.removeItem(key); } catch(e) {}
+    try {
+        sessionStorage.removeItem(key);
+    } catch (e) {
+    }
+    try {
+        localStorage.removeItem(key);
+    } catch (e) {
+    }
 };
 
 export default function AuthPage() {
-    const { lang, setLang, t } = useLanguage();
+    const {lang, setLang, t} = useLanguage();
     usePageTitle(t.accountPageTitle);
 
     const [user, setUser] = useState<any>(null);
@@ -54,12 +67,12 @@ export default function AuthPage() {
     const [mfaError, setMfaError] = useState<string | null>(null);
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(({data: {session}}) => {
             setUser(session?.user ?? null);
             setLoadingSession(false);
         });
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const {data: {subscription}} = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null);
             setLoadingSession(false);
         });
@@ -79,13 +92,13 @@ export default function AuthPage() {
 
             setMfaStatus('loading');
             try {
-                const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+                const {data: factors, error: factorsError} = await supabase.auth.mfa.listFactors();
                 if (factorsError) throw factorsError;
 
                 const verifiedFactor = factors?.totp?.find(f => (f.status as string) === 'verified');
 
                 if (verifiedFactor) {
-                    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+                    const {data: aal} = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
                     if (aal?.currentLevel === 'aal1') {
                         setFactorId(verifiedFactor.id);
                         setMfaStatus('needs_challenge');
@@ -101,11 +114,11 @@ export default function AuthPage() {
 
                 if (unverifiedFactors.length > 0) {
                     const latestUnverified = unverifiedFactors[unverifiedFactors.length - 1];
-                    setMfaSetupData({ factorId: latestUnverified.id, qrCode: '', secret: '' });
+                    setMfaSetupData({factorId: latestUnverified.id, qrCode: '', secret: ''});
                     return;
                 }
 
-                const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
+                const {data: enrollData, error: enrollError} = await supabase.auth.mfa.enroll({
                     factorType: 'totp',
                     friendlyName: `JOMO-${Date.now()}`
                 });
@@ -145,9 +158,10 @@ export default function AuthPage() {
     const handleMfaSetupVerify = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!mfaSetupData || !user?.id) return;
-        setLoadingMfa(true); setMfaError(null);
+        setLoadingMfa(true);
+        setMfaError(null);
         try {
-            const challenge = await supabase.auth.mfa.challenge({ factorId: mfaSetupData.factorId });
+            const challenge = await supabase.auth.mfa.challenge({factorId: mfaSetupData.factorId});
             if (challenge.error) throw challenge.error;
 
             const verify = await supabase.auth.mfa.verify({
@@ -163,7 +177,7 @@ export default function AuthPage() {
                 is_used: false
             }));
 
-            const { error: dbError } = await supabase
+            const {error: dbError} = await supabase
                 .from('user_recovery_codes')
                 .insert(codesToInsert);
 
@@ -183,9 +197,10 @@ export default function AuthPage() {
 
     const handleMfaChallengeVerify = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoadingMfa(true); setMfaError(null);
+        setLoadingMfa(true);
+        setMfaError(null);
         try {
-            const challenge = await supabase.auth.mfa.challenge({ factorId });
+            const challenge = await supabase.auth.mfa.challenge({factorId});
             if (challenge.error) throw challenge.error;
             const verify = await supabase.auth.mfa.verify({
                 factorId, challengeId: challenge.data.id, code: mfaCode
@@ -206,7 +221,7 @@ export default function AuthPage() {
         setMfaError(null);
 
         try {
-            const { error } = await supabase.rpc('recover_access_with_code', {
+            const {error} = await supabase.rpc('recover_access_with_code', {
                 entered_code: recoveryInput.trim()
             });
 
@@ -230,14 +245,14 @@ export default function AuthPage() {
         setLoadingMfa(true);
         setMfaError(null);
         try {
-            const { data: factors } = await supabase.auth.mfa.listFactors();
+            const {data: factors} = await supabase.auth.mfa.listFactors();
             const unverified = factors?.totp?.filter(f => (f.status as string) === 'unverified') || [];
             for (const f of unverified) {
-                await supabase.auth.mfa.unenroll({ factorId: f.id });
+                await supabase.auth.mfa.unenroll({factorId: f.id});
             }
             await new Promise(res => setTimeout(res, 500));
 
-            const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
+            const {data: enrollData, error: enrollError} = await supabase.auth.mfa.enroll({
                 factorType: 'totp',
                 friendlyName: `JOMO-${Date.now()}`
             });
@@ -264,7 +279,7 @@ export default function AuthPage() {
 
         const text = `${t.recoveryFileHeader}\n\n${recoveryCodes.join('\n')}\n\n${t.recoveryFileFooter}`;
 
-        const blob = new Blob([text], { type: 'text/plain' });
+        const blob = new Blob([text], {type: 'text/plain'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -301,7 +316,7 @@ export default function AuthPage() {
 
     return (
         <>
-            <main className="container position-relative mt-0 mb-4" style={{ minHeight: '70vh' }}>
+            <main className="container position-relative mt-0 mb-4" style={{minHeight: '70vh'}}>
                 <TopNav
                     lang={lang}
                     setLang={setLang}
@@ -312,11 +327,14 @@ export default function AuthPage() {
                     {loadingSession ? (
                         <div className="spinner-border text-info" role="status"></div>
                     ) : !user ? (
-                        <AuthForm t={t} />
+                        <AuthForm t={t}/>
                     ) : (
-                        <div className={`${styles.card} ${styles.stakingCard} text-center d-flex flex-column align-items-center`} style={{ maxWidth: '450px', width: '100%' }}>
-                            <h3 className="text-white mb-2 w-100 text-center">{t.welcomeUser || "Welcome to your account"}</h3>
-                            <p className="text-light mb-4 w-100 text-center" style={{ fontSize: '1rem', fontWeight: '500' }}>
+                        <div
+                            className={`${styles.card} ${styles.stakingCard} text-center d-flex flex-column align-items-center`}
+                            style={{maxWidth: '450px', width: '100%'}}>
+                            <h3 className="text-white mb-2 w-100 text-center">{t.welcomeUser}</h3>
+                            <p className="text-light mb-4 w-100 text-center"
+                               style={{fontSize: '1rem', fontWeight: '500'}}>
                                 {user.email}
                             </p>
 
@@ -328,7 +346,8 @@ export default function AuthPage() {
                             )}
 
                             {mfaStatus === 'needs_setup' && (
-                                <div className="p-4 bg-dark rounded mb-4 border border-warning w-100 animate__animated animate__fadeIn">
+                                <div
+                                    className="p-4 bg-dark rounded mb-4 border border-warning w-100 animate__animated animate__fadeIn">
                                     <h5 className="text-warning mb-3 d-flex justify-content-center align-items-center">
                                         <i className="bi bi-shield-exclamation me-2"></i>{t.setupRequired}
                                     </h5>
@@ -338,24 +357,28 @@ export default function AuthPage() {
 
                                             {mfaSetupData.qrCode ? (
                                                 <>
-                                                    <p className="text-white-50 small mb-4 text-center mx-auto" style={{ maxWidth: '300px' }}>
+                                                    <p className="text-white-50 small mb-4 text-center mx-auto"
+                                                       style={{maxWidth: '300px'}}>
                                                         {t.setup2faDesc}
                                                     </p>
                                                     <div className="bg-white p-3 rounded mb-3 shadow-sm d-inline-block">
-                                                        <div style={{ display: 'block', lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: mfaSetupData.qrCode }} />
+                                                        <div style={{display: 'block', lineHeight: 0}}
+                                                             dangerouslySetInnerHTML={{__html: mfaSetupData.qrCode}}/>
                                                     </div>
 
                                                     <div className="mb-4 text-center w-100">
-                                                        <p className="text-white-50 small mb-2" style={{ fontSize: '0.8rem' }}>
-                                                            {t.cantScanCode || "Can't scan? Copy this setup key: "}
+                                                        <p className="text-white-50 small mb-2"
+                                                           style={{fontSize: '0.8rem'}}>
+                                                            {t.cantScanCode}
                                                         </p>
-                                                        <div className="input-group input-group-sm mx-auto shadow-sm" style={{ maxWidth: '280px' }}>
+                                                        <div className="input-group input-group-sm mx-auto shadow-sm"
+                                                             style={{maxWidth: '280px'}}>
                                                             <input
                                                                 type="text"
                                                                 className="form-control bg-black text-info text-center font-monospace border-secondary"
                                                                 value={mfaSetupData.secret}
                                                                 readOnly
-                                                                style={{ letterSpacing: '2px', fontSize: '0.9rem' }}
+                                                                style={{letterSpacing: '2px', fontSize: '0.9rem'}}
                                                             />
                                                             <button
                                                                 className="btn btn-outline-secondary"
@@ -375,72 +398,110 @@ export default function AuthPage() {
                                                     </div>
                                                 </>
                                             ) : (
-                                                <div className="alert alert-info py-3 mb-4 text-start small border border-info" style={{ backgroundColor: 'rgba(13, 202, 240, 0.1)' }}>
+                                                <div
+                                                    className="alert alert-info py-3 mb-4 text-start small border border-info"
+                                                    style={{backgroundColor: 'rgba(13, 202, 240, 0.1)'}}>
                                                     <i className="bi bi-info-circle-fill me-2 fs-5 float-start"></i>
-                                                    <span style={{ display: 'block', paddingLeft: '30px' }}>
+                                                    <span style={{display: 'block', paddingLeft: '30px'}}>
                                                         {t.pageRefreshedMsg}
                                                     </span>
                                                 </div>
                                             )}
 
-                                            <form onSubmit={handleMfaSetupVerify} className="w-100 d-flex flex-column gap-3 align-items-center">
+                                            <form onSubmit={handleMfaSetupVerify}
+                                                  className="w-100 d-flex flex-column gap-3 align-items-center">
                                                 <div className="w-100 text-center">
-                                                    <label className="text-white-50 small mb-2 d-block text-center">{t.verificationCode}</label>
+                                                    <label
+                                                        className="text-white-50 small mb-2 d-block text-center">{t.verificationCode}</label>
                                                     <input
                                                         type="text" required maxLength={6} value={mfaCode}
                                                         onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
                                                         className="form-control form-control-lg bg-black text-white border-secondary text-center fw-bold mx-auto"
-                                                        placeholder="000000" style={{ letterSpacing: '0.6rem', width: '220px', fontSize: '1.6rem', paddingLeft: '1.2rem' }}
+                                                        placeholder="000000" style={{
+                                                        letterSpacing: '0.6rem',
+                                                        width: '220px',
+                                                        fontSize: '1.6rem',
+                                                        paddingLeft: '1.2rem'
+                                                    }}
                                                     />
                                                 </div>
-                                                {mfaError && <div className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
-                                                <button type="submit" disabled={loadingMfa || mfaCode.length < 6} className="btn btn-warning w-100 fw-bold mt-2" style={{ height: '50px' }}>
-                                                    {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyAndEnable)}
+                                                {mfaError && <div
+                                                    className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
+                                                <button type="submit" disabled={loadingMfa || mfaCode.length < 6}
+                                                        className="btn btn-warning w-100 fw-bold mt-2"
+                                                        style={{height: '50px'}}>
+                                                    {loadingMfa ? <span
+                                                        className="spinner-border spinner-border-sm"></span> : (t.verifyAndEnable)}
                                                 </button>
 
-                                                <button type="button" onClick={handleGenerateNewQr} className="btn btn-link text-white-50 small mt-2 p-0 text-decoration-none">
-                                                    {mfaSetupData.qrCode
-                                                        ? (t.restartSetup)
-                                                        : (t.generateNewQr)}
-                                                </button>
+                                                <div
+                                                    className="pt-3 w-100 text-center">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleGenerateNewQr}
+                                                        className="btn btn-link text-info small text-decoration-none d-inline-flex align-items-center gap-1 py-1 px-2"
+                                                    >
+                                                        <i className="bi bi-arrow-repeat"></i>
+                                                        <span>
+                                                              {mfaSetupData.qrCode
+                                                                  ? (t.restartSetup)
+                                                                  : (t.generateNewQr)}
+                                                        </span>
+                                                    </button>
+                                                </div>
                                             </form>
                                         </div>
                                     ) : (
-                                        <div className="py-5 text-center"><div className="spinner-border text-warning" role="status"></div></div>
+                                        <div className="py-5 text-center">
+                                            <div className="spinner-border text-warning" role="status"></div>
+                                        </div>
                                     )}
                                 </div>
                             )}
 
                             {mfaStatus === 'needs_challenge' && (
-                                <div className="p-4 bg-dark rounded mb-4 border border-info w-100 animate__animated animate__fadeIn">
-                                    <h5 className="text-info mb-3 d-flex justify-content-center align-items-center"><i className="bi bi-shield-lock me-2"></i>{t.enter2faCode}</h5>
-                                    <p className="text-white-50 small mb-4 text-center mx-auto" style={{ maxWidth: '300px' }}>{t.enter2faDesc}</p>
+                                <div
+                                    className="p-4 bg-dark rounded mb-4 border border-info w-100 animate__animated animate__fadeIn">
+                                    <h5 className="text-info mb-3 d-flex justify-content-center align-items-center"><i
+                                        className="bi bi-shield-lock me-2"></i>{t.enter2faCode}</h5>
+                                    <p className="text-white-50 small mb-4 text-center mx-auto"
+                                       style={{maxWidth: '300px'}}>{t.enter2faDesc}</p>
 
-                                    <form onSubmit={handleMfaChallengeVerify} className="d-flex flex-column align-items-center gap-3 w-100">
+                                    <form onSubmit={handleMfaChallengeVerify}
+                                          className="d-flex flex-column align-items-center gap-3 w-100">
                                         <input
                                             type="text" required maxLength={6} value={mfaCode}
                                             onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
                                             className="form-control form-control-lg bg-black text-white border-secondary text-center fw-bold mx-auto"
-                                            placeholder="000000" style={{ letterSpacing: '0.5rem', width: '180px', fontSize: '1.5rem' }}
+                                            placeholder="000000"
+                                            style={{letterSpacing: '0.5rem', width: '180px', fontSize: '1.5rem'}}
                                         />
-                                        {mfaError && <div className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
-                                        <button type="submit" disabled={loadingMfa || mfaCode.length < 6} className="btn btn-info w-100 fw-bold">
-                                            {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyBtn)}
+                                        {mfaError && <div
+                                            className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
+                                        <button type="submit" disabled={loadingMfa || mfaCode.length < 6}
+                                                className="btn btn-info w-100 fw-bold">
+                                            {loadingMfa ? <span
+                                                className="spinner-border spinner-border-sm"></span> : (t.verifyBtn)}
                                         </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => { setMfaStatus('needs_recovery'); setMfaError(null); }}
-                                            className="btn btn-link text-white-50 small mt-2 p-0 text-decoration-none"
-                                        >
-                                            {t.lostAuthenticatorBtn}
-                                        </button>
+                                        <div className="pt-2 w-100 text-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => { setMfaStatus('needs_recovery'); setMfaError(null); }}
+                                                className="btn btn-link text-light small text-decoration-none hover-underline d-inline-flex align-items-center gap-1 py-1 px-2"
+                                                style={{ opacity: 0.8 }}
+                                            >
+                                                <i className="bi bi-life-preserver"></i>
+                                                <span>{t.lostAuthenticatorBtn}</span>
+                                            </button>
+                                        </div>
                                     </form>
                                 </div>
                             )}
 
                             {/* saving reserve codes */}
                             {mfaStatus === 'show_recovery_codes' && recoveryCodes && (
-                                <div className="p-4 bg-dark rounded mb-4 border border-success w-100 animate__animated animate__fadeIn">
+                                <div
+                                    className="p-4 bg-dark rounded mb-4 border border-success w-100 animate__animated animate__fadeIn">
                                     <h5 className="text-success mb-3 d-flex justify-content-center align-items-center">
                                         <i className="bi bi-shield-check me-2"></i>{t.recoveryCodesTitle}
                                     </h5>
@@ -449,14 +510,21 @@ export default function AuthPage() {
                                         <strong>⚠️ {t.crucialStep}:</strong> {t.recoveryWarning}
                                     </div>
 
-                                    <div className="alert py-2 small text-start mb-4" style={{ backgroundColor: 'rgba(13, 202, 240, 0.05)', borderColor: 'rgba(13, 202, 240, 0.2)', color: '#a5e8f3' }}>
+                                    <div className="alert py-2 small text-start mb-4" style={{
+                                        backgroundColor: 'rgba(13, 202, 240, 0.05)',
+                                        borderColor: 'rgba(13, 202, 240, 0.2)',
+                                        color: '#a5e8f3'
+                                    }}>
                                         <i className="bi bi-info-circle-fill text-info me-2 float-start mt-1"></i>
-                                        <div style={{ marginLeft: '25px' }}>
-                                            <strong className="text-info">{t.securityTipTitle}</strong> <span style={{ opacity: 0.9 }}>{t.securityTipDesc}</span>
+                                        <div style={{marginLeft: '25px'}}>
+                                            <strong className="text-info">{t.securityTipTitle}</strong> <span
+                                            style={{opacity: 0.9}}>{t.securityTipDesc}</span>
                                         </div>
                                     </div>
 
-                                    <div className="bg-black p-3 rounded mb-4 font-monospace text-info text-center shadow-inner" style={{ fontSize: '1.1rem', letterSpacing: '2px' }}>
+                                    <div
+                                        className="bg-black p-3 rounded mb-4 font-monospace text-info text-center shadow-inner"
+                                        style={{fontSize: '1.1rem', letterSpacing: '2px'}}>
                                         <div className="row">
                                             {recoveryCodes.map((c, i) => (
                                                 <div key={i} className="col-6 mb-2">{c}</div>
@@ -484,7 +552,7 @@ export default function AuthPage() {
                                     <button
                                         onClick={() => setMfaStatus('verified')}
                                         className="btn btn-success w-100 fw-bold py-3"
-                                        style={{ fontSize: '1.1rem' }}
+                                        style={{fontSize: '1.1rem'}}
                                     >
                                         {t.iSavedThemBtn} <i className="bi bi-arrow-right ms-1"></i>
                                     </button>
@@ -492,15 +560,18 @@ export default function AuthPage() {
                             )}
 
                             {mfaStatus === 'needs_recovery' && (
-                                <div className="p-4 bg-dark rounded mb-4 border border-danger w-100 animate__animated animate__fadeIn">
+                                <div
+                                    className="p-4 bg-dark rounded mb-4 border border-danger w-100 animate__animated animate__fadeIn">
                                     <h5 className="text-danger mb-3 d-flex justify-content-center align-items-center">
                                         <i className="bi bi-life-preserver me-2"></i>{t.accountRecoveryTitle}
                                     </h5>
-                                    <p className="text-white-50 small mb-4 text-center mx-auto" style={{ maxWidth: '300px' }}>
+                                    <p className="text-white-50 small mb-4 text-center mx-auto"
+                                       style={{maxWidth: '300px'}}>
                                         {t.enterRecoveryCodeDesc}
                                     </p>
 
-                                    <form onSubmit={handleRecoverySubmit} className="d-flex flex-column align-items-center gap-3 w-100">
+                                    <form onSubmit={handleRecoverySubmit}
+                                          className="d-flex flex-column align-items-center gap-3 w-100">
                                         <input
                                             type="text"
                                             required
@@ -508,18 +579,25 @@ export default function AuthPage() {
                                             onChange={(e) => setRecoveryInput(e.target.value.toUpperCase())}
                                             className="form-control form-control-lg bg-black text-danger border-secondary text-center fw-bold mx-auto font-monospace"
                                             placeholder="XXXX-XXXX"
-                                            style={{ letterSpacing: '0.2rem', width: '220px', fontSize: '1.2rem' }}
+                                            style={{letterSpacing: '0.2rem', width: '220px', fontSize: '1.2rem'}}
                                         />
 
-                                        {mfaError && <div className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
+                                        {mfaError && <div
+                                            className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
 
-                                        <button type="submit" disabled={loadingMfa || recoveryInput.length < 8} className="btn btn-danger w-100 fw-bold">
-                                            {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.disable2faBtn)}
+                                        <button type="submit" disabled={loadingMfa || recoveryInput.length < 8}
+                                                className="btn btn-danger w-100 fw-bold">
+                                            {loadingMfa ? <span
+                                                className="spinner-border spinner-border-sm"></span> : (t.disable2faBtn)}
                                         </button>
 
                                         <button
                                             type="button"
-                                            onClick={() => { setMfaStatus('needs_challenge'); setMfaError(null); setRecoveryInput(''); }}
+                                            onClick={() => {
+                                                setMfaStatus('needs_challenge');
+                                                setMfaError(null);
+                                                setRecoveryInput('');
+                                            }}
                                             className="btn btn-link text-white-50 small mt-2 p-0 text-decoration-none"
                                         >
                                             <i className="bi bi-arrow-left"></i> {t.backToLoginBtn}
@@ -529,7 +607,7 @@ export default function AuthPage() {
                             )}
 
                             {mfaStatus === 'verified' && (
-                                <WalletDashboard user={user} t={t} onLogout={handleLogout} />
+                                <WalletDashboard user={user} t={t} onLogout={handleLogout}/>
                             )}
                         </div>
                     )}
