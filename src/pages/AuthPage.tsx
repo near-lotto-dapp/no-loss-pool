@@ -47,6 +47,7 @@ export default function AuthPage() {
                 if (factorsError) throw factorsError;
 
                 const verifiedFactor = factors?.totp?.find(f => (f.status as string) === 'verified');
+                const unverifiedFactors = factors?.totp?.filter(f => (f.status as string) === 'unverified') || [];
 
                 if (verifiedFactor) {
                     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -61,42 +62,28 @@ export default function AuthPage() {
 
                 setMfaStatus('needs_setup');
 
-                const storageKey = `mfa_setup_${user.id}`;
-                const savedDataStr = localStorage.getItem(storageKey);
+                if (unverifiedFactors.length > 0) {
+                    const latestUnverified = unverifiedFactors[unverifiedFactors.length - 1];
+                    setMfaSetupData({
+                        factorId: latestUnverified.id,
+                        qrCode: '',
+                        secret: ''
+                    });
+                } else {
+                    const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
+                        factorType: 'totp',
+                        friendlyName: `JOMO-${Date.now()}`
+                    });
 
-                if (savedDataStr) {
-                    try {
-                        const savedData = JSON.parse(savedDataStr);
-                        if (savedData && savedData.secret) {
-                            setMfaSetupData(savedData);
-                            return;
-                        }
-                    } catch (e) {}
-                }
+                    if (enrollError) throw enrollError;
 
-                const unverifiedFactors = factors?.totp?.filter(f => (f.status as string) === 'unverified') || [];
-                for (const factor of unverifiedFactors) {
-                    await supabase.auth.mfa.unenroll({ factorId: factor.id });
-                }
-
-                await new Promise(res => setTimeout(res, 500));
-
-                const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
-                    factorType: 'totp',
-                    friendlyName: `JOMO-${Date.now()}`
-                });
-
-                if (enrollError) throw enrollError;
-
-                if (enrollData) {
-                    const newSetupData = {
-                        factorId: enrollData.id,
-                        qrCode: enrollData.totp.qr_code,
-                        secret: enrollData.totp.secret
-                    };
-
-                    localStorage.setItem(storageKey, JSON.stringify(newSetupData));
-                    setMfaSetupData(newSetupData);
+                    if (enrollData) {
+                        setMfaSetupData({
+                            factorId: enrollData.id,
+                            qrCode: enrollData.totp.qr_code,
+                            secret: enrollData.totp.secret
+                        });
+                    }
                 }
 
             } catch (error: any) {
@@ -121,7 +108,6 @@ export default function AuthPage() {
             });
             if (verify.error) throw verify.error;
 
-            localStorage.removeItem(`mfa_setup_${user.id}`);
             setMfaStatus('verified');
             setMfaCode('');
         } catch (err) {
@@ -150,10 +136,34 @@ export default function AuthPage() {
         }
     };
 
-    const handleRestartSetup = () => {
-        if (user?.id) {
-            localStorage.removeItem(`mfa_setup_${user.id}`);
-            window.location.reload();
+    const handleGenerateNewQr = async () => {
+        setLoadingMfa(true);
+        setMfaError(null);
+        try {
+            const { data: factors } = await supabase.auth.mfa.listFactors();
+            const unverified = factors?.totp?.filter(f => (f.status as string) === 'unverified') || [];
+            for (const f of unverified) {
+                await supabase.auth.mfa.unenroll({ factorId: f.id });
+            }
+            await new Promise(res => setTimeout(res, 500));
+
+            const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
+                factorType: 'totp',
+                friendlyName: `JOMO-${Date.now()}`
+            });
+            if (enrollError) throw enrollError;
+
+            if (enrollData) {
+                setMfaSetupData({
+                    factorId: enrollData.id,
+                    qrCode: enrollData.totp.qr_code,
+                    secret: enrollData.totp.secret
+                });
+            }
+        } catch (err: any) {
+            setMfaError(err.message);
+        } finally {
+            setLoadingMfa(false);
         }
     };
 
@@ -208,45 +218,56 @@ export default function AuthPage() {
                                     <h5 className="text-warning mb-3 d-flex justify-content-center align-items-center">
                                         <i className="bi bi-shield-exclamation me-2"></i>{t.setupRequired || "Setup Required"}
                                     </h5>
-                                    <p className="text-white-50 small mb-4 text-center mx-auto" style={{ maxWidth: '300px' }}>
-                                        {t.setup2faDesc || "Enable 2FA to access your wallet. Scan this QR code with your authenticator app."}
-                                    </p>
 
                                     {mfaSetupData ? (
                                         <div className="d-flex flex-column align-items-center w-100">
-                                            <div className="bg-white p-3 rounded mb-3 shadow-sm d-inline-block">
-                                                <div style={{ display: 'block', lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: mfaSetupData.qrCode }} />
-                                            </div>
 
-                                            <div className="mb-4 text-center w-100">
-                                                <p className="text-white-50 small mb-2" style={{ fontSize: '0.8rem' }}>
-                                                    {t.cantScanCode || "Can't scan? Copy this setup key: "}
-                                                </p>
-                                                <div className="input-group input-group-sm mx-auto shadow-sm" style={{ maxWidth: '280px' }}>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control bg-black text-info text-center font-monospace border-secondary"
-                                                        value={mfaSetupData.secret}
-                                                        readOnly
-                                                        style={{ letterSpacing: '2px', fontSize: '0.9rem' }}
-                                                    />
-                                                    <button
-                                                        className="btn btn-outline-secondary"
-                                                        type="button"
-                                                        onClick={(e) => {
-                                                            navigator.clipboard.writeText(mfaSetupData.secret);
-                                                            const icon = e.currentTarget.querySelector('i');
-                                                            if (icon) {
-                                                                icon.className = "bi bi-check2 text-success";
-                                                                setTimeout(() => icon.className = "bi bi-copy", 2000);
-                                                            }
-                                                        }}
-                                                        title={t.copyBtn || "Copy"}
-                                                    >
-                                                        <i className="bi bi-copy"></i>
-                                                    </button>
+                                            {mfaSetupData.qrCode ? (
+                                                <>
+                                                    <p className="text-white-50 small mb-4 text-center mx-auto" style={{ maxWidth: '300px' }}>
+                                                        {t.setup2faDesc || "Enable 2FA to access your wallet. Scan this QR code with your authenticator app."}
+                                                    </p>
+                                                    <div className="bg-white p-3 rounded mb-3 shadow-sm d-inline-block">
+                                                        <div style={{ display: 'block', lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: mfaSetupData.qrCode }} />
+                                                    </div>
+
+                                                    <div className="mb-4 text-center w-100">
+                                                        <p className="text-white-50 small mb-2" style={{ fontSize: '0.8rem' }}>
+                                                            {t.cantScanCode || "Can't scan? Copy this setup key: "}
+                                                        </p>
+                                                        <div className="input-group input-group-sm mx-auto shadow-sm" style={{ maxWidth: '280px' }}>
+                                                            <input
+                                                                type="text"
+                                                                className="form-control bg-black text-info text-center font-monospace border-secondary"
+                                                                value={mfaSetupData.secret}
+                                                                readOnly
+                                                                style={{ letterSpacing: '2px', fontSize: '0.9rem' }}
+                                                            />
+                                                            <button
+                                                                className="btn btn-outline-secondary"
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    navigator.clipboard.writeText(mfaSetupData.secret);
+                                                                    const icon = e.currentTarget.querySelector('i');
+                                                                    if (icon) {
+                                                                        icon.className = "bi bi-check2 text-success";
+                                                                        setTimeout(() => icon.className = "bi bi-copy", 2000);
+                                                                    }
+                                                                }}
+                                                            >
+                                                                <i className="bi bi-copy"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </>
+                                            ) : (
+                                                <div className="alert alert-info py-3 mb-4 text-start small border border-info" style={{ backgroundColor: 'rgba(13, 202, 240, 0.1)' }}>
+                                                    <i className="bi bi-info-circle-fill me-2 fs-5 float-start"></i>
+                                                    <span style={{ display: 'block', paddingLeft: '30px' }}>
+                                                        {t.pageRefreshedMsg || "Page refreshed. If you already copied the code to your Authenticator, just enter the 6 digits below to finish."}
+                                                    </span>
                                                 </div>
-                                            </div>
+                                            )}
 
                                             <form onSubmit={handleMfaSetupVerify} className="w-100 d-flex flex-column gap-3 align-items-center">
                                                 <div className="w-100 text-center">
@@ -263,8 +284,11 @@ export default function AuthPage() {
                                                     {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyAndEnable || "Verify & Enable")}
                                                 </button>
 
-                                                <button type="button" onClick={handleRestartSetup} className="btn btn-link text-white-50 small mt-1 p-0 text-decoration-none">
-                                                    {t.restartSetup || "Code not working? Start over"}
+                                                {/* КНОПКА ГЕНЕРАЦІЇ НОВОГО КОДУ */}
+                                                <button type="button" onClick={handleGenerateNewQr} className="btn btn-link text-white-50 small mt-2 p-0 text-decoration-none">
+                                                    {mfaSetupData.qrCode
+                                                        ? (t.restartSetup || "Restart setup")
+                                                        : (t.generateNewQr || "I didn't copy it. Generate a new code")}
                                                 </button>
                                             </form>
                                         </div>
