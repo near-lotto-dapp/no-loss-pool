@@ -52,36 +52,35 @@ export default function AuthPage() {
                     setMfaStatus('needs_setup');
 
                     const savedDataStr = localStorage.getItem('mfa_setup_data');
-                    let savedData = null;
                     if (savedDataStr) {
-                        try { savedData = JSON.parse(savedDataStr); } catch (e) {}
+                        try {
+                            const savedData = JSON.parse(savedDataStr);
+                            if (savedData && savedData.factorId) {
+                                setMfaSetupData(savedData);
+                                return;
+                            }
+                        } catch (e) {}
                     }
 
-                    const isSavedValid = savedData && unverifiedFactors.some(f => f.id === savedData.factorId);
+                    for (const factor of unverifiedFactors) {
+                        await supabase.auth.mfa.unenroll({ factorId: factor.id });
+                    }
+                    await new Promise(res => setTimeout(res, 500));
 
-                    if (isSavedValid) {
-                        setMfaSetupData(savedData);
-                    } else {
-                        for (const factor of unverifiedFactors) {
-                            await supabase.auth.mfa.unenroll({ factorId: factor.id });
-                        }
-                        await new Promise(res => setTimeout(res, 500));
+                    const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
+                        factorType: 'totp',
+                        friendlyName: `JOMO-${Date.now()}`
+                    });
+                    if (enrollError) throw enrollError;
 
-                        const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
-                            factorType: 'totp',
-                            friendlyName: `JOMO-${Date.now()}`
-                        });
-                        if (enrollError) throw enrollError;
-
-                        if (enrollData) {
-                            const newSetupData = {
-                                factorId: enrollData.id,
-                                qrCode: enrollData.totp.qr_code,
-                                secret: enrollData.totp.secret
-                            };
-                            setMfaSetupData(newSetupData);
-                            localStorage.setItem('mfa_setup_data', JSON.stringify(newSetupData));
-                        }
+                    if (enrollData) {
+                        const newSetupData = {
+                            factorId: enrollData.id,
+                            qrCode: enrollData.totp.qr_code,
+                            secret: enrollData.totp.secret
+                        };
+                        setMfaSetupData(newSetupData);
+                        localStorage.setItem('mfa_setup_data', JSON.stringify(newSetupData));
                     }
                 } else {
                     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -138,6 +137,11 @@ export default function AuthPage() {
         } finally {
             setLoadingMfa(false);
         }
+    };
+
+    const handleRestartSetup = () => {
+        localStorage.removeItem('mfa_setup_data');
+        window.location.reload();
     };
 
     const handleLogout = async () => {
@@ -241,6 +245,9 @@ export default function AuthPage() {
                                                 {mfaError && <div className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
                                                 <button type="submit" disabled={loadingMfa || mfaCode.length < 6} className="btn btn-warning w-100 fw-bold mt-2" style={{ height: '50px' }}>
                                                     {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyAndEnable || "Verify & Enable")}
+                                                </button>
+                                                <button type="button" onClick={handleRestartSetup} className="btn btn-link text-white-50 small mt-1 p-0 text-decoration-none">
+                                                    {t.restartSetup || "Code not working? Start over"}
                                                 </button>
                                             </form>
                                         </div>
