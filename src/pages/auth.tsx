@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Footer } from '@/components/footer';
 import { LanguageSwitcher } from '@/components/language_switcher';
 import { AuthForm } from '@/components/auth_form';
 import { supabase } from '@/utils/supabaseClient';
 import styles from '@/styles/app.module.css';
 import { Language, translations } from "@/pages/translations.ts";
-import {WalletDashboard} from "@/contracts/wallet_dashboard.tsx";
+import { WalletDashboard } from "@/contracts/wallet_dashboard.tsx";
 
 export default function AuthPage() {
     const [lang, setLang] = useState<Language>(() => {
@@ -25,6 +26,9 @@ export default function AuthPage() {
     const [mfaError, setMfaError] = useState<string | null>(null);
 
     const t = translations[lang];
+    useEffect(() => {
+        document.title = `${t.accountPageTitle}`;
+    }, [lang]);
 
     useEffect(() => { localStorage.setItem('lang', lang); }, [lang]);
 
@@ -132,7 +136,17 @@ export default function AuthPage() {
     return (
         <>
             <main className="container position-relative mt-0 mb-4" style={{ minHeight: '70vh' }}>
-                <div className="d-flex justify-content-end align-items-center gap-2 mb-4">
+                <div className="w-100 d-flex justify-content-between align-items-center mb-4 pt-4">
+                    <Link
+                        to="/"
+                        className="text-info text-decoration-none fw-bold fs-5 d-flex align-items-center gap-2"
+                        style={{ transition: 'opacity 0.2s' }}
+                        onMouseOver={(e) => (e.currentTarget.style.opacity = '0.8')}
+                        onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
+                    >
+                        <i className="bi bi-arrow-left"></i> {t.homeBtn}
+                    </Link>
+
                     <LanguageSwitcher lang={lang} setLang={setLang}/>
                 </div>
 

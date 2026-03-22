@@ -124,7 +124,6 @@ export const poolContract = {
         });
     },
 
-
     withdraw: async (callFunction: any, amountInNear: string) => {
         const amountInYocto = parseNearAmount(amountInNear);
         if (!amountInYocto) throw new Error("Invalid amount");

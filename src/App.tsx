@@ -1,20 +1,21 @@
-import { BrowserRouter, Routes, Route } from "react-router";
-import { Navigation } from "./components/navigation";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Analytics } from "@vercel/analytics/react";
-import Home from "./pages/home.tsx";
+import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/auth';
+import NoLossPoolPage from './pages/NoLossPoolPage';
 
-function App() {
+export default function App() {
     return (
-        <BrowserRouter>
-            <Navigation />
-            <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/auth" element={<AuthPage />} />
-            </Routes>
-            <Analytics />
-        </BrowserRouter>
+        <>
+            <Router>
+                <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/no-loss-pool" element={<NoLossPoolPage />} />
+                    <Route path="/auth" element={<AuthPage />} />
+                    <Route path="*" element={<LandingPage />} />
+                </Routes>
+                <Analytics />
+            </Router>
+        </>
     );
 }
-
-export default App;

@@ -12,7 +12,7 @@ async function getCryptoKey(secret: string) {
     return crypto.subtle.deriveKey(
         {
             name: "PBKDF2",
-            salt: encoder.encode("jomo-static-salt"), // Можна змінити на свій
+            salt: encoder.encode("jomo-static-salt"),
             iterations: 100000,
             hash: "SHA-256",
         },

@@ -1,4 +1,5 @@
 import styles from '@/styles/app.module.css';
+import { formatNearAmount } from '@near-js/utils';
 
 export interface WinnerRecord {
     timestamp: number;
@@ -38,7 +39,7 @@ export const WinnersHistory = ({ t, winners = [] }: WinnersHistoryProps) => {
                                         : winner.account_id}
                                 </td>
                                 <td className="py-3 fw-bold" style={{ color: '#38ef7d', textShadow: '0 0 8px rgba(56, 239, 125, 0.3)' }}>
-                                    +{winner.amount} NEAR
+                                    <span>{Number(formatNearAmount(winner.amount.toString())).toFixed(4)} NEAR</span>
                                 </td>
                             </tr>
                         ))

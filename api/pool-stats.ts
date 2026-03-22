@@ -40,7 +40,7 @@ export default async function handler(req: any, res: any) {
                 finality: "optimistic",
                 account_id: POOL_CONTRACT_ID,
                 method_name: "get_pool_info",
-                args_base64: "e30=" // Порожній {}
+                args_base64: "e30="
             }
         };
 
@@ -76,10 +76,11 @@ export default async function handler(req: any, res: any) {
         const linearResultStr = Buffer.from(linearData.result.result).toString('utf-8');
         const totalLinearBalance = JSON.parse(linearResultStr);
 
-        const totalStaked = Number(jomoPoolInfo.total_staked) / 1e24;
-        const currentLinearBalance = Number(totalLinearBalance) / 1e24;
 
-        const newTvl = totalStaked;
+        const totalStaked = Number(jomoPoolInfo.total_staked) / 1e24;
+        const totalActive = Number(jomoPoolInfo.total_active) / 1e24;
+        const currentLinearBalance = Number(totalLinearBalance) / 1e24;
+        const newTvl = totalActive;
         const newPrizePool = Math.max(0, currentLinearBalance - totalStaked);
 
         await supabase

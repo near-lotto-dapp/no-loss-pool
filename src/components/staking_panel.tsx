@@ -49,7 +49,6 @@ const formatNear = (value: string | number | undefined, decimals: number): strin
 };
 
 export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPanelProps) => {
-    // 1. ВИПРАВЛЕНО НА signIn ТА signOut
     const { signedAccountId, callFunction, loading, signIn, signOut } = useNearWallet();
 
     const [activeBalance, setActiveBalance] = useState<string>("0");
@@ -65,6 +64,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
     const [now, setNow] = useState<number>(Date.now());
 
     const drawTimeLeft = useNextDrawTimer(t.drawingNow || "Draw...");
+    const hasActiveUnstake = Number(unstakingBalance) > 0;
 
     useEffect(() => {
         fetchPoolData();
@@ -166,8 +166,14 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
     };
 
     const setMaxAmount = () => {
-        const total = Number(activeBalance) + Number(pendingBalance);
-        setAmount(total.toFixed(4));
+        const num = Number(activeBalance);
+        const safeMax = Math.floor(num * 10000) / 10000;
+
+        if (safeMax > 0) {
+            setAmount(safeMax.toString());
+        } else {
+            setAmount("0");
+        }
     };
 
     const isButtonDisabled = () => {
@@ -177,7 +183,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
         if (activeTab === 'deposit') {
             return numAmount < 10;
         } else {
-            return numAmount <= 0;
+            return numAmount <= 0 || hasActiveUnstake;
         }
     };
 
@@ -214,7 +220,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                     <div className="bg-dark rounded p-3 mb-4 text-center tvl-card">
                         <h6 className="text-white-50 mb-2">{t.poolTvl}</h6>
                         <h3 className="text-success m-0 fw-bold text-glow-success">
-                            {isLoadingDb ? "..." : `${formatNear(dbTvl, 2)} NEAR`}
+                            {isLoadingDb ? "..." : `${formatNear(dbTvl, 4)} NEAR`}
                         </h3>
                         <div className="mt-2 d-flex justify-content-center align-items-center gap-2">
                             <span className="badge bg-success-subtle text-success border border-success-subtle small">
@@ -234,7 +240,6 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                 {signedAccountId ? (
                     <div className="d-flex flex-column gap-4">
 
-                        {/* ВІДОБРАЖЕННЯ ГАМАНЦЯ ТА КНОПКА ВИХОДУ */}
                         <div className="d-flex justify-content-between align-items-center p-3 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
                             <div className="d-flex align-items-center gap-2 text-truncate me-2">
                                 <i className="bi bi-wallet2 text-info fs-5"></i>
@@ -243,11 +248,11 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                 </span>
                             </div>
                             <button
-                                onClick={() => signOut()} // 2. ВИПРАВЛЕНО НА signOut()
+                                onClick={() => signOut()}
                                 className="btn btn-sm btn-outline-secondary text-white-50 border-0 flex-shrink-0"
                                 style={{ fontSize: '0.85rem' }}
                             >
-                                <i className="bi bi-box-arrow-right me-1"></i> {t.logout || "Logout"}
+                                <i className="bi bi-box-arrow-right me-1"></i> {t.logoutBtn}
                             </button>
                         </div>
 
@@ -290,7 +295,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                     }}
                                 >
                                     <span className="text-warning mb-2 text-center w-100" style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-                                        <i className="bi bi-hourglass-split me-1"></i> Unstaking:
+                                        <i className="bi bi-hourglass-split me-1"></i> {t.unstaking}
                                     </span>
 
                                     <h3 className="text-warning fw-bold mb-4 text-center w-100" style={{ textShadow: '0 0 10px rgba(255, 193, 7, 0.2)' }}>
@@ -356,6 +361,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                     onChange={(e) => setAmount(e.target.value)}
                                     placeholder={activeTab === 'deposit' ? (t.depositPlaceholder) : (t.withdrawPlaceholder)}
                                     className={`form-control form-control-lg bg-dark text-white border-end-0 ${styles.customInput}`}
+                                    disabled={activeTab === 'withdraw' && hasActiveUnstake}
                                 />
 
                                 {activeTab === 'withdraw' && (
@@ -363,13 +369,25 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                         className={`btn btn-outline-secondary text-info border-start-0 ${styles.maxBtn}`}
                                         type="button"
                                         onClick={setMaxAmount}
+                                        disabled={hasActiveUnstake}
                                     >
                                         {t.maxBtn}
                                     </button>
                                 )}
                             </div>
 
-                            {activeTab === 'withdraw' && (
+                            {activeTab === 'withdraw' && hasActiveUnstake && (
+                                <div className="alert alert-danger mt-3 mb-0 p-3" style={{ fontSize: '0.85rem' }}>
+                                    <div className="d-flex align-items-start">
+                                        <i className="bi bi-exclamation-triangle-fill me-2 mt-1 fs-5"></i>
+                                        <div>
+                                            <strong>{t.warning || "Warning"}:</strong> {t.activeUnstakeWarning || `You already have an active unstake request (${Number(unstakingBalance).toFixed(4)} NEAR). Please wait for the timer and click Claim before withdrawing new funds.`}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'withdraw' && !hasActiveUnstake && (
                                 <div className="alert alert-warning mt-3 mb-0 p-3" style={{ backgroundColor: 'rgba(255, 193, 7, 0.1)', borderColor: 'rgba(255, 193, 7, 0.3)', color: '#ffc107', fontSize: '0.85rem' }}>
                                     <div className="d-flex align-items-start">
                                         <i className="bi bi-info-circle me-2 mt-1 fs-5"></i>
