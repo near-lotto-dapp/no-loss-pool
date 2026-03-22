@@ -50,17 +50,38 @@ export default function AuthPage() {
 
                 if (!verifiedFactor) {
                     setMfaStatus('needs_setup');
-                    for (const factor of unverifiedFactors) {
-                        await supabase.auth.mfa.unenroll({ factorId: factor.id });
+
+                    const savedDataStr = localStorage.getItem('mfa_setup_data');
+                    let savedData = null;
+                    if (savedDataStr) {
+                        try { savedData = JSON.parse(savedDataStr); } catch (e) {}
                     }
-                    await new Promise(res => setTimeout(res, 500));
-                    const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
-                        factorType: 'totp',
-                        friendlyName: `JOMO-${Date.now()}`
-                    });
-                    if (enrollError) throw enrollError;
-                    if (enrollData) {
-                        setMfaSetupData({ factorId: enrollData.id, qrCode: enrollData.totp.qr_code, secret: enrollData.totp.secret });
+
+                    const isSavedValid = savedData && unverifiedFactors.some(f => f.id === savedData.factorId);
+
+                    if (isSavedValid) {
+                        setMfaSetupData(savedData);
+                    } else {
+                        for (const factor of unverifiedFactors) {
+                            await supabase.auth.mfa.unenroll({ factorId: factor.id });
+                        }
+                        await new Promise(res => setTimeout(res, 500));
+
+                        const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
+                            factorType: 'totp',
+                            friendlyName: `JOMO-${Date.now()}`
+                        });
+                        if (enrollError) throw enrollError;
+
+                        if (enrollData) {
+                            const newSetupData = {
+                                factorId: enrollData.id,
+                                qrCode: enrollData.totp.qr_code,
+                                secret: enrollData.totp.secret
+                            };
+                            setMfaSetupData(newSetupData);
+                            localStorage.setItem('mfa_setup_data', JSON.stringify(newSetupData));
+                        }
                     }
                 } else {
                     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -90,6 +111,7 @@ export default function AuthPage() {
                 factorId: mfaSetupData.factorId, challengeId: challenge.data.id, code: mfaCode
             });
             if (verify.error) throw verify.error;
+            localStorage.removeItem('mfa_setup_data');
             setMfaStatus('verified');
             setMfaCode('');
         } catch (err) {
