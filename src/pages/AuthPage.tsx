@@ -9,6 +9,8 @@ import { WalletDashboard } from "@/contracts/wallet_dashboard.tsx";
 import { usePageTitle } from "@/hooks/usePageTitle.ts";
 import { useLanguage } from "@/hooks/useLanguage.ts";
 
+let memoryMfaCache: { factorId: string, qrCode: string, secret: string } | null = null;
+
 export default function AuthPage() {
     const { lang, setLang, t } = useLanguage();
     usePageTitle(t.accountPageTitle || "Account");
@@ -16,7 +18,6 @@ export default function AuthPage() {
     const [user, setUser] = useState<any>(null);
     const [loadingSession, setLoadingSession] = useState(true);
 
-    // 2FA
     const [mfaStatus, setMfaStatus] = useState<'loading' | 'needs_setup' | 'needs_challenge' | 'verified'>('loading');
     const [mfaSetupData, setMfaSetupData] = useState<{ factorId: string, qrCode: string, secret: string } | null>(null);
     const [mfaCode, setMfaCode] = useState('');
@@ -47,7 +48,6 @@ export default function AuthPage() {
                 if (factorsError) throw factorsError;
 
                 const verifiedFactor = factors?.totp?.find(f => (f.status as string) === 'verified');
-                const unverifiedFactors = factors?.totp?.filter(f => (f.status as string) === 'unverified') || [];
 
                 if (verifiedFactor) {
                     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -62,6 +62,26 @@ export default function AuthPage() {
 
                 setMfaStatus('needs_setup');
 
+                if (memoryMfaCache) {
+                    setMfaSetupData(memoryMfaCache);
+                    return;
+                }
+
+                const storageKey = `mfa_setup_${user.id}`;
+                try {
+                    const savedStr = localStorage.getItem(storageKey);
+                    if (savedStr) {
+                        const savedData = JSON.parse(savedStr);
+                        if (savedData && savedData.secret) {
+                            memoryMfaCache = savedData;
+                            setMfaSetupData(savedData);
+                            return;
+                        }
+                    }
+                } catch (e) {}
+
+                const unverifiedFactors = factors?.totp?.filter(f => (f.status as string) === 'unverified') || [];
+
                 if (unverifiedFactors.length > 0) {
                     const latestUnverified = unverifiedFactors[unverifiedFactors.length - 1];
                     setMfaSetupData({
@@ -69,21 +89,26 @@ export default function AuthPage() {
                         qrCode: '',
                         secret: ''
                     });
-                } else {
-                    const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
-                        factorType: 'totp',
-                        friendlyName: `JOMO-${Date.now()}`
-                    });
+                    return;
+                }
 
-                    if (enrollError) throw enrollError;
+                const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
+                    factorType: 'totp',
+                    friendlyName: `JOMO-${Date.now()}`
+                });
 
-                    if (enrollData) {
-                        setMfaSetupData({
-                            factorId: enrollData.id,
-                            qrCode: enrollData.totp.qr_code,
-                            secret: enrollData.totp.secret
-                        });
-                    }
+                if (enrollError) throw enrollError;
+
+                if (enrollData) {
+                    const newSetupData = {
+                        factorId: enrollData.id,
+                        qrCode: enrollData.totp.qr_code,
+                        secret: enrollData.totp.secret
+                    };
+
+                    memoryMfaCache = newSetupData;
+                    localStorage.setItem(storageKey, JSON.stringify(newSetupData));
+                    setMfaSetupData(newSetupData);
                 }
 
             } catch (error: any) {
@@ -108,6 +133,9 @@ export default function AuthPage() {
             });
             if (verify.error) throw verify.error;
 
+            memoryMfaCache = null;
+            localStorage.removeItem(`mfa_setup_${user.id}`);
+
             setMfaStatus('verified');
             setMfaCode('');
         } catch (err) {
@@ -130,7 +158,7 @@ export default function AuthPage() {
             setMfaStatus('verified');
             setMfaCode('');
         } catch (err) {
-            setMfaError(t.mfaError || "Invalid code. Try again.");
+            setMfaError(t.mfaError);
         } finally {
             setLoadingMfa(false);
         }
@@ -154,11 +182,14 @@ export default function AuthPage() {
             if (enrollError) throw enrollError;
 
             if (enrollData) {
-                setMfaSetupData({
+                const newSetupData = {
                     factorId: enrollData.id,
                     qrCode: enrollData.totp.qr_code,
                     secret: enrollData.totp.secret
-                });
+                };
+                memoryMfaCache = newSetupData;
+                if (user?.id) localStorage.setItem(`mfa_setup_${user.id}`, JSON.stringify(newSetupData));
+                setMfaSetupData(newSetupData);
             }
         } catch (err: any) {
             setMfaError(err.message);
@@ -169,6 +200,7 @@ export default function AuthPage() {
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
+        memoryMfaCache = null;
         setMfaStatus('loading');
         setMfaError(null);
         setMfaSetupData(null);
@@ -187,7 +219,7 @@ export default function AuthPage() {
                     >
                         <i className="bi bi-arrow-left flex-shrink-0"></i>
                         <span className="text-truncate">
-                            {user ? user.email : (t.homeBtn || "Home")}
+                            {t.homeBtn}
                         </span>
                     </Link>
 
@@ -284,7 +316,6 @@ export default function AuthPage() {
                                                     {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyAndEnable || "Verify & Enable")}
                                                 </button>
 
-                                                {/* КНОПКА ГЕНЕРАЦІЇ НОВОГО КОДУ */}
                                                 <button type="button" onClick={handleGenerateNewQr} className="btn btn-link text-white-50 small mt-2 p-0 text-decoration-none">
                                                     {mfaSetupData.qrCode
                                                         ? (t.restartSetup || "Restart setup")
