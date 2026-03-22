@@ -6,12 +6,12 @@ import { AuthForm } from '@/components/auth_form';
 import { supabase } from '@/utils/supabaseClient';
 import styles from '@/styles/app.module.css';
 import { WalletDashboard } from "@/contracts/wallet_dashboard.tsx";
-import {usePageTitle} from "@/hooks/usePageTitle.ts";
-import {useLanguage} from "@/hooks/useLanguage.ts";
+import { usePageTitle } from "@/hooks/usePageTitle.ts";
+import { useLanguage } from "@/hooks/useLanguage.ts";
 
 export default function AuthPage() {
     const { lang, setLang, t } = useLanguage();
-    usePageTitle(t.accountPageTitle);
+    usePageTitle(t.accountPageTitle || "Account");
 
     const [user, setUser] = useState<any>(null);
     const [loadingSession, setLoadingSession] = useState(true);
@@ -38,8 +38,9 @@ export default function AuthPage() {
     }, []);
 
     useEffect(() => {
+        if (!user?.id) return;
+
         const checkMfa = async () => {
-            if (!user) return;
             setMfaStatus('loading');
             try {
                 const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
@@ -51,15 +52,19 @@ export default function AuthPage() {
                 if (!verifiedFactor) {
                     setMfaStatus('needs_setup');
 
-                    const savedDataStr = localStorage.getItem('mfa_setup_data');
+                    const storageKey = `mfa_setup_${user.id}`;
+                    const savedDataStr = localStorage.getItem(storageKey);
+                    let savedData = null;
+
                     if (savedDataStr) {
-                        try {
-                            const savedData = JSON.parse(savedDataStr);
-                            if (savedData && savedData.factorId) {
-                                setMfaSetupData(savedData);
-                                return;
-                            }
-                        } catch (e) {}
+                        try { savedData = JSON.parse(savedDataStr); } catch (e) {}
+                    }
+
+                    const isSavedValid = savedData && unverifiedFactors.some(f => f.id === savedData.factorId);
+
+                    if (isSavedValid) {
+                        setMfaSetupData(savedData);
+                        return;
                     }
 
                     for (const factor of unverifiedFactors) {
@@ -71,6 +76,7 @@ export default function AuthPage() {
                         factorType: 'totp',
                         friendlyName: `JOMO-${Date.now()}`
                     });
+
                     if (enrollError) throw enrollError;
 
                     if (enrollData) {
@@ -80,7 +86,7 @@ export default function AuthPage() {
                             secret: enrollData.totp.secret
                         };
                         setMfaSetupData(newSetupData);
-                        localStorage.setItem('mfa_setup_data', JSON.stringify(newSetupData));
+                        localStorage.setItem(storageKey, JSON.stringify(newSetupData));
                     }
                 } else {
                     const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -97,11 +103,11 @@ export default function AuthPage() {
             }
         };
         checkMfa();
-    }, [user]);
+    }, [user?.id]);
 
     const handleMfaSetupVerify = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!mfaSetupData) return;
+        if (!mfaSetupData || !user?.id) return;
         setLoadingMfa(true); setMfaError(null);
         try {
             const challenge = await supabase.auth.mfa.challenge({ factorId: mfaSetupData.factorId });
@@ -110,7 +116,8 @@ export default function AuthPage() {
                 factorId: mfaSetupData.factorId, challengeId: challenge.data.id, code: mfaCode
             });
             if (verify.error) throw verify.error;
-            localStorage.removeItem('mfa_setup_data');
+
+            localStorage.removeItem(`mfa_setup_${user.id}`);
             setMfaStatus('verified');
             setMfaCode('');
         } catch (err) {
@@ -140,8 +147,10 @@ export default function AuthPage() {
     };
 
     const handleRestartSetup = () => {
-        localStorage.removeItem('mfa_setup_data');
-        window.location.reload();
+        if (user?.id) {
+            localStorage.removeItem(`mfa_setup_${user.id}`);
+            window.location.reload();
+        }
     };
 
     const handleLogout = async () => {
@@ -158,11 +167,14 @@ export default function AuthPage() {
                     <Link
                         to="/"
                         className="text-info text-decoration-none fw-bold fs-5 d-flex align-items-center gap-2"
-                        style={{ transition: 'opacity 0.2s' }}
+                        style={{ transition: 'opacity 0.2s', maxWidth: '70%' }}
                         onMouseOver={(e) => (e.currentTarget.style.opacity = '0.8')}
                         onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
                     >
-                        <i className="bi bi-arrow-left"></i> {t.homeBtn}
+                        <i className="bi bi-arrow-left flex-shrink-0"></i>
+                        <span className="text-truncate">
+                            {user ? user.email : (t.homeBtn || "Home")}
+                        </span>
                     </Link>
 
                     <LanguageSwitcher lang={lang} setLang={setLang}/>
@@ -246,6 +258,7 @@ export default function AuthPage() {
                                                 <button type="submit" disabled={loadingMfa || mfaCode.length < 6} className="btn btn-warning w-100 fw-bold mt-2" style={{ height: '50px' }}>
                                                     {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyAndEnable || "Verify & Enable")}
                                                 </button>
+
                                                 <button type="button" onClick={handleRestartSetup} className="btn btn-link text-white-50 small mt-1 p-0 text-decoration-none">
                                                     {t.restartSetup || "Code not working? Start over"}
                                                 </button>
