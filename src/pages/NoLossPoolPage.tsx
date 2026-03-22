@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Footer } from '@/components/footer';
-import { LanguageSwitcher } from '@/components/language_switcher';
 import { supabase } from '@/utils/supabaseClient';
 import { StakingPanel } from '@/components/staking_panel';
 import {WinnerRecord, WinnersHistory} from "@/components/winners_history.tsx";
@@ -10,6 +8,7 @@ import About from "@/pages/about.tsx";
 import {poolContract} from "@/contracts/pool_contract.ts";
 import {usePageTitle} from "@/hooks/usePageTitle.ts";
 import {useLanguage} from "@/hooks/useLanguage.ts";
+import {TopNav} from "@/components/top_nav.tsx";
 
 export default function NoLossPoolPage() {
     const { lang, setLang, t } = useLanguage();
@@ -57,15 +56,11 @@ export default function NoLossPoolPage() {
 
     return (
         <div className="min-vh-100 text-white d-flex flex-column">
-            <nav className="container pt-4 pb-3 d-flex justify-content-between align-items-center">
-                <Link to="/" className="text-decoration-none h4 fw-bold m-0 transition-all hover-glow" style={{ color: '#00C9FF' }}>
-                    <i className="bi bi-arrow-left me-2"></i> {t.homeBtn}
-                </Link>
-
-                <div className="d-flex align-items-center gap-3">
-                    <LanguageSwitcher lang={lang} setLang={setLang}/>
-                </div>
-            </nav>
+            <TopNav
+                lang={lang}
+                setLang={setLang}
+                title={t.homeBtn}
+            />
 
             <main className="flex-grow-1 container py-4 d-flex flex-column align-items-center">
 

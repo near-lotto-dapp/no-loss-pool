@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import { Footer } from '@/components/footer';
-import { LanguageSwitcher } from '@/components/language_switcher';
 import { AuthForm } from '@/components/auth_form';
 import { supabase } from '@/utils/supabaseClient';
 import styles from '@/styles/app.module.css';
 import { WalletDashboard } from "@/contracts/wallet_dashboard.tsx";
 import { usePageTitle } from "@/hooks/usePageTitle.ts";
 import { useLanguage } from "@/hooks/useLanguage.ts";
+import {TopNav} from "@/components/top_nav.tsx";
 
 let memoryMfaCache: { factorId: string, qrCode: string, secret: string } | null = null;
 
@@ -41,7 +40,7 @@ const clearMfaCache = (userId: string) => {
 
 export default function AuthPage() {
     const { lang, setLang, t } = useLanguage();
-    usePageTitle(t.accountPageTitle || "Account");
+    usePageTitle(t.accountPageTitle);
 
     const [user, setUser] = useState<any>(null);
     const [loadingSession, setLoadingSession] = useState(true);
@@ -168,7 +167,7 @@ export default function AuthPage() {
             setMfaStatus('verified');
             setMfaCode('');
         } catch (err) {
-            setMfaError(t.mfaError || "Invalid code. Try again.");
+            setMfaError(t.mfaError);
         } finally {
             setLoadingMfa(false);
         }
@@ -219,22 +218,11 @@ export default function AuthPage() {
     return (
         <>
             <main className="container position-relative mt-0 mb-4" style={{ minHeight: '70vh' }}>
-                <div className="w-100 d-flex justify-content-between align-items-center mb-4 pt-4">
-                    <Link
-                        to="/"
-                        className="text-info text-decoration-none fw-bold fs-5 d-flex align-items-center gap-2"
-                        style={{ transition: 'opacity 0.2s', maxWidth: '70%' }}
-                        onMouseOver={(e) => (e.currentTarget.style.opacity = '0.8')}
-                        onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
-                    >
-                        <i className="bi bi-arrow-left flex-shrink-0"></i>
-                        <span className="text-truncate">
-                            {t.homeBtn}
-                        </span>
-                    </Link>
-
-                    <LanguageSwitcher lang={lang} setLang={setLang}/>
-                </div>
+                <TopNav
+                    lang={lang}
+                    setLang={setLang}
+                    title={t.homeBtn}
+                />
 
                 <div className="row justify-content-center">
                     {loadingSession ? (

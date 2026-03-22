@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Footer } from '@/components/footer';
-import { LanguageSwitcher } from '@/components/language_switcher';
 import {supabase} from "@/utils/supabaseClient.ts";
 import {usePageTitle} from "@/hooks/usePageTitle.ts";
 import {useLanguage} from "@/hooks/useLanguage.ts";
+import {TopNav} from "@/components/top_nav.tsx";
 
 export default function LandingPage() {
     const { lang, setLang, t } = useLanguage();
@@ -25,22 +25,13 @@ export default function LandingPage() {
 
     return (
         <div className="container position-relative mt-0 mb-4" style={{ minHeight: '70vh' }}>
-            <div className="w-100 d-flex justify-content-between align-items-center mb-4 pt-4">
-                <Link
-                    to="/auth"
-                    className="text-info text-decoration-none fw-bold fs-5 d-flex align-items-center gap-2"
-                    style={{ transition: 'opacity 0.2s', maxWidth: '70%' }}
-                    onMouseOver={(e) => (e.currentTarget.style.opacity = '0.8')}
-                    onMouseOut={(e) => (e.currentTarget.style.opacity = '1')}
-                >
-                    <i className="bi bi-person-circle flex-shrink-0"></i>
-                    <span className="text-truncate">
-                    {user ? user.email : t.enterCabinetBtn}
-                </span>
-                </Link>
-
-                <LanguageSwitcher lang={lang} setLang={setLang}/>
-            </div>
+            <TopNav
+                lang={lang}
+                setLang={setLang}
+                title={user ? user.email : t.enterCabinetBtn}
+                to="/auth"
+                icon="bi-person-circle"
+            />
 
             {/* Top Section */}
             <main className="flex-grow-1">

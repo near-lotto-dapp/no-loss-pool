@@ -25,15 +25,15 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
             const hasSpecial = /[\W_]/.test(password);
 
             if (password.length < 8) {
-                setError(t.passLength || "Password must be at least 8 characters long.");
+                setError(t.passLength);
                 setLoading(false); return;
             }
             if (!hasLetter || !hasNumber) {
-                setError(t.passAlphanumeric || "Password must contain both letters and numbers.");
+                setError(t.passAlphanumeric);
                 setLoading(false); return;
             }
             if (!hasSpecial) {
-                setError(t.passSpecial || "Password must contain at least one special character.");
+                setError(t.passSpecial);
                 setLoading(false); return;
             }
         }
@@ -50,7 +50,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                 authError = error; userData = data;
 
                 if (data?.user && !error) {
-                    setSuccessMsg(t.generatingWallet || "Registration successful! Generating wallet...");
+                    setSuccessMsg(t.generatingWallet);
                     try {
                         await fetch('/api/auth/setup-wallet', {
                             method: 'POST',
@@ -63,7 +63,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
 
             if (authError) throw authError;
 
-            setSuccessMsg(isLogin ? (t.loginSuccess || 'Login successful!') : (t.registerSuccess || 'Registration successful!'));
+            setSuccessMsg(isLogin ? (t.loginSuccess) : (t.registerSuccess));
             if (onSuccess && userData?.user) {
                 setTimeout(() => onSuccess(userData.user), 1000);
             }
@@ -79,32 +79,32 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
         <div className={styles.center} style={{ minHeight: 'auto', padding: '2rem 0' }}>
             <div className={`${styles.card} ${styles.stakingCard}`}>
                 <h3 className="text-center text-white mb-4">
-                    {isLogin ? (t.loginTitle || "Log In") : (t.createAccount || "Create Account")}
+                    {isLogin ? (t.loginTitle) : (t.createAccount)}
                 </h3>
 
                 <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
                     <div className="form-group">
-                        <label className="text-white-50 mb-2">{t.emailLabel || 'Email'}</label>
+                        <label className="text-white-50 mb-2">{t.emailLabel}</label>
                         <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={`form-control form-control-lg bg-dark text-white border-secondary ${styles.customInput}`} placeholder="your@email.com" />
                     </div>
 
                     <div className="form-group">
-                        <label className="text-white-50 mb-2">{t.passwordLabel || 'Password'}</label>
-                        <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className={`form-control form-control-lg bg-dark text-white border-secondary ${styles.customInput}`} placeholder={isLogin ? (t.passwordPlaceholder || "Enter your password") : (t.newPasswordPlaceholder || "8+ chars, 1 number, 1 special")} />
+                        <label className="text-white-50 mb-2">{t.passwordLabel}</label>
+                        <input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} className={`form-control form-control-lg bg-dark text-white border-secondary ${styles.customInput}`} placeholder={isLogin ? (t.passwordPlaceholder) : (t.newPasswordPlaceholder)} />
                     </div>
 
                     {error && <div className="alert alert-danger py-2 mt-2">{error}</div>}
                     {successMsg && <div className="alert alert-success py-2 mt-2">{successMsg}</div>}
 
                     <button type="submit" disabled={loading || !email || password.length < 8} className={`btn btn-lg w-100 fw-bold text-white mt-3 ${styles.gradientPrimary}`}>
-                        {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : (isLogin ? (t.loginBtn || "Log In") : (t.registerBtn || "Register"))}
+                        {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : (isLogin ? (t.loginBtn) : (t.registerBtn))}
                     </button>
                 </form>
 
                 <div className="text-center mt-4">
-                    <span className="text-white-50 me-2">{isLogin ? (t.noAccount || "Don't have an account?") : (t.haveAccount || "Already have an account?")}</span>
+                    <span className="text-white-50 me-2">{isLogin ? (t.noAccount) : (t.haveAccount)}</span>
                     <button type="button" onClick={() => { setIsLogin(!isLogin); setError(null); setSuccessMsg(null); setPassword(''); }} className="btn btn-link text-info p-0 text-decoration-none fw-bold">
-                        {isLogin ? (t.registerBtn || "Register") : (t.loginBtn || "Log In")}
+                        {isLogin ? (t.registerBtn) : (t.loginBtn)}
                     </button>
                 </div>
             </div>

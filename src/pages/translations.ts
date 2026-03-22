@@ -90,7 +90,6 @@ export const translations: Record<Language, any> = {
         passwordLabel: "Пароль",
         passwordPlaceholder: "Мінімум 8 символів",
         registerBtn: "Зареєструватися",
-        registerSuccess: "Реєстрація успішна! Тепер ви можете увійти.",
         registerError: "Сталася помилка під час реєстрації.",
         loginTitle: "Увійти в безпечний обліковий запис",
         loginBtn: "Увійти",
@@ -161,6 +160,8 @@ export const translations: Record<Language, any> = {
         cantScanCode: "Не можете відсканувати? Скопіюйте цей ключ налаштування:",
         restartSetup: "Код не працює? Почати спочатку",
         securityStatus: "Перевірка стану безпеки...",
+        registerSuccess: "Реєстрація успішна! Тепер ви можете увійти після підтвердження електронної пошти.",
+        generatingWallet: "Реєстрація успішна! Генеруємо гаманець...",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -251,7 +252,7 @@ export const translations: Record<Language, any> = {
         passwordLabel: "Password",
         passwordPlaceholder: "Minimum 8 characters",
         registerBtn: "Register",
-        registerSuccess: "Registration successful! You can now log in.",
+        registerSuccess: "Registration successful! You can now log in after verifying your email.",
         registerError: "An error occurred during registration.",
         loginTitle: "Log In to secure account",
         loginBtn: "Log In",
@@ -323,6 +324,7 @@ export const translations: Record<Language, any> = {
         cantScanCode: "Can't scan? Copy this setup key: ",
         restartSetup: "Code not working? Start over",
         securityStatus: "Verifying security status...",
+        generatingWallet: "Registration successful! Generating wallet...",
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -413,7 +415,6 @@ export const translations: Record<Language, any> = {
         passwordLabel: "Contraseña",
         passwordPlaceholder: "Mínimo 8 caracteres",
         registerBtn: "Registrarse",
-        registerSuccess: "¡Registro exitoso! Ahora puedes iniciar sesión.",
         registerError: "Ocurrió un error durante el registro.",
         loginTitle: "Iniciar sesión en cuenta segura",
         loginBtn: "Iniciar sesión",
@@ -484,5 +485,7 @@ export const translations: Record<Language, any> = {
         cantScanCode: "¿No puedes escanear? Copia esta clave de configuración:",
         restartSetup: "¿El código no funciona? Empezar de nuevo",
         securityStatus: "Verificando el estado de seguridad...",
+        registerSuccess: "¡Registro exitoso! Ahora puedes iniciar sesión después de verificar tu correo electrónico.",
+        generatingWallet: "¡Registro exitoso! Generando billetera...",
     }
 };
