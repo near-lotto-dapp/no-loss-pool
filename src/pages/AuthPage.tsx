@@ -330,7 +330,7 @@ export default function AuthPage() {
                             {mfaStatus === 'needs_setup' && (
                                 <div className="p-4 bg-dark rounded mb-4 border border-warning w-100 animate__animated animate__fadeIn">
                                     <h5 className="text-warning mb-3 d-flex justify-content-center align-items-center">
-                                        <i className="bi bi-shield-exclamation me-2"></i>{t.setupRequired || "Setup Required"}
+                                        <i className="bi bi-shield-exclamation me-2"></i>{t.setupRequired}
                                     </h5>
 
                                     {mfaSetupData ? (
@@ -339,7 +339,7 @@ export default function AuthPage() {
                                             {mfaSetupData.qrCode ? (
                                                 <>
                                                     <p className="text-white-50 small mb-4 text-center mx-auto" style={{ maxWidth: '300px' }}>
-                                                        {t.setup2faDesc || "Enable 2FA to access your wallet. Scan this QR code with your authenticator app."}
+                                                        {t.setup2faDesc}
                                                     </p>
                                                     <div className="bg-white p-3 rounded mb-3 shadow-sm d-inline-block">
                                                         <div style={{ display: 'block', lineHeight: 0 }} dangerouslySetInnerHTML={{ __html: mfaSetupData.qrCode }} />
@@ -378,14 +378,14 @@ export default function AuthPage() {
                                                 <div className="alert alert-info py-3 mb-4 text-start small border border-info" style={{ backgroundColor: 'rgba(13, 202, 240, 0.1)' }}>
                                                     <i className="bi bi-info-circle-fill me-2 fs-5 float-start"></i>
                                                     <span style={{ display: 'block', paddingLeft: '30px' }}>
-                                                        {t.pageRefreshedMsg || "Page refreshed. If you already copied the code to your Authenticator, just enter the 6 digits below to finish."}
+                                                        {t.pageRefreshedMsg}
                                                     </span>
                                                 </div>
                                             )}
 
                                             <form onSubmit={handleMfaSetupVerify} className="w-100 d-flex flex-column gap-3 align-items-center">
                                                 <div className="w-100 text-center">
-                                                    <label className="text-white-50 small mb-2 d-block text-center">{t.verificationCode || "Verification Code"}</label>
+                                                    <label className="text-white-50 small mb-2 d-block text-center">{t.verificationCode}</label>
                                                     <input
                                                         type="text" required maxLength={6} value={mfaCode}
                                                         onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
@@ -395,13 +395,13 @@ export default function AuthPage() {
                                                 </div>
                                                 {mfaError && <div className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
                                                 <button type="submit" disabled={loadingMfa || mfaCode.length < 6} className="btn btn-warning w-100 fw-bold mt-2" style={{ height: '50px' }}>
-                                                    {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyAndEnable || "Verify & Enable")}
+                                                    {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyAndEnable)}
                                                 </button>
 
                                                 <button type="button" onClick={handleGenerateNewQr} className="btn btn-link text-white-50 small mt-2 p-0 text-decoration-none">
                                                     {mfaSetupData.qrCode
-                                                        ? (t.restartSetup || "Restart setup")
-                                                        : (t.generateNewQr || "I didn't copy it. Generate a new code")}
+                                                        ? (t.restartSetup)
+                                                        : (t.generateNewQr)}
                                                 </button>
                                             </form>
                                         </div>
@@ -413,8 +413,8 @@ export default function AuthPage() {
 
                             {mfaStatus === 'needs_challenge' && (
                                 <div className="p-4 bg-dark rounded mb-4 border border-info w-100 animate__animated animate__fadeIn">
-                                    <h5 className="text-info mb-3 d-flex justify-content-center align-items-center"><i className="bi bi-shield-lock me-2"></i>{t.enter2faCode || "Enter 2FA Code"}</h5>
-                                    <p className="text-white-50 small mb-4 text-center mx-auto" style={{ maxWidth: '300px' }}>{t.enter2faDesc || "Open Google Authenticator and enter your 6-digit code."}</p>
+                                    <h5 className="text-info mb-3 d-flex justify-content-center align-items-center"><i className="bi bi-shield-lock me-2"></i>{t.enter2faCode}</h5>
+                                    <p className="text-white-50 small mb-4 text-center mx-auto" style={{ maxWidth: '300px' }}>{t.enter2faDesc}</p>
 
                                     <form onSubmit={handleMfaChallengeVerify} className="d-flex flex-column align-items-center gap-3 w-100">
                                         <input
@@ -425,7 +425,7 @@ export default function AuthPage() {
                                         />
                                         {mfaError && <div className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
                                         <button type="submit" disabled={loadingMfa || mfaCode.length < 6} className="btn btn-info w-100 fw-bold">
-                                            {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyBtn || "Verify")}
+                                            {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyBtn)}
                                         </button>
                                         <button
                                             type="button"
@@ -449,10 +449,10 @@ export default function AuthPage() {
                                         <strong>⚠️ {t.crucialStep}:</strong> {t.recoveryWarning}
                                     </div>
 
-                                    <div className="alert alert-info py-2 small text-start mb-4" style={{ backgroundColor: 'rgba(13, 202, 240, 0.05)', borderColor: 'rgba(13, 202, 240, 0.2)' }}>
+                                    <div className="alert py-2 small text-start mb-4" style={{ backgroundColor: 'rgba(13, 202, 240, 0.05)', borderColor: 'rgba(13, 202, 240, 0.2)', color: '#a5e8f3' }}>
                                         <i className="bi bi-info-circle-fill text-info me-2 float-start mt-1"></i>
                                         <div style={{ marginLeft: '25px' }}>
-                                            <strong>{t.securityTipTitle}</strong> {t.securityTipDesc}
+                                            <strong className="text-info">{t.securityTipTitle}</strong> <span style={{ opacity: 0.9 }}>{t.securityTipDesc}</span>
                                         </div>
                                     </div>
 
@@ -470,7 +470,7 @@ export default function AuthPage() {
                                             onClick={handleCopyCodes}
                                             className="btn btn-info fw-bold d-flex justify-content-center align-items-center gap-2 py-2"
                                         >
-                                            <i className="bi bi-copy"></i> {t.copyCodesBtn} (Recommended)
+                                            <i className="bi bi-copy"></i> {t.copyCodesBtn}
                                         </button>
 
                                         <button

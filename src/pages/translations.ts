@@ -167,7 +167,6 @@ export const translations: Record<Language, any> = {
         crucialStep: "Критично важливий крок",
         securityTipTitle: "Порада з безпеки:",
         securityTipDesc: "Найбезпечніший спосіб — скопіювати ці коди в захищений менеджер паролів (1Password, Bitwarden, Apple Keychain). Якщо ви завантажите .txt файл, не зберігайте його постійно на пристрої, щоб уникнути крадіжки шкідливим ПЗ.",
-        copyCodesBtn: "Скопіювати в менеджер паролів",
         downloadTxtBtn: "Завантажити .txt файл",
         iSavedThemBtn: "Я надійно їх зберіг",
         recoveryFileHeader: "JOMO Pool - Коди відновлення 2FA",
@@ -179,6 +178,9 @@ export const translations: Record<Language, any> = {
         enterRecoveryCodeDesc: "Введіть один із ваших 8-символьних кодів відновлення, щоб вимкнути 2FA та відновити доступ.",
         disable2faBtn: "Вимкнути 2FA та відновити доступ",
         backToLoginBtn: "Повернутися до входу",
+        copyCodesBtn: "Скопіювати в менеджер паролів (рекомендовано)",
+        pageRefreshedMsg: "Сторінку оновлено. Якщо ви вже скопіювали код у ваш Authenticator, просто введіть 6 цифр нижче, щоб завершити.",
+        generateNewQr: "Я не скопіював(-ла). Згенерувати новий код",
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -347,7 +349,7 @@ export const translations: Record<Language, any> = {
         crucialStep: "Crucial Step",
         securityTipTitle: "Security Tip: ",
         securityTipDesc: "The safest method is to copy these codes into a secure password manager (1Password, Bitwarden, Apple Keychain). If you download the .txt file, do not keep it permanently on your device to prevent theft by malware.",
-        copyCodesBtn: "Copy to Password Manager",
+        copyCodesBtn: "Copy to Password Manager (Recommended)",
         downloadTxtBtn: "Download .txt file",
         iSavedThemBtn: "I have saved them safely",
         recoveryFileHeader: "JOMO Pool - 2FA Recovery Codes",
@@ -359,6 +361,8 @@ export const translations: Record<Language, any> = {
         enterRecoveryCodeDesc: "Enter one of your 8-character recovery codes to disable 2FA and regain access.",
         disable2faBtn: "Disable 2FA & Recover",
         backToLoginBtn: "Back to Login",
+        pageRefreshedMsg: "Page refreshed. If you already copied the code to your Authenticator, just enter the 6 digits below to finish.",
+        generateNewQr: "I didn't copy it. Generate a new code",
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -526,7 +530,6 @@ export const translations: Record<Language, any> = {
         crucialStep: "Paso crucial",
         securityTipTitle: "Consejo de seguridad:",
         securityTipDesc: "El método más seguro es copiar estos códigos en un gestor de contraseñas seguro (1Password, Bitwarden, Apple Keychain). Si descargas el archivo .txt, no lo guardes permanentemente en tu dispositivo para evitar el robo por malware.",
-        copyCodesBtn: "Copiar al gestor de contraseñas",
         downloadTxtBtn: "Descargar archivo .txt",
         iSavedThemBtn: "Los he guardado de forma segura",
         recoveryFileHeader: "JOMO Pool - Códigos de recuperación 2FA",
@@ -538,5 +541,8 @@ export const translations: Record<Language, any> = {
         enterRecoveryCodeDesc: "Introduce uno de tus códigos de recuperación de 8 caracteres para desactivar 2FA y recuperar el acceso.",
         disable2faBtn: "Desactivar 2FA y recuperar acceso",
         backToLoginBtn: "Volver al inicio de sesión",
+        copyCodesBtn: "Copiar al gestor de contraseñas (recomendado)",
+        pageRefreshedMsg: "Página actualizada. Si ya copiaste el código en tu Authenticator, simplemente introduce los 6 dígitos abajo para finalizar.",
+        generateNewQr: "No lo copié. Generar un nuevo código",
     }
 };
