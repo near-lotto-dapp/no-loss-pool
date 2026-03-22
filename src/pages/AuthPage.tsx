@@ -44,8 +44,9 @@ export default function AuthPage() {
 
     const [user, setUser] = useState<any>(null);
     const [loadingSession, setLoadingSession] = useState(true);
-
-    const [mfaStatus, setMfaStatus] = useState<'loading' | 'needs_setup' | 'needs_challenge' | 'verified'>('loading');
+    const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
+    const [mfaStatus, setMfaStatus] = useState<'loading' | 'needs_setup' | 'needs_challenge' | 'show_recovery_codes' | 'needs_recovery' | 'verified'>('loading');
+    const [recoveryInput, setRecoveryInput] = useState('');
     const [mfaSetupData, setMfaSetupData] = useState<{ factorId: string, qrCode: string, secret: string } | null>(null);
     const [mfaCode, setMfaCode] = useState('');
     const [factorId, setFactorId] = useState('');
@@ -131,6 +132,16 @@ export default function AuthPage() {
         checkMfa();
     }, [user?.id]);
 
+    const generateRecoveryCodes = () => {
+        const codes = [];
+        for (let i = 0; i < 10; i++) {
+            const part1 = Math.random().toString(36).substring(2, 6).toUpperCase();
+            const part2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+            codes.push(`${part1}-${part2}`);
+        }
+        return codes;
+    };
+
     const handleMfaSetupVerify = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!mfaSetupData || !user?.id) return;
@@ -138,17 +149,33 @@ export default function AuthPage() {
         try {
             const challenge = await supabase.auth.mfa.challenge({ factorId: mfaSetupData.factorId });
             if (challenge.error) throw challenge.error;
+
             const verify = await supabase.auth.mfa.verify({
                 factorId: mfaSetupData.factorId, challengeId: challenge.data.id, code: mfaCode
             });
             if (verify.error) throw verify.error;
 
+            const newCodes = generateRecoveryCodes();
+
+            const codesToInsert = newCodes.map(code => ({
+                user_id: user.id,
+                code: code,
+                is_used: false
+            }));
+
+            const { error: dbError } = await supabase
+                .from('user_recovery_codes')
+                .insert(codesToInsert);
+
+            if (dbError) throw dbError;
+
             clearMfaCache(user.id);
 
-            setMfaStatus('verified');
+            setRecoveryCodes(newCodes);
+            setMfaStatus('show_recovery_codes');
             setMfaCode('');
         } catch (err) {
-            setMfaError(t.mfaError || "Invalid code. Try again.");
+            setMfaError(t.mfaError);
         } finally {
             setLoadingMfa(false);
         }
@@ -168,6 +195,31 @@ export default function AuthPage() {
             setMfaCode('');
         } catch (err) {
             setMfaError(t.mfaError);
+        } finally {
+            setLoadingMfa(false);
+        }
+    };
+
+    const handleRecoverySubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoadingMfa(true);
+        setMfaError(null);
+
+        try {
+            const { error } = await supabase.rpc('recover_access_with_code', {
+                entered_code: recoveryInput.trim()
+            });
+
+            if (error) throw error;
+
+            if (user?.id) clearMfaCache(user.id);
+            await supabase.auth.signOut();
+
+            alert(t.recoverySuccessMsg);
+            window.location.reload();
+
+        } catch (err) {
+            setMfaError(t.invalidRecoveryCode);
         } finally {
             setLoadingMfa(false);
         }
@@ -205,6 +257,38 @@ export default function AuthPage() {
         } finally {
             setLoadingMfa(false);
         }
+    };
+
+    const handleDownloadCodes = () => {
+        if (!recoveryCodes) return;
+
+        const text = `${t.recoveryFileHeader}\n\n${recoveryCodes.join('\n')}\n\n${t.recoveryFileFooter}`;
+
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'jomo-recovery-codes.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const handleCopyCodes = (e: React.MouseEvent<HTMLButtonElement>) => {
+        if (!recoveryCodes) return;
+
+        const text = `${t.recoveryFileHeader}\n\n${recoveryCodes.join('\n')}\n\n${t.recoveryFileFooter}`;
+
+        navigator.clipboard.writeText(text);
+
+        const btn = e.currentTarget;
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<i class="bi bi-check2-all"></i> ${t.copiedBtn}`;
+        btn.classList.replace('btn-info', 'btn-success');
+
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.classList.replace('btn-success', 'btn-info');
+        }, 2500);
     };
 
     const handleLogout = async () => {
@@ -342,6 +426,103 @@ export default function AuthPage() {
                                         {mfaError && <div className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
                                         <button type="submit" disabled={loadingMfa || mfaCode.length < 6} className="btn btn-info w-100 fw-bold">
                                             {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.verifyBtn || "Verify")}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setMfaStatus('needs_recovery'); setMfaError(null); }}
+                                            className="btn btn-link text-white-50 small mt-2 p-0 text-decoration-none"
+                                        >
+                                            {t.lostAuthenticatorBtn}
+                                        </button>
+                                    </form>
+                                </div>
+                            )}
+
+                            {/* saving reserve codes */}
+                            {mfaStatus === 'show_recovery_codes' && recoveryCodes && (
+                                <div className="p-4 bg-dark rounded mb-4 border border-success w-100 animate__animated animate__fadeIn">
+                                    <h5 className="text-success mb-3 d-flex justify-content-center align-items-center">
+                                        <i className="bi bi-shield-check me-2"></i>{t.recoveryCodesTitle}
+                                    </h5>
+
+                                    <div className="alert alert-warning py-2 small text-start mb-3">
+                                        <strong>⚠️ {t.crucialStep}:</strong> {t.recoveryWarning}
+                                    </div>
+
+                                    <div className="alert alert-info py-2 small text-start mb-4" style={{ backgroundColor: 'rgba(13, 202, 240, 0.05)', borderColor: 'rgba(13, 202, 240, 0.2)' }}>
+                                        <i className="bi bi-info-circle-fill text-info me-2 float-start mt-1"></i>
+                                        <div style={{ marginLeft: '25px' }}>
+                                            <strong>{t.securityTipTitle}</strong> {t.securityTipDesc}
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-black p-3 rounded mb-4 font-monospace text-info text-center shadow-inner" style={{ fontSize: '1.1rem', letterSpacing: '2px' }}>
+                                        <div className="row">
+                                            {recoveryCodes.map((c, i) => (
+                                                <div key={i} className="col-6 mb-2">{c}</div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="d-flex flex-column gap-2 w-100 mb-4">
+
+                                        <button
+                                            onClick={handleCopyCodes}
+                                            className="btn btn-info fw-bold d-flex justify-content-center align-items-center gap-2 py-2"
+                                        >
+                                            <i className="bi bi-copy"></i> {t.copyCodesBtn} (Recommended)
+                                        </button>
+
+                                        <button
+                                            onClick={handleDownloadCodes}
+                                            className="btn btn-outline-secondary d-flex justify-content-center align-items-center gap-2 py-2"
+                                        >
+                                            <i className="bi bi-download"></i> {t.downloadTxtBtn}
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setMfaStatus('verified')}
+                                        className="btn btn-success w-100 fw-bold py-3"
+                                        style={{ fontSize: '1.1rem' }}
+                                    >
+                                        {t.iSavedThemBtn} <i className="bi bi-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            )}
+
+                            {mfaStatus === 'needs_recovery' && (
+                                <div className="p-4 bg-dark rounded mb-4 border border-danger w-100 animate__animated animate__fadeIn">
+                                    <h5 className="text-danger mb-3 d-flex justify-content-center align-items-center">
+                                        <i className="bi bi-life-preserver me-2"></i>{t.accountRecoveryTitle}
+                                    </h5>
+                                    <p className="text-white-50 small mb-4 text-center mx-auto" style={{ maxWidth: '300px' }}>
+                                        {t.enterRecoveryCodeDesc}
+                                    </p>
+
+                                    <form onSubmit={handleRecoverySubmit} className="d-flex flex-column align-items-center gap-3 w-100">
+                                        <input
+                                            type="text"
+                                            required
+                                            value={recoveryInput}
+                                            onChange={(e) => setRecoveryInput(e.target.value.toUpperCase())}
+                                            className="form-control form-control-lg bg-black text-danger border-secondary text-center fw-bold mx-auto font-monospace"
+                                            placeholder="XXXX-XXXX"
+                                            style={{ letterSpacing: '0.2rem', width: '220px', fontSize: '1.2rem' }}
+                                        />
+
+                                        {mfaError && <div className="alert alert-danger py-2 m-0 small w-100 text-center">{mfaError}</div>}
+
+                                        <button type="submit" disabled={loadingMfa || recoveryInput.length < 8} className="btn btn-danger w-100 fw-bold">
+                                            {loadingMfa ? <span className="spinner-border spinner-border-sm"></span> : (t.disable2faBtn)}
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => { setMfaStatus('needs_challenge'); setMfaError(null); setRecoveryInput(''); }}
+                                            className="btn btn-link text-white-50 small mt-2 p-0 text-decoration-none"
+                                        >
+                                            <i className="bi bi-arrow-left"></i> {t.backToLoginBtn}
                                         </button>
                                     </form>
                                 </div>
