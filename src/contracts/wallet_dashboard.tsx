@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
 import { supabase } from '@/utils/supabaseClient';
+import {StakingPanel} from "@/components/StakingPanel.tsx";
 
 interface WalletDashboardProps {
     user: any;
@@ -29,6 +30,9 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
     const [txHash, setTxHash] = useState<string | null>(null);
     const [addressError, setAddressError] = useState<string | null>(null);
     const [amountError, setAmountError] = useState<string | null>(null);
+
+    // staking
+    const [showStake, setShowStake] = useState(false);
 
     const fetchBalance = async (accountId: string, isSilent = false) => {
         if (!isSilent) setLoadingBalance(true);
@@ -178,11 +182,12 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
 
     return (
         <div className="p-4 bg-dark rounded mb-4 border border-secondary text-start position-relative w-100 animate__animated animate__fadeIn">
+            {/* Balance */}
             <div className="d-flex justify-content-between align-items-center mb-1">
                 <small className="text-white-50">{t.balance}</small>
                 <span className="badge bg-dark border border-secondary text-white-50 d-flex align-items-center" style={{ fontSize: '0.7rem' }}>
-                    <span className="spinner-grow spinner-grow-sm text-success me-1" style={{ width: '6px', height: '6px' }}></span> Live
-                </span>
+                <span className="spinner-grow spinner-grow-sm text-success me-1" style={{ width: '6px', height: '6px' }}></span> Live
+            </span>
             </div>
 
             <div className="mb-4 text-center">
@@ -195,17 +200,18 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                 )}
             </div>
 
+            {/* Wallet address */}
             <small className="text-white-50 d-block mb-2 text-center w-100">{t.yourWallet}</small>
             <div className="d-flex justify-content-between align-items-center bg-black p-2 rounded border border-dark mb-4">
                 {loadingWallet ? (
                     <span className="spinner-border spinner-border-sm text-info mx-auto"></span>
                 ) : walletAddress ? (
                     <>
-                        <span className="text-info fw-bold font-monospace ps-2" style={{ fontSize: '0.85rem' }}>
-                              {formatAddress(walletAddress)}
-                        </span>
+                    <span className="text-info fw-bold font-monospace ps-2" style={{ fontSize: '0.85rem' }}>
+                          {formatAddress(walletAddress)}
+                    </span>
                         <button onClick={() => { navigator.clipboard.writeText(walletAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className={`btn btn-sm ${copied ? 'btn-success' : 'btn-outline-secondary'}`}>
-                            {copied ? (t.copied || "Copied!") : (t.copyBtn || "Copy")}
+                            {copied ? (t.copied) : (t.copyBtn)}
                         </button>
                     </>
                 ) : (
@@ -213,21 +219,34 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                 )}
             </div>
 
-            <div className="d-flex gap-2 mb-3">
+            {/* Deposit and Withdrawal buttons */}
+            <div className="d-flex gap-2 mb-2">
                 <button
-                    onClick={() => { setShowDeposit(!showDeposit); setShowWithdraw(false); }}
-                    className={`btn flex-grow-1 fw-bold ${showDeposit ? 'btn-secondary' : 'btn-info'}`}
+                    onClick={() => { setShowDeposit(!showDeposit); setShowWithdraw(false); setShowStake(false); }}
+                    className={`btn flex-grow-1 fw-bold py-2 ${showDeposit ? 'btn-secondary' : 'btn-info'}`}
+                    style={{ fontSize: '0.9rem' }}
                 >
                     <i className="bi bi-qr-code me-2"></i>{t.depositBtn}
                 </button>
                 <button
-                    onClick={() => { setShowWithdraw(!showWithdraw); setShowDeposit(false); }}
-                    className={`btn flex-grow-1 fw-bold ${showWithdraw ? 'btn-secondary' : 'btn-warning'}`}
+                    onClick={() => { setShowWithdraw(!showWithdraw); setShowDeposit(false); setShowStake(false); }}
+                    className={`btn flex-grow-1 fw-bold py-2 ${showWithdraw ? 'btn-secondary' : 'btn-warning'}`}
+                    style={{ fontSize: '0.9rem' }}
                 >
                     <i className="bi bi-send me-2"></i>{t.withdrawBtn}
                 </button>
             </div>
 
+            {/* Staking button */}
+            <button
+                onClick={() => { setShowStake(!showStake); setShowDeposit(false); setShowWithdraw(false); }}
+                className={`btn w-100 fw-bold py-2 mb-3 ${showStake ? 'btn-secondary' : 'btn-success'}`}
+                style={{ fontSize: '1rem' }}
+            >
+                <i className="bi bi-layers me-2"></i>{t.stakeBtn}
+            </button>
+
+            {/* --- Deposit block --- */}
             {showDeposit && walletAddress && (
                 <div className="mt-3 p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn d-flex flex-column align-items-center">
                     <p className="text-white-50 small mb-3 text-center w-100">{t.scanToDeposit}</p>
@@ -240,11 +259,11 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                 </div>
             )}
 
+            {/* --- Withdrawal block --- */}
             {showWithdraw && (
                 <div className="mt-3 p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn">
                     <h6 className="text-white mb-3 text-center">{t.withdrawTitle}</h6>
 
-                    {/* address validation */}
                     <div className="mb-3 text-start">
                         <label className="text-white-50 small mb-1">{t.withdrawAddress}</label>
                         <input
@@ -265,7 +284,6 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                         )}
                     </div>
 
-                    {/* amount validation */}
                     <div className="mb-3 text-start">
                         <label className="text-white-50 small mb-1">{t.withdrawAmount}</label>
                         <div className="input-group">
@@ -279,16 +297,11 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                                     validateAmount(e.target.value);
                                 }}
                             />
-                            <button
-                                className="btn btn-outline-secondary"
-                                onClick={() => {
-                                    const maxAmount = balance || '0';
-                                    setWithdrawAmount(maxAmount);
-                                    validateAmount(maxAmount);
-                                }}
-                            >
-                                {t.withdrawMax}
-                            </button>
+                            <button className="btn btn-outline-secondary" onClick={() => {
+                                const maxAmount = balance || '0';
+                                setWithdrawAmount(maxAmount);
+                                validateAmount(maxAmount);
+                            }}>{t.withdrawMax}</button>
                         </div>
                         {amountError && (
                             <div className="text-danger small mt-1 animate__animated animate__fadeIn">
@@ -297,29 +310,18 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                         )}
                     </div>
 
-                    {/* error from back */}
                     {withdrawError && <div className="alert alert-danger py-2 small text-center">{withdrawError}</div>}
-
-                    {/* success message */}
                     {withdrawSuccess && (
                         <div className="alert alert-success py-3 small text-center animate__animated animate__fadeIn">
-                            <div className="mb-2">🚀 {t.withdrawSuccess}</div>
+                            <div className="mb-2"> {t.withdrawSuccess}</div>
                             {txHash && (
-                                <a
-                                    href={`https://nearblocks.io/txns/${txHash}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="btn btn-sm btn-outline-success fw-bold text-decoration-none"
-                                    style={{ fontSize: '0.75rem' }}
-                                >
-                                    <i className="bi bi-box-arrow-up-right me-1"></i>
-                                    View in Explorer
+                                <a href={`https://nearblocks.io/txns/${txHash}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-success fw-bold text-decoration-none" style={{ fontSize: '0.75rem' }}>
+                                    <i className="bi bi-box-arrow-up-right me-1"></i>{t.viewExplorer}
                                 </a>
                             )}
                         </div>
                     )}
 
-                    {/* sent button (blocked if validations were not passed */}
                     <button
                         className="btn btn-warning w-100 fw-bold mt-2"
                         disabled={loadingWithdraw || !withdrawAddress || !withdrawAmount || addressError !== null || amountError !== null}
@@ -328,6 +330,17 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                         {loadingWithdraw ? <span className="spinner-border spinner-border-sm"></span> : (t.sendAssetsBtn)}
                     </button>
                 </div>
+            )}
+
+            {/* --- Staking block --- */}
+            {showStake && (
+                <StakingPanel
+                    balance={balance}
+                    t={t}
+                    onSuccess={() => {
+                        if (walletAddress) fetchBalance(walletAddress, true);
+                    }}
+                />
             )}
 
             <button onClick={onLogout} className="btn btn-outline-danger w-100 fw-bold mt-3">

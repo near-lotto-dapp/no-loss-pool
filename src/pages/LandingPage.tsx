@@ -46,7 +46,7 @@ export default function LandingPage() {
                     <h2 className="text-center mb-5">{t.chooseRiskLevel}</h2>
                     <div className="row g-4">
                         {/* Conservative */}
-                        <div className="col-md-4">
+                        <div className="col-md-6">
                             <div className="card h-100 bg-dark border-success p-4">
                                 <span className="badge bg-success mb-3 w-25">{t.conservative}</span>
                                 <h3>Private Staking</h3>
@@ -60,7 +60,7 @@ export default function LandingPage() {
                         </div>
 
                         {/* Balanced */}
-                        <div className="col-md-4">
+                        <div className="col-md-6">
                             <div className="card h-100 bg-dark border-info p-4">
                                 <span className="badge bg-info mb-3 w-25">{t.balanced}</span>
                                 <h3>No-Loss Pool</h3>
@@ -73,19 +73,6 @@ export default function LandingPage() {
                             </div>
                         </div>
 
-                        {/* Aggressive */}
-                        <div className="col-md-4">
-                            <div className="card h-100 bg-dark border-danger p-4">
-                                <span className="badge bg-danger mb-3 w-25">{t.aggressive}</span>
-                                <h3>Lotto Pool</h3>
-                                <p className="text-white-50 flex-grow-1">
-                                    {t.lottoPoolDesc}
-                                </p>
-                                <a href="https://pool.codes/" target="_blank" rel="noopener noreferrer" className="btn btn-outline-danger mt-3">
-                                    {t.tryLuckBtn}
-                                </a>
-                            </div>
-                        </div>
                     </div>
                 </section>
 

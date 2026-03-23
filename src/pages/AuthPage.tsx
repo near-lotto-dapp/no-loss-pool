@@ -331,7 +331,7 @@ export default function AuthPage() {
                     ) : (
                         <div
                             className={`${styles.card} ${styles.stakingCard} text-center d-flex flex-column align-items-center`}
-                            style={{maxWidth: '450px', width: '100%'}}>
+                            style={{maxWidth: '650px', width: '100%'}}>
                             <h3 className="text-white mb-2 w-100 text-center">{t.welcomeUser}</h3>
                             <p className="text-light mb-4 w-100 text-center"
                                style={{fontSize: '1rem', fontWeight: '500'}}>
