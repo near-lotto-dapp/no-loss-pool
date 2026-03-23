@@ -373,8 +373,8 @@ export default function AuthPage() {
                                                        style={{maxWidth: '300px'}}>
                                                         {t.setup2faDesc}
                                                     </p>
-                                                    <div className="bg-white p-3 rounded mb-3 shadow-sm d-inline-block">
-                                                        <div style={{display: 'block', lineHeight: 0}}
+                                                    <div className="bg-white p-3 rounded mb-3 shadow-sm d-flex justify-content-center align-items-center mx-auto">
+                                                        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', lineHeight: 0, width: '100%'}}
                                                              dangerouslySetInnerHTML={{__html: mfaSetupData.qrCode}}/>
                                                     </div>
 
