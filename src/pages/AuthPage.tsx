@@ -382,13 +382,11 @@ export default function AuthPage() {
                                                         />
                                                     </div>
 
-                                                    <div className="mb-4 text-center w-100">
-                                                        <p className="text-white-50 small mb-2"
-                                                           style={{fontSize: '0.8rem'}}>
+                                                    <div className="mb-4 w-100 d-flex flex-column align-items-center">
+                                                        <p className="text-white-50 small mb-2 text-center w-100" style={{fontSize: '0.8rem'}}>
                                                             {t.cantScanCode}
                                                         </p>
-                                                        <div className="input-group input-group-sm mx-auto shadow-sm"
-                                                             style={{maxWidth: '280px'}}>
+                                                        <div className="input-group input-group-sm shadow-sm" style={{maxWidth: '280px'}}>
                                                             <input
                                                                 type="text"
                                                                 className="form-control bg-black text-info text-center font-monospace border-secondary"
