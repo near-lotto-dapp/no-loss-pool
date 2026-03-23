@@ -18,7 +18,9 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true); setError(null); setSuccessMsg(null);
+        setLoading(true);
+        setError(null);
+        setSuccessMsg(null);
 
         if (!isLogin) {
             const hasLetter = /[a-zA-Z]/.test(password);
@@ -49,8 +51,14 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                 authError = error;
                 userData = data;
             } else {
-                // registration
-                const { data, error } = await supabase.auth.signUp({ email, password });
+                // REGISTRATION WITH REDIRECT TO /AUTH
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        emailRedirectTo: `${window.location.origin}/auth`,
+                    }
+                });
 
                 if (error) {
                     if (error.message.toLowerCase().includes('already registered')) {
