@@ -333,10 +333,22 @@ export default function AuthPage() {
                             className={`${styles.card} ${styles.stakingCard} text-center d-flex flex-column align-items-center`}
                             style={{maxWidth: '650px', width: '100%'}}>
                             <h3 className="text-white mb-2 w-100 text-center">{t.welcomeUser}</h3>
-                            <p className="text-light mb-4 w-100 text-center"
-                               style={{fontSize: '1rem', fontWeight: '500'}}>
-                                {user.email}
-                            </p>
+                            <div className="mb-4 w-100 text-center">
+                                  <span className="text-light d-block" style={{fontSize: '1rem', fontWeight: '500'}}>
+                                        {user.email}
+                                  </span>
+                                {mfaStatus !== 'verified' && (
+                                    <button
+                                        type="button"
+                                        onClick={handleLogout}
+                                        className="btn btn-link text-white-50 text-decoration-none p-0 mt-1 d-inline-flex align-items-center gap-1"
+                                        style={{ fontSize: '0.85rem' }}
+                                    >
+                                        <i className="bi bi-box-arrow-right"></i>
+                                        <span>{t.logoutBtn}</span>
+                                    </button>
+                                )}
+                            </div>
 
                             {mfaStatus === 'loading' && (
                                 <div className="py-4 w-100 text-center">
