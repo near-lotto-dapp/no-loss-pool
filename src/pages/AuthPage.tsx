@@ -7,6 +7,7 @@ import {WalletDashboard} from "@/contracts/wallet_dashboard.tsx";
 import {usePageTitle} from "@/hooks/usePageTitle.ts";
 import {useLanguage} from "@/hooks/useLanguage.ts";
 import {TopNav} from "@/components/top_nav.tsx";
+import { QRCodeSVG } from 'qrcode.react';
 
 let memoryMfaCache: { factorId: string, qrCode: string, secret: string } | null = null;
 
@@ -373,9 +374,12 @@ export default function AuthPage() {
                                                        style={{maxWidth: '300px'}}>
                                                         {t.setup2faDesc}
                                                     </p>
-                                                    <div className="bg-white p-3 rounded mb-3 shadow-sm d-inline-flex justify-content-center align-items-center mx-auto" style={{ width: 'fit-content' }}>
-                                                        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', lineHeight: 0, margin: '0 auto' }}
-                                                             dangerouslySetInnerHTML={{ __html: mfaSetupData.qrCode }}/>
+
+                                                    <div className="bg-white p-3 rounded mb-4 shadow-sm mx-auto d-inline-flex justify-content-center align-items-center">
+                                                        <QRCodeSVG
+                                                            value={`otpauth://totp/JOMO:${user.email}?secret=${mfaSetupData.secret}&issuer=JOMO`}
+                                                            size={200}
+                                                        />
                                                     </div>
 
                                                     <div className="mb-4 text-center w-100">
