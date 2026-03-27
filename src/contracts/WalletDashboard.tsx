@@ -33,6 +33,14 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
 
     const GAS_RESERVE = 0.001;
 
+    const safeTruncate = (value: string | number, decimals: number) => {
+        const str = typeof value === 'number' ? value.toFixed(10) : value.toString();
+        const [whole, fraction] = str.split('.');
+        if (!fraction) return whole;
+        const truncated = fraction.slice(0, decimals);
+        return parseFloat(`${whole}.${truncated}`).toString();
+    };
+
     const fetchBalance = async (accountId: string, isSilent = false) => {
         if (!isSilent) setLoadingBalance(true);
         try {
@@ -191,7 +199,9 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
             return false;
         }
 
-        if (numVal > (maxBalance - GAS_RESERVE)) {
+        const maxAllowed = parseFloat((maxBalance - GAS_RESERVE).toFixed(6));
+
+        if (numVal > maxAllowed) {
             const errorMsg = (t.insufficientGasReserve || `Insufficient balance. Reserve ${GAS_RESERVE} NEAR for gas.`).replace('{{reserve}}', GAS_RESERVE.toString());
             setAmountError(errorMsg);
             return false;
@@ -353,9 +363,10 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                                     onChange={handleAmountChange}
                                 />
                                 <button className="btn btn-outline-secondary" onClick={() => {
-                                    const maxAmount = Math.max(0, parseFloat(balance || '0') - GAS_RESERVE).toFixed(4).replace(/\.?0+$/, '');
-                                    setWithdrawAmount(maxAmount);
-                                    validateAmount(maxAmount);
+                                    const maxAmountNum = Math.max(0, parseFloat(balance || '0') - GAS_RESERVE);
+                                    const valToSet = maxAmountNum > 0 ? safeTruncate(maxAmountNum, 5) : '0';
+                                    setWithdrawAmount(valToSet);
+                                    validateAmount(valToSet);
                                 }}>{t.withdrawMax || t.maxBtn}</button>
                             </div>
                             {amountError && (

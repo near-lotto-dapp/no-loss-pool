@@ -13,6 +13,14 @@ interface StakingPanelProps {
 const MIN_STAKE_AMOUNT = 1;
 const STAKING_GAS_RESERVE = 0.05;
 
+const safeTruncate = (value: string | number, decimals: number) => {
+    const str = typeof value === 'number' ? value.toFixed(10) : value.toString();
+    const [whole, fraction] = str.split('.');
+    if (!fraction) return whole;
+    const truncated = fraction.slice(0, decimals);
+    return parseFloat(`${whole}.${truncated}`).toString();
+};
+
 export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPanelProps) {
     const [activeTab, setActiveTab] = useState<'stake' | 'unstake'>('stake');
     const [amount, setAmount] = useState('');
@@ -119,8 +127,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     }, [pendingRequest, currentEpoch, t, walletAddress]);
     // --------------------------------
 
-    const maxStakeAmount = Math.max(0, parseFloat(balance || '0') - STAKING_GAS_RESERVE);
-
     // --- Validation ---
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
@@ -140,15 +146,18 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         const numVal = parseFloat(val);
 
         if (currentTab === 'stake') {
+            const maxStakeAllowed = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6));
+
             if (numVal < MIN_STAKE_AMOUNT) {
                 setInputError(t.staking?.min_stake_error || `Minimum stake is ${MIN_STAKE_AMOUNT} NEAR`);
-            } else if (numVal > maxStakeAmount) {
+            } else if (numVal > maxStakeAllowed) {
                 setInputError(t.insufficientBalanceGas || `Leave ${STAKING_GAS_RESERVE} NEAR for gas.`);
-            } else if (numVal === parseFloat(maxStakeAmount.toFixed(5).replace(/\.?0+$/, ''))) {
-                setInputInfo(t.staking?.reservedBalance || `Reserved ${STAKING_GAS_RESERVE} NEAR for network fees.`);
+            } else if (numVal === parseFloat(safeTruncate(maxStakeAllowed, 5))) {
+                setInputInfo(`Reserved ${STAKING_GAS_RESERVE} NEAR for network fees.`);
             }
         } else {
-            if (numVal > parseFloat(stakedBalance)) {
+            const currentShares = parseFloat(stakedBalance);
+            if (numVal > currentShares) {
                 setInputError(t.insufficientBalanceError || "Insufficient shares balance.");
             }
         }
@@ -162,6 +171,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         setSuccessHash(null);
     }, [activeTab]);
 
+    const maxStakeAmount = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6));
     const isStakeValid = parseFloat(amount) >= MIN_STAKE_AMOUNT && parseFloat(amount) <= maxStakeAmount;
     const isUnstakeValid = parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(stakedBalance);
     const canCreateDelayedUnstake = isUnstakeValid && pendingRequest === null;
@@ -206,9 +216,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const handleStake = () => invokeStakingAction({ action: 'stake', amount, providerId: selectedProvider });
     const handleUnstake = () => invokeStakingAction({ action: 'unstake', amount, providerId: selectedProvider });
     const handleClaim = () => invokeStakingAction({ action: 'claim', providerId: selectedProvider });
-
-    // for next release
-    // const handleInstantUnstake = () => invokeStakingAction({ action: 'instant_unstake', amount, providerId: selectedProvider });
 
     // --- Performance ---
     const activeShares = parseFloat(stakedBalance);
@@ -318,7 +325,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             <div className="mb-3">
                 <div className="d-flex justify-content-between">
                     <label className="text-white-50 small mb-1">
-                        {activeTab === 'stake' ? (t.staking?.stakeAmount || "Amount (NEAR)") : (t.staking?.amount_shares || "Amount (Shares)")}
+                        {activeTab === 'stake' ? (t.staking?.amount_near || "Amount (NEAR)") : (t.staking?.amount_shares || "Amount (Shares)")}
                     </label>
                     <small className="text-white-50">
                         {t.staking?.available || "Available:"} {isLoadingData
@@ -341,9 +348,11 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         onClick={() => {
                             let valToSet = '';
                             if (activeTab === 'stake') {
-                                valToSet = maxStakeAmount.toFixed(5).replace(/\.?0+$/, '');
+                                const maxStakeNum = Math.max(0, parseFloat(balance || '0') - STAKING_GAS_RESERVE);
+                                valToSet = maxStakeNum > 0 ? safeTruncate(maxStakeNum, 5) : '0';
                             } else {
-                                valToSet = Number(stakedBalance).toFixed(6).replace(/\.?0+$/, '');
+                                const sharesNum = parseFloat(stakedBalance || '0');
+                                valToSet = sharesNum > 0 ? safeTruncate(sharesNum, 6) : '0';
                             }
                             setAmount(valToSet);
                             validateInput(valToSet, activeTab);
