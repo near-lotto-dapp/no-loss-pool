@@ -1,32 +1,44 @@
-# 🌊 JOMO No-Loss Pool
+# 🌊 JOMO Vault: Secure NEAR Staking & Custodial Ecosystem
 
 [![Network](https://img.shields.io/badge/Network-NEAR_Mainnet-blue.svg)](https://near.org)
-[![Protocol](https://img.shields.io/badge/Powered_by-LiNEAR-success.svg)](https://linearprotocol.org/)
+[![Security](https://img.shields.io/badge/Security-2FA_Secured-success.svg)]()
 [![Status](https://img.shields.io/badge/Status-Operational-brightgreen.svg)]()
 
-**JOMO No-Loss Pool** is a decentralized, no-loss prize protocol built on the **NEAR Protocol** exclusively for the Crypto JOMO community.
+**JOMO Vault** is a highly secure, streamlined gateway to the **NEAR Protocol** ecosystem, built specifically for the Crypto JOMO community. It focuses entirely on safe asset management and sustainable yield generation through private staking, stripping away the noise of complex DeFi mechanics.
 
 *"Stack crypto, ignore the noise. Steadily moving toward the goal!"*
 
-## 💡 How It Works
-Unlike traditional lotteries where your ticket cost is lost, the JOMO Pool uses **Liquid Staking** to ensure you never lose your principal deposit.
+## 🏢 Core Features
 
-1. **Stake NEAR:** Users deposit NEAR into the smart contract (Minimum: 10 NEAR). Your active balance acts as your ticket.
-2. **Generate Yield:** The smart contract automatically routes all deposited NEAR into the **LiNEAR Protocol**, where it generates a constant yield (~8.4% APY).
-3. **Win the Jackpot:** Periodically, a smart-contract algorithm randomly selects one winning ticket. The winner receives **97% of the total generated yield**.
-4. **No-Loss Guarantee:** If you don't win, you lose nothing! You keep 100% of your initial deposit and automatically participate in the next draw.
+### 🔒 Secure Custodial Wallet
+Maximum security within a personal, 2FA-protected dashboard.
+* **Instant Onboarding:** A secure NEAR wallet is auto-generated upon registration. Keys are encrypted and managed seamlessly without the hassle of seed phrases for everyday use.
+* **Zero Movement Fees:** Deposit and withdraw NEAR anytime. JOMO charges **0% platform fees** on standard wallet transfers. You only pay the microscopic network gas fees required by the NEAR blockchain.
 
-## ✨ Key Features
-* 🔒 **Non-Custodial:** The contract only manages the logic. All funds are backed by LiNEAR liquid staking.
-* 🎲 **On-Chain Randomness:** Winners are selected using NEAR's native, secure on-chain random seed generation.
-* ⏱️ **Two-Step Withdrawal:** True DeFi architecture. Unstaking initiates a 3-day (4 epochs) cooldown period, after which users can securely claim their liquid NEAR.
-* 🤖 **Autonomous Execution:** Draws and yield distribution are handled purely on-chain.
+### 📈 Private Staking (LiNEAR Protocol)
+Put your NEAR to work safely. Stake assets directly via the LiNEAR liquid staking protocol to earn passive income.
+* **Transparent Fee:** Only a flat 0.3% JOMO service fee is applied upon withdrawal from staking.
+* **Network Unstake:** Standard unstaking utilizes the blockchain's native cooldown period of ~3 days (4 epochs).
+* **Protocol Rules:** To ensure network stability, the protocol permits only one active unstake request per user at a time.
+
+## 🛡️ Bulletproof Security Architecture
+Security is the foundational layer of the JOMO Vault.
+* **Mandatory 2FA:** Time-based One-Time Passwords (TOTP) via Authenticator apps are enforced for all custodial accounts. No login or critical action proceeds without confirmation.
+* **Offline Recovery:** Secure, one-time 8-character recovery codes are generated client-side for emergency access.
+* **AES-256 Encryption:** All sensitive data and private keys are encrypted at rest using military-grade standards.
+* **Edge Execution:** Critical blockchain operations (wallet generation, transaction signing) run on isolated, highly secure serverless Edge Functions.
+
+## 🚀 Roadmap
+* [x] Seamless Custodial Wallet Generation
+* [x] Mandatory 2FA & Security Architecture
+* [x] Direct LiNEAR Staking Integration
+* [ ] **Cloud Wallet (Non-Custodial):** The ultimate Web3 experience. Client-side encryption where the user holds the password and the Secret Recovery Phrase (Seed Phrase) as the ultimate backup. JOMO will have zero access to the funds.
 
 ## 🛠 Tech Stack
-* **Smart Contract:** Rust (`near-sdk-rs`)
-* **Frontend:** React, Next.js, TypeScript
-* **Wallet Integration:** NEAR Wallet Selector
-* **DeFi Integration:** LiNEAR Protocol Cross-Contract Calls
+* **Frontend:** React, TypeScript, Vite, Bootstrap
+* **Backend & Auth:** Supabase (PostgreSQL, Auth, RPC)
+* **Serverless / Edge:** Deno (Supabase Edge Functions)
+* **Blockchain Interaction:** `near-api-js`, NEAR Protocol, LiNEAR Smart Contracts
 
 ## 📜 License
 
@@ -35,5 +47,4 @@ This project is licensed under the **MIT License**. This means you are free to u
 For more details, please see the [LICENSE](./LICENSE) file.
 
 ---
-**Disclaimer:** *This software is provided "as is", without warranty of any kind. Use at your own risk. The Crypto JOMO team is not responsible for any financial losses incurred through the use of this protocol.*
-
+**Disclaimer:** *This software is provided "as is", without warranty of any kind. Use at your own risk. Cryptocurrencies are subject to high market risks. The Crypto JOMO team is not responsible for any financial losses incurred through the use of this protocol or loss of account credentials.*
