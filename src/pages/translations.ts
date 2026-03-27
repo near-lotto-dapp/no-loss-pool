@@ -212,8 +212,8 @@ export const translations: Record<Language, any> = {
         cloudWalletTitle: "Хмарний гаманець",
         cloudWalletSubtitle: "(Non-Custodial)",
         cloudWalletDesc: "Наближається справжній децентралізований досвід. Незабаром ви зможете взяти абсолютний контроль над своїми ключами.",
-        cloudWalletNote: "Ваші приватні ключі будуть шифруватися виключно на вашому пристрої за допомогою особистого пароля. JOMO не матиме жодного доступу до ваших коштів.",
-        trueWeb3Rule: "Справжнє правило Web3: Втрата пароля означатиме безповоротну втрату коштів.",
+        cloudWalletNote: "Ваші приватні ключі будуть шифруватися виключно на вашому пристрої за допомогою особистого пароля. Ви отримаєте секретну фразу (Seed Phrase) як головний резервний інструмент.",
+        trueWeb3Rule: "Справжнє правило Web3: Ви володієте своїми ключами. Якщо ви втратите і пароль, і свою Seed-фразу, ваші кошти будуть втрачені назавжди.",
         inUnstakeProcess: "В процесі виводу",
 
         wallet_types: {
@@ -223,7 +223,7 @@ export const translations: Record<Language, any> = {
             non_custodial_desc: "Ви маєте повний контроль над ключами. Зашифровано вашим паролем. Увага: JOMO не зможе відновити кошти у разі втрати пароля.",
             coming_soon: "В розробці",
             security_note_title: "Безпека",
-            security_note_desc: "Втрата пароля = втрата коштів.",
+            security_note_desc: "Бережіть свою Seed-фразу. Втрата пароля ТА Seed-фрази = втрата коштів.",
         },
         staking: {
             fee_notice: "Сервісний збір 3% нараховується тільки на чистий отриманий прибуток.",
@@ -506,8 +506,8 @@ export const translations: Record<Language, any> = {
         cloudWalletTitle: "Cloud Wallet",
         cloudWalletSubtitle: "(Non-Custodial)",
         cloudWalletDesc: "The ultimate decentralized experience is coming. Soon, you will have the option to take absolute control of your keys.",
-        cloudWalletNote: "Your private keys will be encrypted entirely client-side using your personal password. JOMO will have zero access to your funds.",
-        trueWeb3Rule: "True Web3 Rule: Loss of your password will mean an irreversible loss of funds.",
+        cloudWalletNote: "Your private keys will be encrypted entirely client-side using your personal password. You will receive a Secret Recovery Phrase (Seed Phrase) as your ultimate backup.",
+        trueWeb3Rule: "True Web3 Rule: You hold your own keys. If you lose both your password and your Seed Phrase, your funds are lost forever.",
         inUnstakeProcess: "In Unstaking",
 
         wallet_types: {
@@ -517,7 +517,7 @@ export const translations: Record<Language, any> = {
             non_custodial_desc: "You have full control over your keys. Encrypted with your password. Note: JOMO cannot recover your funds if you lose your password.",
             coming_soon: "In development",
             security_note_title: "Security",
-            security_note_desc: "Loss of password = loss of funds.",
+            security_note_desc: "Keep your Seed Phrase safe. Loss of both password AND Seed Phrase = loss of funds.",
         },
 
         staking: {
@@ -789,8 +789,8 @@ export const translations: Record<Language, any> = {
         cloudWalletTitle: "Billetera en la nube",
         cloudWalletSubtitle: "(No Custodia)",
         cloudWalletDesc: "La máxima experiencia descentralizada está en camino. Pronto, tendrás la opción de tomar el control absoluto de tus claves.",
-        cloudWalletNote: "Tus claves privadas se cifrarán completamente en tu dispositivo utilizando tu contraseña personal. JOMO tendrá cero acceso a tus fondos.",
-        trueWeb3Rule: "Regla de Web3: La pérdida de tu contraseña significará una pérdida irreversible de fondos.",
+        cloudWalletNote: "Tus claves privadas se cifrarán completamente en tu dispositivo utilizando tu contraseña personal. Recibirás una Frase Semilla (Seed Phrase) como tu respaldo definitivo.",
+        trueWeb3Rule: "Regla de Web3: Tú controlas tus propias claves. Si pierdes tanto tu contraseña como tu Frase Semilla, tus fondos se perderán para siempre.",
         inUnstakeProcess: "En proceso de retiro",
 
         wallet_types: {
@@ -800,7 +800,7 @@ export const translations: Record<Language, any> = {
             non_custodial_desc: "Tienes control total sobre tus llaves. Cifrado con tu contraseña. Nota: JOMO no puede recuperar tus fondos si pierdes tu contraseña.",
             coming_soon: "En desarrollo",
             security_note_title: "Seguridad",
-            security_note_desc: "Pérdida de contraseña = pérdida de fondos.",
+            security_note_desc: "Guarda tu Frase Semilla. Pérdida de contraseña Y Frase Semilla = pérdida de fondos.",
         },
         staking: {
             fee_notice: "Se aplica una tarifa de servicio del 3% solo sobre el beneficio neto obtenido.",
