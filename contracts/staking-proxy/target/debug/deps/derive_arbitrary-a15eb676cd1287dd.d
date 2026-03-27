@@ -1,8 +1,0 @@
-/Users/serhiikyba/RustroverProjects/jomo-noloss-pool/contracts/staking-proxy/target/debug/deps/libderive_arbitrary-a15eb676cd1287dd.dylib: /Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/lib.rs /Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/container_attributes.rs /Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/field_attributes.rs /Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/variant_attributes.rs
-
-/Users/serhiikyba/RustroverProjects/jomo-noloss-pool/contracts/staking-proxy/target/debug/deps/derive_arbitrary-a15eb676cd1287dd.d: /Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/lib.rs /Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/container_attributes.rs /Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/field_attributes.rs /Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/variant_attributes.rs
-
-/Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/lib.rs:
-/Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/container_attributes.rs:
-/Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/field_attributes.rs:
-/Users/serhiikyba/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/derive_arbitrary-1.4.2/src/variant_attributes.rs:

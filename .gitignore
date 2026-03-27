@@ -17,6 +17,7 @@ dist-ssr
 Cargo.lock
 back/target/
 back/**/target/
+contracts/staking-proxy/target/
 
 # Node/React
 .next

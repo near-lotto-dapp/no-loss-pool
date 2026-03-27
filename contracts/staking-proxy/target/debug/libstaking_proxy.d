@@ -1,1 +1,0 @@
-/Users/serhiikyba/RustroverProjects/jomo-noloss-pool/contracts/staking-proxy/target/debug/libstaking_proxy.dylib: /Users/serhiikyba/RustroverProjects/jomo-noloss-pool/contracts/staking-proxy/src/lib.rs
