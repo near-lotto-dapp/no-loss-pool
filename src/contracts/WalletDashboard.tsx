@@ -15,7 +15,7 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
     const [balance, setBalance] = useState<string | null>(null);
     const [loadingBalance, setLoadingBalance] = useState(false);
 
-    const [isGeneratingWallet, setIsGeneratingWallet] = useState(false); // НОВИЙ СТАН
+    const [isGeneratingWallet, setIsGeneratingWallet] = useState(false);
 
     const [showDeposit, setShowDeposit] = useState(false);
     const [copied, setCopied] = useState(false);
@@ -59,6 +59,10 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                     setWalletAddress(data.near_account_id);
                     await fetchBalance(data.near_account_id);
                 }
+                await supabase
+                    .from('profiles')
+                    .update({ last_activity: new Date().toISOString() })
+                    .eq('id', user.id);
             } catch (err) {
                 console.error(err);
             } finally {
@@ -134,11 +138,47 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
 
     const validateNearAddress = (address: string) => {
         if (!address) { setAddressError(null); return true; }
-        if (address.length < 2 || address.length > 64) { setAddressError(t.invalidNearLength); return false; }
+
+        if (address.length < 2 || address.length > 64) {
+            setAddressError(t.invalidNearLength || "Address must be between 2 and 64 characters.");
+            return false;
+        }
+
+        if (address.startsWith('0x')) {
+            setAddressError(t.invalidNearFormat || "NEAR addresses do not start with 0x.");
+            return false;
+        }
+
+        if (address === walletAddress) {
+            setAddressError("You cannot withdraw to your own wallet.");
+            return false;
+        }
+
+        if (address.length !== 64 && !address.includes('.')) {
+            setAddressError(t.invalidNearFormat || "Address must contain a domain (e.g. .near, .tg) or be 64 characters long.");
+            return false;
+        }
+
         const nearRegex = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
-        if (!nearRegex.test(address)) { setAddressError(t.invalidNearFormat); return false; }
+        if (!nearRegex.test(address)) {
+            setAddressError(t.invalidNearFormat || "Invalid NEAR format.");
+            return false;
+        }
+
+        if (address.length === 64 && !/^[a-f0-9]{64}$/.test(address)) {
+            setAddressError(t.invalidNearFormat || "Invalid 64-character account ID (must be hex).");
+            return false;
+        }
+
         setAddressError(null);
         return true;
+    };
+
+    const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value;
+        if (val !== '' && !/^\d*\.?\d*$/.test(val)) return;
+        setWithdrawAmount(val);
+        validateAmount(val);
     };
 
     const validateAmount = (val: string) => {
@@ -147,7 +187,7 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
         const maxBalance = parseFloat(balance || '0');
 
         if (isNaN(numVal) || numVal <= 0) {
-            setAmountError(t.invalidAmountZero);
+            setAmountError(t.invalidAmountZero || "Amount must be greater than 0");
             return false;
         }
 
@@ -289,9 +329,9 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                                 placeholder="example.near"
                                 value={withdrawAddress}
                                 onChange={(e) => {
-                                    const newValue = e.target.value.toLowerCase();
-                                    setWithdrawAddress(newValue);
-                                    validateNearAddress(newValue);
+                                    const val = e.target.value.toLowerCase().replace(/[^a-z0-9_.-]/g, '');
+                                    setWithdrawAddress(val);
+                                    validateNearAddress(val);
                                 }}
                             />
                             {addressError && (
@@ -305,17 +345,15 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                             <label className="text-white-50 small mb-1">{t.withdrawAmount}</label>
                             <div className="input-group">
                                 <input
-                                    type="number"
+                                    type="text"
+                                    inputMode="decimal"
                                     className={`form-control bg-dark text-white ${amountError ? 'border-danger' : 'border-secondary'}`}
                                     placeholder="0.0"
                                     value={withdrawAmount}
-                                    onChange={(e) => {
-                                        setWithdrawAmount(e.target.value);
-                                        validateAmount(e.target.value);
-                                    }}
+                                    onChange={handleAmountChange}
                                 />
                                 <button className="btn btn-outline-secondary" onClick={() => {
-                                    const maxAmount = Math.max(0, parseFloat(balance || '0') - GAS_RESERVE).toFixed(4);
+                                    const maxAmount = Math.max(0, parseFloat(balance || '0') - GAS_RESERVE).toFixed(4).replace(/\.?0+$/, '');
                                     setWithdrawAmount(maxAmount);
                                     validateAmount(maxAmount);
                                 }}>{t.withdrawMax || t.maxBtn}</button>

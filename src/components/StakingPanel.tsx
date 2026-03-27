@@ -131,7 +131,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             } else if (numVal > maxStakeAmount) {
                 setInputError(t.insufficientBalanceGas || `Leave ${STAKING_GAS_RESERVE} NEAR for gas.`);
             } else if (numVal === parseFloat(maxStakeAmount.toFixed(5).replace(/\.?0+$/, ''))) {
-                setInputInfo(`Reserved ${STAKING_GAS_RESERVE} NEAR for network fees.`);
+                setInputInfo(t.staking?.reservedBalance || `Reserved ${STAKING_GAS_RESERVE} NEAR for network fees.`);
             }
         } else {
             if (numVal > parseFloat(stakedBalance)) {

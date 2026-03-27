@@ -254,6 +254,7 @@ export const translations: Record<Language, any> = {
             delayed_desc: "⏳ ~3 дні. Комісія: лише 0.3% JOMO.",
             instant_desc: "⚡ Миттєво. Комісія: LiNEAR (динамічна ~0.3-1%) + 0.3% JOMO.",
             stakeAmount: "Сума (NEAR)",
+            reservedBalance: "Зарезервовано 0.05 NEAR для мережевих комісій.",
         },
 
         actions: {
@@ -547,6 +548,7 @@ export const translations: Record<Language, any> = {
             delayed_desc: "⏳ ~3 days. Fee: only 0.3% JOMO.",
             instant_desc: "⚡ Instant. Fee: LiNEAR (dynamic ~0.3-1%) + 0.3% JOMO.",
             stakeAmount: "Amount (NEAR)",
+            reservedBalance: "Reserved 0.05 NEAR for network fees.",
         },
 
         actions: {
@@ -827,6 +829,7 @@ export const translations: Record<Language, any> = {
             delayed_desc: "⏳ ~3 días. Tarifa: solo 0.3% JOMO.",
             instant_desc: "⚡ Instantáneo. Tarifa: LiNEAR (dinámica ~0.3-1%) + 0.3% JOMO.",
             stakeAmount: "Cantidad (NEAR)",
+            reservedBalance: "Se han reservado 0.05 NEAR para las comisiones de red.",
         },
 
         actions: {
