@@ -74,17 +74,28 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         }
 
         const epochsLeft = pendingRequest.unlock_epoch - currentEpoch;
-        const msLeftInitial = epochsLeft * 12 * 60 * 60 * 1000;
+        const maxMsLeft = epochsLeft * 12 * 60 * 60 * 1000;
 
-        const targetDate = Date.now() + msLeftInitial;
+        const storageKey = `jomo_unstake_${walletAddress}_${pendingRequest.unlock_epoch}`;
+        let targetDate = parseInt(localStorage.getItem(storageKey) || '0', 10);
+        const now = Date.now();
+
+        if (!targetDate || targetDate <= now || (targetDate - now > maxMsLeft + 60000)) {
+            targetDate = now + maxMsLeft;
+            localStorage.setItem(storageKey, targetDate.toString());
+        }
 
         const interval = setInterval(() => {
-            const now = Date.now();
-            const difference = targetDate - now;
+            const currentTime = Date.now();
+            const difference = targetDate - currentTime;
 
             if (difference <= 0) {
-                setTimeLeftString(t.staking?.status_ready || 'Ready');
-                clearInterval(interval);
+                if (currentEpoch >= pendingRequest.unlock_epoch) {
+                    setTimeLeftString(t.staking?.status_ready || 'Ready');
+                    clearInterval(interval);
+                } else {
+                    setTimeLeftString(t.staking?.processing || 'Processing...');
+                }
             } else {
                 const d = Math.floor(difference / (1000 * 60 * 60 * 24));
                 const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
@@ -96,14 +107,17 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                 const minStr = t.time?.min_short || 'm';
                 const secStr = t.time?.sec_short || 's';
 
+                const daysDisplay = d > 0 ? `${d}${dayStr} ` : '';
+
                 setTimeLeftString(
-                    `${d}${dayStr} ${h.toString().padStart(2, '0')}${hourStr} ${m.toString().padStart(2, '0')}${minStr} ${s.toString().padStart(2, '0')}${secStr}`
+                    `${daysDisplay}${h.toString().padStart(2, '0')}${hourStr} ${m.toString().padStart(2, '0')}${minStr} ${s.toString().padStart(2, '0')}${secStr}`
                 );
             }
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [pendingRequest, currentEpoch, t]);
+    }, [pendingRequest, currentEpoch, t, walletAddress]);
+    // --------------------------------
 
     const maxStakeAmount = Math.max(0, parseFloat(balance || '0') - STAKING_GAS_RESERVE);
 
