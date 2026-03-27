@@ -1,13 +1,13 @@
 import {useState, useEffect} from 'react';
-import {Footer} from '@/components/footer';
 import {AuthForm} from '@/components/auth_form';
 import {supabase} from '@/utils/supabaseClient';
 import styles from '@/styles/app.module.css';
-import {WalletDashboard} from "@/contracts/wallet_dashboard.tsx";
 import {usePageTitle} from "@/hooks/usePageTitle.ts";
 import {useLanguage} from "@/hooks/useLanguage.ts";
 import {TopNav} from "@/components/top_nav.tsx";
 import { QRCodeSVG } from 'qrcode.react';
+import {WalletDashboard} from "@/contracts/WalletDashboard.tsx";
+import {FooterWallet} from "@/components/FooterWallet.tsx";
 
 let memoryMfaCache: { factorId: string, qrCode: string, secret: string } | null = null;
 
@@ -627,7 +627,7 @@ export default function AuthPage() {
                     )}
                 </div>
             </main>
-            <Footer t={t}/>
+            <FooterWallet t={t}/>
         </>
     );
 }

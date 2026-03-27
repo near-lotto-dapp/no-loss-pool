@@ -1,5 +1,6 @@
 export type Language = 'ua' | 'en' | 'es';
-const apy:string = "~5%";
+const apy:string = "~4.3%";
+
 export const translations: Record<Language, any> = {
     ua: {
         title: "JOMO No-Loss Pool",
@@ -135,7 +136,6 @@ export const translations: Record<Language, any> = {
         withdrawMax: "МАКС",
         copied: "Скопійовано!",
         sendAssetsBtn: "Надіслати активи",
-        landingSubtitle: "САЙТ ЗНАХОДИТЬСЯ У РОЗРОБЦІ !!!",
         enterCabinetBtn: "Увійти в обліковий запис",
         chooseRiskLevel: "Обери свій рівень ризику",
         conservative: "Безпечний",
@@ -147,10 +147,10 @@ export const translations: Record<Language, any> = {
         aggressive: "Ризиковий",
         lottoPoolDesc: "Класична лотерея на блокчейні. Окремий домен для гри.",
         tryLuckBtn: "Випробувати удачу",
-        securityFirst: "Безпека понад усе для надійного акаунту",
-        encryptionDesc: "Ключі зашифровані та не залишають хмару.",
-        mfaDesc: "Жоден логін не пройде без підтвердження.",
-        edgeDesc: "Ізольоване середовище виконання коду.",
+        securityFirst: "Безпека понад усе",
+        encryptionDesc: "Ключі зашифровані та ніколи не залишають хмару.",
+        mfaDesc: "Жоден вхід не пройде без підтвердження.",
+        edgeDesc: "Ізольоване та безпечне середовище виконання коду.",
         homeBtn: "Назад",
         warning: "Увага",
         activeUnstakeWarning: "Виведення займає ~3 дні. ⚠️ Не можна створити нове виведення, поки активне попереднє. Заберіть кошти тут після завершення таймера.",
@@ -186,6 +186,101 @@ export const translations: Record<Language, any> = {
         invalidNearFormat: "Невірний формат адреси NEAR. Використовуйте лише малі літери, цифри, '-', '_' або '.'.",
         invalidNearLength: "Адреса має містити від 2 до 64 символів.",
         emailInUse: "Ця електронна пошта вже зареєстрована. Будь ласка, увійдіть.",
+        successTx: "Успіх!",
+        chooseValidator: "Валідатор",
+        activeBadge: "АКТИВНИЙ",
+        liveBadge: "Онлайн",
+        insufficientGasReserve: "Недостатньо коштів. Залиште {{reserve}} NEAR для оплати газу.",
+        walletError: "Помилка гаманця",
+
+        // --- LANDING ---
+        landingHeroTitle: "Безпечно. Просто. JOMO.",
+        landingSubtitle: "Ваш безпечний шлюз до екосистеми NEAR. Відчуйте безперебійний стейкінг та бездоганну безпеку.",
+        startEarningBtn: "Почати заробляти",
+        howItWorksTitleLanding: "Як це працює",
+        hwStep1Title: "1. Куленепробивний захист",
+        hwStep1Desc: "Реєструйтеся та миттєво захистіть свій акаунт. Ми вимагаємо обов'язкову 2FA (Authenticator) та генеруємо офлайн-коди відновлення, щоб гарантувати доступ лише вам.",
+        hwStep2Title: "2. Миттєвий гаманець",
+        hwStep2Desc: "Ніяких сід-фраз чи складних налаштувань. Безпечний гаманець NEAR автоматично створюється під час реєстрації. Ваші приватні ключі зашифровані та надійно зберігаються.",
+        hwStep3Title: "3. Вільні перекази",
+        hwStep3Desc: "Поповнюйте та виводьте NEAR будь-коли. JOMO бере 0% комісії за перекази з гаманця. Ви сплачуєте лише мікроскопічну комісію мережі NEAR за транзакції.",
+        stakingTitle: "Заробляйте через LiNEAR",
+        stakingDesc: "Змусьте свої NEAR працювати безпечно. Стейкайте активи, отримуйте ліквідні токени та заробляйте пасивний дохід.",
+        stakingBullet1: "Прозора комісія: Лише 0.3% комісії JOMO стягується під час виводу (анстейку).",
+        stakingBullet2: "Мережевий розстейк: Стандартне виведення коштів займає від 2 до 4 днів.",
+        stakingBullet3: "Ліміт запитів: Протокол мережі дозволяє мати лише один активний запит на виведення одночасно.",
+        cloudWalletTitle: "Хмарний гаманець",
+        cloudWalletSubtitle: "(Non-Custodial)",
+        cloudWalletDesc: "Наближається справжній децентралізований досвід. Незабаром ви зможете взяти абсолютний контроль над своїми ключами.",
+        cloudWalletNote: "Ваші приватні ключі будуть шифруватися виключно на вашому пристрої за допомогою особистого пароля. JOMO не матиме жодного доступу до ваших коштів.",
+        trueWeb3Rule: "Справжнє правило Web3: Втрата пароля означатиме безповоротну втрату коштів.",
+        inUnstakeProcess: "В процесі виводу",
+
+        wallet_types: {
+            custodial_title: "Кастодіальний гаманець",
+            custodial_desc: "Керується JOMO для максимальної простоти. Захищений 2FA та професійною інфраструктурою. Ми дбаємо про технічну сторону.",
+            non_custodial_title: "Хмарний гаманець (Self-Custody)",
+            non_custodial_desc: "Ви маєте повний контроль над ключами. Зашифровано вашим паролем. Увага: JOMO не зможе відновити кошти у разі втрати пароля.",
+            coming_soon: "В розробці",
+            security_note_title: "Безпека",
+            security_note_desc: "Втрата пароля = втрата коштів.",
+        },
+        staking: {
+            fee_notice: "Сервісний збір 3% нараховується тільки на чистий отриманий прибуток.",
+            status_pending: "В черзі (Розстейк)",
+            status_ready: "Доступно до виводу",
+            eta_label: "Буде доступно приблизно через {{days}} дні",
+            liquid_token_notice: "Ви отримаєте ліквідні токени безпосередньо на свій гаманець.",
+            estimated_apy: "Орієнтовний APY",
+            mint_token: "Отримуєте токен",
+            liquid_token_info: "Ви миттєво отримуєте ліквідні токени та заробляєте винагороди",
+            min_stake_error: "Мінімальна сума - 1 NEAR",
+            standard_unstake: "Стандартний вивід (4 Епохи)",
+            instant_unstake: "Миттєвий вивід (в токенах)",
+            unstake_queue: "Черга на вивід",
+            no_active_requests: "Немає активних запитів",
+            unlocks_in: "Розблокується через ~{{hours}} годин",
+            claim_btn: "Забрати",
+            processing: "Обробка...",
+            total_deposited: "Всього депозитів",
+            total_withdrawn: "Всього виведено",
+            total_shares: "Всього акцій (вкл. холд)",
+            available: "Доступно:",
+            delayed_btn: "З затримкою",
+            instant_btn: "Миттєво",
+            unstake_request: "Запит на вивід",
+            active_req_tooltip: "У вас вже є активний запит",
+            performance: "Ваша статистика",
+            delayed_desc: "⏳ ~3 дні. Комісія: лише 0.3% JOMO.",
+            instant_desc: "⚡ Миттєво. Комісія: LiNEAR (динамічна ~0.3-1%) + 0.3% JOMO.",
+            stakeAmount: "Сума (NEAR)",
+        },
+
+        actions: {
+            deposit: "Депозит",
+            withdraw: "Вивід",
+            stake: "Стейкінг",
+        },
+
+        time: {
+            day_short: "д",
+            hour_short: "г",
+            min_short: "хв",
+            sec_short: "с"
+        },
+
+        wallet_footer: {
+            smartContract: "Контракт Сховища",
+            termsTitle: "Умови використання (Стейкінг)",
+            shortDisclaimer: "JOMO Vault надає зручний інтерфейс для кастодіального зберігання та стейкінгу NEAR. Криптовалюти схильні до високих ринкових ризиків. Процедура мережевого розстейкінгу займає близько 3-х днів. Будь ласка, інвестуйте відповідально.",
+            copyright: "© 2026 Crypto JOMO Vault. Всі права захищено.",
+            fullTerms: `1. Характер послуг: JOMO Vault надає кастодіальний гаманець та інтерфейс до смарт-контрактів мережі NEAR (зокрема LiNEAR Protocol).
+2. Ризики: Депозити в криптовалюті не застраховані. Ви приймаєте всі ризики, пов'язані з волатильністю ринку.
+3. Виведення коштів: Стандартний процес розстейкінгу (Delayed Unstake) контролюється блокчейном і триває близько 4 епох (~48-72 години). Ми не можемо пришвидшити цей процес.
+4. Комісії: JOMO стягує фіксовану сервісну комісію у розмірі 0.3% під час виведення коштів. Транзакційні комісії мережі (Gas) сплачуються користувачем.
+5. Відповідальність: Платформа не несе відповідальності за втрату коштів внаслідок компрометації ваших облікових даних (пароля, 2FA).`
+        },
+
     },
     en: {
         title: "JOMO No-Loss Pool",
@@ -227,7 +322,7 @@ export const translations: Record<Language, any> = {
         exampleTitle: "Math of Success (Example): 📝",
         exampleText: "Imagine the total pool is 10,000 NEAR, and your deposit is 1,000 NEAR (your chance is 10%). The pool generated 50 NEAR in profit. If you win, you take your 1,000 NEAR + 48.5 NEAR jackpot! If not—your 1,000 NEAR stays with you for the next draw.",
         feeDescription: "A small fee of 3% from the PROFIT (not your deposit!) allows us to maintain servers and contract security. No hidden fees!",
-        shortDisclaimer: "By participating, you confirm you are 18+ and not a resident of prohibited jurisdictions. JOMO Pool is a no-loss protocol; you can withdraw your deposit. Unstaking takes ~3 days. Use at your own risk.",
+        shortDisclaimer: "By participating, you confirm you are 18+ and not a resident of prohibited jurisdictions. JOMO Pool is a no-loss protocol, you can withdraw your deposit. Unstaking takes ~3 days. Use at your own risk.",
         fullTerms: "1. General Provisions: JOMO Pool is a decentralized protocol on the NEAR blockchain. By using the site, you agree that developers provide only the interface to the smart contract and are not responsible for your funds.\n" +
             "\n" +
             "2. Age Restrictions: You must be at least 18 years old.\n" +
@@ -322,7 +417,6 @@ export const translations: Record<Language, any> = {
         withdrawMax: "MAX",
         sendAssetsBtn: "Send Assets",
         copied: "Copied!",
-        landingSubtitle: "UNDER DEVELOPING!!!",
         enterCabinetBtn: "Your secure account",
         chooseRiskLevel: "Choose your risk level",
         conservative: "Safe",
@@ -334,10 +428,10 @@ export const translations: Record<Language, any> = {
         aggressive: "Risk",
         lottoPoolDesc: "Classic blockchain lottery. Dedicated domain to play.",
         tryLuckBtn: "Try Your Luck",
-        securityFirst: "Security first for a secure account",
-        encryptionDesc: "Keys are encrypted and never leave the cloud.",
-        mfaDesc: "No login will be completed without confirmation.",
-        edgeDesc: "Isolated code execution environment.",
+        securityFirst: "Security First",
+        encryptionDesc: "All sensitive data and private keys are encrypted at rest using military-grade standards.",
+        mfaDesc: "Time-based One-Time Passwords (TOTP) ensure your account remains impenetrable even if your password is compromised.",
+        edgeDesc: "Critical blockchain operations run on isolated, highly secure serverless Edge Functions.",
         homeBtn: "Back",
         unstaking: "Unstaking: ",
         warning: "Warning",
@@ -379,13 +473,107 @@ export const translations: Record<Language, any> = {
         tokenLabel: "Mint Token",
         feeLabel: "Pool Fee",
         liquidHint: "You receive liquid tokens instantly while earning rewards",
-        stakeAmount: "Amount to Stake (NEAR)",
         stakeSuccess: "Staking successful!",
         confirmStakeBtn: "Stake Now",
         invalidAmount: "Invalid amount",
         insufficientBalanceGas: "Leave 0.05 NEAR for gas.",
         stakeBtn: "Stake NEAR",
         viewExplorer: "View in Explorer",
+        successTx: "Success!",
+        activeBadge: "ACTIVE",
+        liveBadge: "Live",
+        insufficientGasReserve: "Insufficient balance. Reserve {{reserve}} NEAR for gas.",
+        walletError: "Wallet error",
+
+        // --- NEW LANDING PAGE KEYS ---
+        landingHeroTitle: "Secure. Simple. JOMO.",
+        landingSubtitle: "Your secure gateway to the NEAR ecosystem. Experience seamless staking and bulletproof security.",
+        startEarningBtn: "Start Earning",
+        howItWorksTitleLanding: "How It Works",
+        hwStep1Title: "1. Bulletproof Setup",
+        hwStep1Desc: "Register and lock your account instantly. We enforce mandatory 2FA (Authenticator) and generate offline Recovery Codes to guarantee only you have access to your vault.",
+        hwStep2Title: "2. Instant Custodial Wallet",
+        hwStep2Desc: "No seed phrases, no complex setups. A secure NEAR wallet is auto-generated the moment you sign up. Your private keys are encrypted and safely managed by JOMO.",
+        hwStep3Title: "3. Free Movements",
+        hwStep3Desc: "Deposit and withdraw your NEAR anytime. JOMO charges 0% platform fees on wallet transfers. You only pay the microscopic network gas fees required by the NEAR blockchain.",
+        stakingTitle: "Earn Yield via LiNEAR",
+        stakingDesc: "Put your NEAR to work safely. Stake your assets to receive liquid tokens and earn passive income.",
+        stakingBullet1: "Transparent Fee: Only 0.3% JOMO fee is applied upon withdrawal.",
+        stakingBullet2: "Network Unstake: Standard un-staking takes ~2 to 4 days.",
+        stakingBullet3: "One Request Limit: The network protocol permits only one active unstake request per user at a time.",
+        cloudWalletTitle: "Cloud Wallet",
+        cloudWalletSubtitle: "(Non-Custodial)",
+        cloudWalletDesc: "The ultimate decentralized experience is coming. Soon, you will have the option to take absolute control of your keys.",
+        cloudWalletNote: "Your private keys will be encrypted entirely client-side using your personal password. JOMO will have zero access to your funds.",
+        trueWeb3Rule: "True Web3 Rule: Loss of your password will mean an irreversible loss of funds.",
+        inUnstakeProcess: "In Unstaking",
+
+        wallet_types: {
+            custodial_title: "Custodial Wallet",
+            custodial_desc: "Managed by JOMO for maximum simplicity. Secured by 2FA and professional infrastructure. We take care of the technical side.",
+            non_custodial_title: "Cloud Wallet (Non-Custodial)",
+            non_custodial_desc: "You have full control over your keys. Encrypted with your password. Note: JOMO cannot recover your funds if you lose your password.",
+            coming_soon: "In development",
+            security_note_title: "Security",
+            security_note_desc: "Loss of password = loss of funds.",
+        },
+
+        staking: {
+            fee_notice: "A 3% service fee is applied only to the net profit earned.",
+            status_pending: "In queue (Unstaking)",
+            status_ready: "Available to withdraw",
+            eta_label: "Available in approximately {{days}} days",
+            liquid_token_notice: "You will receive liquid tokens directly to your wallet.",
+            estimated_apy: "Estimated APY",
+            mint_token: "Mint Token",
+            liquid_token_info: "You receive liquid tokens instantly while earning rewards",
+            min_stake_error: "Minimum stake is 1 NEAR",
+            standard_unstake: "Standard Unstake (4 Epochs)",
+            instant_unstake: "Instant (Receive Liquid)",
+            unstake_queue: "Unstake Queue",
+            no_active_requests: "No active requests",
+            unlocks_in: "Unlocks in ~{{hours}} hours",
+            claim_btn: "Claim",
+            processing: "Processing...",
+            total_deposited: "Total Deposited",
+            total_withdrawn: "Total Withdrawn",
+            total_shares: "Total Shares (Inc. Hold)",
+            available: "Available:",
+            delayed_btn: "Delayed",
+            instant_btn: "Instant",
+            unstake_request: "Unstake Request",
+            active_req_tooltip: "You already have an active request",
+            performance: "Your Performance",
+            delayed_desc: "⏳ ~3 days. Fee: only 0.3% JOMO.",
+            instant_desc: "⚡ Instant. Fee: LiNEAR (dynamic ~0.3-1%) + 0.3% JOMO.",
+            stakeAmount: "Amount (NEAR)",
+        },
+
+        actions: {
+            deposit: "Deposit",
+            withdraw: "Withdraw",
+            stake: "Stake",
+        },
+
+        time: {
+            day_short: "d",
+            hour_short: "h",
+            min_short: "m",
+            sec_short: "s"
+        },
+
+        wallet_footer: {
+            smartContract: "Vault Contract",
+            termsTitle: "Terms of Service (Staking)",
+            shortDisclaimer: "JOMO Vault provides a secure interface for custodial storage and NEAR staking. Cryptocurrencies are subject to high market risks. The standard network unstaking procedure takes approximately 3 days. Please invest responsibly.",
+            copyright: "© 2026 Crypto JOMO Vault. All rights reserved.",
+            fullTerms: `1. Nature of Services: JOMO Vault provides a custodial wallet and interface to NEAR network smart contracts (including LiNEAR Protocol).
+2. Risks: Cryptocurrency deposits are not insured. You accept all risks associated with market volatility.
+3. Withdrawals: The standard unstaking process (Delayed Unstake) is controlled by the blockchain and takes about 4 epochs (~48-72 hours). We cannot expedite this process.
+4. Fees: JOMO charges a fixed service fee of 0.3% upon withdrawal. Network transaction fees (Gas) are covered by the user.
+5. Liability: The platform is not liable for loss of funds due to the compromise of your credentials (password, 2FA).`
+        },
+
     },
     es: {
         title: "JOMO No-Loss Pool",
@@ -427,7 +615,7 @@ export const translations: Record<Language, any> = {
         exampleTitle: "Matemáticas del éxito (Ejemplo): 📝",
         exampleText: "Imagina que el pool total es de 10,000 NEAR y tu depósito es de 1,000 NEAR (tu probabilidad es del 10%). El pool generó 50 NEAR de beneficio. Si ganas, te llevas tus 1,000 NEAR + ¡48.5 NEAR de jackpot! Si no, tus 1,000 NEAR se quedan contigo para el próximo sorteo.",
         feeDescription: "Una pequeña comisión del 3% sobre el BENEFICIO (¡no sobre tu depósito!) nos permite mantener los servidores y la seguridad del contrato. ¡Sin comisiones ocultas!",
-        shortDisclaimer: "Al participar, confirmas que eres mayor de 18 años y no resides en jurisdicciones prohibidas. JOMO Pool es un protocolo sin pérdidas; puedes retirar tu depósito. El desbloqueo tarda ~3 días. Úsalo bajo tu propio riesgo.",
+        shortDisclaimer: "Al participar, confirmas que eres mayor de 18 años y no resides en jurisdicciones prohibidas. JOMO Pool es un protocolo sin pérdidas, puedes retirar tu depósito. El desbloqueo tarda ~3 días. Úsalo bajo tu propio riesgo.",
         fullTerms: "1. Disposiciones generales: JOMO Pool es un protocolo descentralizado en la blockchain de NEAR. Al usar el sitio, aceptas que los desarrolladores solo proporcionan la interfaz al contrato inteligente y no son responsables de tus fondos.\n" +
             "\n" +
             "2. Restricciones de edad: Debes tener al menos 18 años.\n" +
@@ -521,7 +709,6 @@ export const translations: Record<Language, any> = {
         withdrawMax: "MÁX",
         copied: "¡Copiado!",
         sendAssetsBtn: "Enviar activos",
-        landingSubtitle: "¡EN DESARROLLO!",
         enterCabinetBtn: "Entrar a tu cuenta segura",
         chooseRiskLevel: "Elige tu nivel de riesgo",
         conservative: "Seguro",
@@ -533,10 +720,10 @@ export const translations: Record<Language, any> = {
         aggressive: "Agresivo",
         lottoPoolDesc: "Lotería clásica en blockchain. Dominio separado para jugar.",
         tryLuckBtn: "Probar suerte",
-        securityFirst: "La seguridad ante todo para una cuenta segura",
-        encryptionDesc: "Las claves están cifradas y no salen de la nube.",
+        securityFirst: "La seguridad ante todo",
+        encryptionDesc: "Las claves están cifradas y nunca salen de la nube.",
         mfaDesc: "Ningún inicio de sesión se completará sin confirmación.",
-        edgeDesc: "Entorno de ejecución de código aislado.",
+        edgeDesc: "Entorno de ejecución de código aislado y seguro.",
         homeBtn: "Volver",
         warning: "Atención",
         activeUnstakeWarning: "El unstaking estándar tarda aproximadamente 3 días. ⚠️ No puedes iniciar un nuevo unstake mientras haya uno en progreso. Reclama tus fondos aquí cuando el temporizador termine.",
@@ -572,5 +759,100 @@ export const translations: Record<Language, any> = {
         invalidNearFormat: "Formato de dirección NEAR inválido. Usa solo letras minúsculas, números, '-', '_' o '.'.",
         invalidNearLength: "La dirección debe tener entre 2 y 64 caracteres.",
         emailInUse: "Este correo electrónico ya está registrado. Por favor, inicia sesión.",
+        successTx: "¡Éxito!",
+        chooseValidator: "Validador",
+        activeBadge: "ACTIVO",
+        liveBadge: "En vivo",
+        insufficientGasReserve: "Saldo insuficiente. Reserva {{reserve}} NEAR para gas.",
+        walletError: "Error de billetera",
+
+        // --- LANDING PAGE KEYS ---
+        landingHeroTitle: "Seguro. Simple. JOMO.",
+        landingSubtitle: "Tu puerta de enlace segura al ecosistema NEAR. Experimenta staking sin interrupciones y seguridad a prueba de balas.",
+        startEarningBtn: "Empezar a ganar",
+        howItWorksTitleLanding: "Cómo funciona",
+        hwStep1Title: "1. Configuración a prueba de balas",
+        hwStep1Desc: "Regístrate y bloquea tu cuenta al instante. Imponemos 2FA obligatorio (Authenticator) y generamos códigos de recuperación fuera de línea para garantizar que solo tú tengas acceso.",
+        hwStep2Title: "2. Billetera custodia instantánea",
+        hwStep2Desc: "Sin frases semilla, sin configuraciones complejas. Se genera automáticamente una billetera NEAR segura en el momento de registrarte. Tus claves privadas están cifradas de forma segura.",
+        hwStep3Title: "3. Movimientos gratuitos",
+        hwStep3Desc: "Deposita y retira tus NEAR en cualquier momento. JOMO cobra 0% de comisiones por transferencias. Solo pagas las microscópicas comisiones de red (gas) de la blockchain NEAR.",
+        stakingTitle: "Genera rendimientos con LiNEAR",
+        stakingDesc: "Pon tus NEAR a trabajar de forma segura. Haz staking de tus activos para recibir tokens líquidos y obtener ingresos pasivos.",
+        stakingBullet1: "Tarifa transparente: Solo se aplica una comisión del 0.3% de JOMO al momento del retiro.",
+        stakingBullet2: "Unstake de red: El retiro estándar de la red tarda de 2 a 4 días.",
+        stakingBullet3: "Límite de solicitudes: El protocolo de la red solo permite una solicitud activa de retiro por usuario a la vez.",
+        cloudWalletTitle: "Billetera en la nube",
+        cloudWalletSubtitle: "(No Custodia)",
+        cloudWalletDesc: "La máxima experiencia descentralizada está en camino. Pronto, tendrás la opción de tomar el control absoluto de tus claves.",
+        cloudWalletNote: "Tus claves privadas se cifrarán completamente en tu dispositivo utilizando tu contraseña personal. JOMO tendrá cero acceso a tus fondos.",
+        trueWeb3Rule: "Regla de Web3: La pérdida de tu contraseña significará una pérdida irreversible de fondos.",
+        inUnstakeProcess: "En proceso de retiro",
+
+        wallet_types: {
+            custodial_title: "Billetera Custodia",
+            custodial_desc: "Gestionada por JOMO para máxima simplicidad. Protegida por 2FA e infraestructura profesional. Nosotros nos encargamos de lo técnico.",
+            non_custodial_title: "Billetera en la Nube (No Custodia)",
+            non_custodial_desc: "Tienes control total sobre tus llaves. Cifrado con tu contraseña. Nota: JOMO no puede recuperar tus fondos si pierdes tu contraseña.",
+            coming_soon: "En desarrollo",
+            security_note_title: "Seguridad",
+            security_note_desc: "Pérdida de contraseña = pérdida de fondos.",
+        },
+        staking: {
+            fee_notice: "Se aplica una tarifa de servicio del 3% solo sobre el beneficio neto obtenido.",
+            status_pending: "En cola (Retirada)",
+            status_ready: "Disponible para retirar",
+            eta_label: "Disponible en aproximadamente {{days}} días",
+            liquid_token_notice: "Recibirás tokens líquidos directamente en tu billetera.",
+            estimated_apy: "APY estimado",
+            mint_token: "Recibes el token",
+            liquid_token_info: "Recibes tokens líquidos al instante y ganas recompensas",
+            min_stake_error: "Cantidad mínima: 1 NEAR",
+            standard_unstake: "Retiro estándar (4 épocas)",
+            instant_unstake: "Retiro instantáneo (en tokens)",
+            unstake_queue: "Cola de retiro",
+            no_active_requests: "No hay solicitudes activas",
+            unlocks_in: "Se desbloquea en ~{{hours}} horas",
+            claim_btn: "Reclamar",
+            processing: "Procesando...",
+            total_deposited: "Total Depositado",
+            total_withdrawn: "Total Retirado",
+            total_shares: "Total Acciones (Inc. Retención)",
+            available: "Disponible:",
+            delayed_btn: "Diferido",
+            instant_btn: "Instantáneo",
+            unstake_request: "Solicitud de Retiro",
+            active_req_tooltip: "Ya tienes una solicitud activa",
+            performance: "Tu Rendimiento",
+            delayed_desc: "⏳ ~3 días. Tarifa: solo 0.3% JOMO.",
+            instant_desc: "⚡ Instantáneo. Tarifa: LiNEAR (dinámica ~0.3-1%) + 0.3% JOMO.",
+            stakeAmount: "Cantidad (NEAR)",
+        },
+
+        actions: {
+            deposit: "Depositar",
+            withdraw: "Retirar",
+            stake: "Stake",
+        },
+
+        time: {
+            day_short: "d",
+            hour_short: "h",
+            min_short: "m",
+            sec_short: "s"
+        },
+
+        wallet_footer: {
+            smartContract: "Contrato Vault",
+            termsTitle: "Términos de Servicio (Staking)",
+            shortDisclaimer: "JOMO Vault proporciona una interfaz segura para el almacenamiento custodial y el staking de NEAR. Las criptomonedas están sujetas a altos riesgos de mercado. El procedimiento estándar de retiro de la red tarda aproximadamente 3 días. Invierta de manera responsable.",
+            copyright: "© 2026 Crypto JOMO Vault. Todos los derechos reservados.",
+            fullTerms: `1. Naturaleza de los servicios: JOMO Vault proporciona una billetera custodial e interfaz a los contratos inteligentes de la red NEAR (incluido LiNEAR Protocol).
+2. Riesgos: Los depósitos en criptomonedas no están asegurados. Usted acepta todos los riesgos asociados con la volatilidad del mercado.
+3. Retiros: El proceso de retiro estándar (Delayed Unstake) es controlado por la blockchain y toma alrededor de 4 épocas (~48-72 horas). No podemos acelerar este proceso.
+4. Tarifas: JOMO cobra una tarifa de servicio fija del 0.3% al momento del retiro. Las tarifas de transacción de la red (Gas) son cubiertas por el usuario.
+5. Responsabilidad: La plataforma no se hace responsable de la pérdida de fondos debido al compromiso de sus credenciales (contraseña, 2FA).`
+        },
+
     }
 };

@@ -61,11 +61,13 @@ serve(async (req) => {
     const myKeyStore = new keyStores.InMemoryKeyStore();
     const keyPair = KeyPair.fromString(decryptedKey);
     await myKeyStore.setKey("mainnet", profile.near_account_id, keyPair);
+    const nodeUrl = Deno.env.get("VITE_NEAR_MAINNET_URL");
+    console.log(`Connecting to NEAR RPC: ${nodeUrl}`);
 
     const near = await connect({
       networkId: "mainnet",
       keyStore: myKeyStore,
-      nodeUrl: "https://rpc.mainnet.near.org",
+      nodeUrl: nodeUrl,
     });
 
     const account = await near.account(profile.near_account_id);
@@ -73,6 +75,24 @@ serve(async (req) => {
 
     if (!amountInYocto) {
       throw new Error('Invalid amount format');
+    }
+
+    console.log("Verifying balance...");
+    const state = await account.state();
+    const availableBalance = BigInt(state.amount);
+    const requestedAmount = BigInt(amountInYocto);
+
+    const reserveForGasString = utils.format.parseNearAmount("0.001");
+    if (!reserveForGasString) {
+      throw new Error('Failed to calculate gas reserve');
+    }
+    const reserveForGas = BigInt(reserveForGasString);
+
+    if (requestedAmount + reserveForGas > availableBalance) {
+      const maxAvailable = availableBalance > reserveForGas ? availableBalance - reserveForGas : 0n;
+      const maxAvailableNear = utils.format.formatNearAmount(maxAvailable.toString());
+
+      throw new Error(`Insufficient balance. You can withdraw up to ${maxAvailableNear} NEAR.`);
     }
 
     console.log(`Sending ${amountInYocto} yoctoNEAR to ${recipientId}...`);
@@ -84,7 +104,7 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error:", error.message);
     return new Response(
         JSON.stringify({ error: error.message }),

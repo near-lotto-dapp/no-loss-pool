@@ -1,0 +1,1 @@
+/Users/serhiikyba/RustroverProjects/jomo-noloss-pool/contracts/staking-proxy/target/wasm32-unknown-unknown/release/staking_proxy.wasm: /Users/serhiikyba/RustroverProjects/jomo-noloss-pool/contracts/staking-proxy/src/lib.rs /Users/serhiikyba/RustroverProjects/jomo-noloss-pool/contracts/staking-proxy/target/near/staking_proxy_abi.zst

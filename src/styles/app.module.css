@@ -376,3 +376,34 @@
   color: #00b3ff !important;
   font-weight: bold;
 }
+
+/* Custom class for the reverted cyan text */
+.infoTextReverted {
+  color: #00ecff; /* Bright cyan color from image_1.png */
+  font-size: 14px; /* Default size, not 'small' */
+  text-align: center;
+  width: 100%;
+  margin-top: 15px; /* Spacing from boxes above */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Style for the info icon inside the cyan text */
+.infoTextReverted i {
+  color: #fff; /* Icon should be white according to image_1.png */
+  margin-right: 8px; /* Space between icon and text */
+  font-size: 1.1em; /* Make icon slightly larger to be clearer */
+}
+
+/* Chrome, Safari, Edge, Opera */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
