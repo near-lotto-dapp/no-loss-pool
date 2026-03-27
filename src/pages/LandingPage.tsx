@@ -4,20 +4,24 @@ import { supabase } from "@/utils/supabaseClient.ts";
 import { usePageTitle } from "@/hooks/usePageTitle.ts";
 import { useLanguage } from "@/hooks/useLanguage.ts";
 import { TopNav } from "@/components/top_nav.tsx";
-import {FooterWallet} from "@/components/FooterWallet.tsx";
+import { FooterWallet } from "@/components/FooterWallet.tsx";
 
 export default function LandingPage() {
     const { lang, setLang, t } = useLanguage();
     const [user, setUser] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true); // Стан для запобігання блиманню кнопки
+
     usePageTitle(t.homePageTitle);
 
     useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
             setUser(session?.user ?? null);
+            setIsLoading(false);
         });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null);
+            setIsLoading(false);
         });
 
         return () => subscription.unsubscribe();
@@ -34,21 +38,65 @@ export default function LandingPage() {
             />
 
             <main className="flex-grow-1 animate__animated animate__fadeIn">
-                {/* Top Section */}
-                <header className="container py-4 text-center">
-                    <h1 className="display-5 fw-bold text-white mb-3" dangerouslySetInnerHTML={{ __html: t.landingHeroTitle }}></h1>
-                    <p className="lead mb-4 text-white-50" style={{ maxWidth: '600px', margin: '0 auto' }}>
-                        {t.landingSubtitle}
-                    </p>
-                    {!user && (
-                        <Link to="/auth" className="btn btn-info btn-lg fw-bold px-5 rounded-pill mt-2 shadow">
-                            {t.startEarningBtn}
-                        </Link>
-                    )}
+
+                {/* --- TOP BLOCK --- */}
+                <header className="container py-5 mb-3">
+                    <div className="row align-items-center">
+
+                        <div className="col-lg-6 text-center text-lg-start mb-5 mb-lg-0">
+                            <h1 className="display-4 fw-bold text-white mb-3" dangerouslySetInnerHTML={{ __html: t.landingHeroTitle }}></h1>
+                            <p className="lead mb-4 text-white-50 mx-auto mx-lg-0" style={{ maxWidth: '500px' }}>
+                                {t.landingSubtitle}
+                            </p>
+
+                            <div style={{ minHeight: '60px' }} className="d-flex justify-content-center justify-content-lg-start align-items-center mt-2">
+                                {isLoading ? (
+                                    <div className="spinner-border text-info opacity-50" role="status"></div>
+                                ) : (
+                                    <Link to="/auth" className="btn btn-info btn-lg fw-bold px-5 rounded-pill shadow animate__animated animate__fadeIn">
+                                        {user ? (t.enterCabinetBtn || "Enter Cabinet") : t.startEarningBtn}
+                                    </Link>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="col-lg-6 text-center d-none d-lg-block">
+                            <div className="position-relative d-inline-block animate__animated animate__zoomIn animate__slow">
+
+                                <div className="position-absolute top-50 start-50 translate-middle rounded-circle"
+                                     style={{ width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(13,202,240,0.15) 0%, rgba(0,0,0,0) 70%)', filter: 'blur(20px)' }}>
+                                </div>
+
+                                <div className="position-relative" style={{ zIndex: 2 }}>
+                                    <i className="bi bi-safe-fill text-dark" style={{
+                                        fontSize: '14rem',
+                                        filter: 'drop-shadow(0 0 15px rgba(13,202,240,0.6))',
+                                        WebkitTextStroke: '2px #0dcaf0'
+                                    }}></i>
+
+                                    <div className="position-absolute top-50 start-50 translate-middle" style={{ marginTop: '10px' }}>
+                                        <i className="bi bi-shield-check text-info" style={{ fontSize: '4.5rem', textShadow: '0 0 20px #0dcaf0' }}></i>
+                                    </div>
+                                </div>
+
+                                <div className="position-absolute top-0 start-0 translate-middle animate__animated animate__pulse animate__infinite animate__slower">
+                                    <i className="bi bi-stars text-warning" style={{ fontSize: '2.5rem', filter: 'drop-shadow(0 0 15px rgba(255,193,7,0.8))' }}></i>
+                                </div>
+
+                                <div className="position-absolute bottom-0 end-0 translate-middle animate__animated animate__pulse animate__infinite animate__slower" style={{ animationDelay: '1s' }}>
+                                    <span className="badge bg-dark border border-info text-info fs-6 px-3 py-2 shadow" style={{ boxShadow: '0 0 15px rgba(13,202,240,0.5) !important' }}>
+                                        NEAR Protocol
+                                    </span>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
                 </header>
 
                 {/* User Flow & Business Logic Section */}
-                <section className="container py-5 mt-3">
+                <section className="container py-5 mt-3 border-top border-secondary">
                     <h3 className="text-center mb-5 fw-bold text-white">{t.howItWorksTitleLanding}</h3>
                     <div className="row g-4">
 
