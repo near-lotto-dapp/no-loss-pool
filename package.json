@@ -15,6 +15,7 @@
     "@near-wallet-selector/core": "^10.1.4",
     "@supabase/supabase-js": "^2.99.3",
     "@vercel/analytics": "^2.0.1",
+    "big.js": "^7.0.1",
     "bn.js": "^5.2.3",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@types/big.js": "^6.2.2",
     "@types/bn.js": "^5.2.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",

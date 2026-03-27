@@ -1,5 +1,5 @@
 export type Language = 'ua' | 'en' | 'es';
-const apy:string = "~4.3%";
+const apy:string = "~ 4.3 %";
 
 export const translations: Record<Language, any> = {
     ua: {
@@ -204,7 +204,7 @@ export const translations: Record<Language, any> = {
         hwStep2Desc: "Ніяких сід-фраз чи складних налаштувань. Безпечний гаманець NEAR автоматично створюється під час реєстрації. Ваші приватні ключі зашифровані та надійно зберігаються.",
         hwStep3Title: "3. Вільні перекази",
         hwStep3Desc: "Поповнюйте та виводьте NEAR будь-коли. JOMO бере 0% комісії за перекази з гаманця. Ви сплачуєте лише мікроскопічну комісію мережі NEAR за транзакції.",
-        stakingTitle: "Заробляйте через LiNEAR",
+        stakingTitle: `Отримуйте дохід з LiNEAR з APY ${apy}`,
         stakingDesc: "Змусьте свої NEAR працювати безпечно. Стейкайте активи, отримуйте ліквідні токени та заробляйте пасивний дохід.",
         stakingBullet1: "Прозора комісія: Лише 0.3% комісії JOMO стягується під час виводу (анстейку).",
         stakingBullet2: "Мережевий розстейк: Стандартне виведення коштів займає від 2 до 4 днів.",
@@ -258,6 +258,7 @@ export const translations: Record<Language, any> = {
             stakeAmount: "Сума (NEAR)",
             amount_shares: "Сума (Shares)",
             reservedBalance: "Зарезервовано 0.05 NEAR для мережевих комісій.",
+            lifetime_profit: "Загальний прибуток",
         },
 
         actions: {
@@ -500,7 +501,7 @@ export const translations: Record<Language, any> = {
         hwStep2Desc: "No seed phrases, no complex setups. A secure NEAR wallet is auto-generated the moment you sign up. Your private keys are encrypted and safely managed by JOMO.",
         hwStep3Title: "3. Free Movements",
         hwStep3Desc: "Deposit and withdraw your NEAR anytime. JOMO charges 0% platform fees on wallet transfers. You only pay the microscopic network gas fees required by the NEAR blockchain.",
-        stakingTitle: "Earn Yield via LiNEAR",
+        stakingTitle: `Earn Yield via LiNEAR with APY ${apy}`,
         stakingDesc: "Put your NEAR to work safely. Stake your assets to receive liquid tokens and earn passive income.",
         stakingBullet1: "Transparent Fee: Only 0.3% JOMO fee is applied upon withdrawal.",
         stakingBullet2: "Network Unstake: Standard un-staking takes ~2 to 4 days.",
@@ -555,6 +556,7 @@ export const translations: Record<Language, any> = {
             stakeAmount: "Amount (NEAR)",
             amount_shares: "Amount (Shares)",
             reservedBalance: "Reserved 0.05 NEAR for network fees.",
+            lifetime_profit: "Lifetime Earned",
         },
 
         actions: {
@@ -785,7 +787,7 @@ export const translations: Record<Language, any> = {
         hwStep2Desc: "Sin frases semilla, sin configuraciones complejas. Se genera automáticamente una billetera NEAR segura en el momento de registrarte. Tus claves privadas están cifradas de forma segura.",
         hwStep3Title: "3. Movimientos gratuitos",
         hwStep3Desc: "Deposita y retira tus NEAR en cualquier momento. JOMO cobra 0% de comisiones por transferencias. Solo pagas las microscópicas comisiones de red (gas) de la blockchain NEAR.",
-        stakingTitle: "Genera rendimientos con LiNEAR",
+        stakingTitle: `Obtén rendimiento con LiNEAR con un APY de ${apy}`,
         stakingDesc: "Pon tus NEAR a trabajar de forma segura. Haz staking de tus activos para recibir tokens líquidos y obtener ingresos pasivos.",
         stakingBullet1: "Tarifa transparente: Solo se aplica una comisión del 0.3% de JOMO al momento del retiro.",
         stakingBullet2: "Unstake de red: El retiro estándar de la red tarda de 2 a 4 días.",
@@ -839,6 +841,7 @@ export const translations: Record<Language, any> = {
             stakeAmount: "Cantidad (NEAR)",
             amount_shares: "Cantidad (Shares)",
             reservedBalance: "Se han reservado 0.05 NEAR para las comisiones de red.",
+            lifetime_profit: "Ganancia total",
         },
 
         actions: {

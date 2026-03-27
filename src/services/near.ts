@@ -66,6 +66,37 @@ export const stakingService = {
         }
     },
 
+    // Rate for LiNEAR
+    async getLinearPrice(): Promise<string> {
+        try {
+            const res = await fetch(import.meta.env.VITE_NEAR_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    jsonrpc: "2.0",
+                    id: "dontcare",
+                    method: "query",
+                    params: {
+                        request_type: "call_function",
+                        finality: "optimistic",
+                        account_id: "linear-protocol.near",
+                        method_name: "ft_price",
+                        args_base64: btoa("{}")
+                    }
+                })
+            });
+            const data = await res.json();
+            if (data.result?.result) {
+                const resultString = String.fromCharCode(...data.result.result);
+                return JSON.parse(resultString);
+            }
+            return "1000000000000000000000000";
+        } catch (e) {
+            console.error("Failed to fetch LiNEAR price", e);
+            return "1000000000000000000000000";
+        }
+    },
+
     /**
      * Fetches the SINGLE active unstake request (or null)
      */

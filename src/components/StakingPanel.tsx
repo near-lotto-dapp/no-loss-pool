@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { stakingService, UnstakeRequest, UserMetrics } from '../services/near.ts';
 import { formatNearAmount } from "@near-js/utils";
 import { supabase } from '@/utils/supabaseClient';
+import Big from 'big.js';
 
 interface StakingPanelProps {
     balance: string | null;
@@ -31,6 +32,8 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const [metrics, setMetrics] = useState<UserMetrics | null>(null);
     const [currentEpoch, setCurrentEpoch] = useState<number>(0);
     const [isLoadingData, setIsLoadingData] = useState(false);
+    const [lifetimeProfit, setLifetimeProfit] = useState<string>('0.000000');
+    const [linearPrice, setLinearPrice] = useState<string>('1000000000000000000000000');
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [txError, setTxError] = useState<string | null>(null);
@@ -46,17 +49,46 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         if (!isSilent) setIsLoadingData(true);
 
         try {
-            const [sharesYocto, requestData, epoch, userMetrics] = await Promise.all([
+            const [sharesYocto, requestData, epoch, userMetrics, priceYocto] = await Promise.all([
                 stakingService.getUserShares(walletAddress, selectedProvider),
                 stakingService.getUserUnstakeRequest(walletAddress),
                 stakingService.getCurrentEpoch(),
-                stakingService.getUserMetrics(walletAddress)
+                stakingService.getUserMetrics(walletAddress),
+                stakingService.getLinearPrice() // <-- НОВИЙ ВИКЛИК
             ]);
 
             setStakedBalance(formatNearAmount(sharesYocto));
             setPendingRequest(requestData && !requestData.is_claimed ? requestData : null);
             setCurrentEpoch(epoch);
             setMetrics(userMetrics);
+
+            // --- Total profit ---
+            setLinearPrice(priceYocto);
+
+            if (userMetrics) {
+                const price = new Big(priceYocto || '1000000000000000000000000').div(1e24);
+
+                // 1. (Shares * Price)
+                const shares = new Big(sharesYocto || '0').div(1e24);
+                const currentValueNEAR = shares.times(price);
+
+                // 2. (Pending Unstake)
+                const pendingSharesBig = requestData && !requestData.is_claimed
+                    ? new Big(requestData.amount).div(1e24)
+                    : new Big(0);
+                const pendingValueNEAR = pendingSharesBig.times(price);
+
+                const totalCurrentWealth = currentValueNEAR.plus(pendingValueNEAR);
+
+                const withdrawn = new Big(userMetrics.total_withdrawn || '0').div(1e24);
+                const deposited = new Big(userMetrics.total_deposited || '0').div(1e24);
+
+                let profit = totalCurrentWealth.plus(withdrawn).minus(deposited);
+
+                if (profit.lt(0)) profit = new Big(0);
+
+                setLifetimeProfit(profit.toFixed(6));
+            }
 
         } catch (err) {
             console.error("Failed to load staking data", err);
@@ -224,7 +256,8 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
     const totalDeposited = metrics ? parseFloat(formatNearAmount(metrics.total_deposited)) : 0;
     const totalWithdrawn = metrics ? parseFloat(formatNearAmount(metrics.total_withdrawn)) : 0;
-    const unstakedAmount = pendingRequest ? parseFloat(formatNearAmount(pendingRequest.initial_deposit_value)) : 0;
+    const priceNum = parseFloat(formatNearAmount(linearPrice)) || 1;
+    const unstakedAmountNEAR = pendingShares * priceNum;
 
     return (
         <div className="mt-3 p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn">
@@ -302,10 +335,10 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                             <span className="text-white fw-bold">{totalDeposited.toFixed(2)} NEAR</span>
                         </div>
 
-                        {unstakedAmount > 0 && (
+                        {unstakedAmountNEAR > 0 && (
                             <div className="d-flex justify-content-between mb-1">
                                 <small className="text-white-50">{t.inUnstakeProcess || "In Unstaking"}</small>
-                                <span className="text-warning fw-bold">{unstakedAmount.toFixed(2)} NEAR</span>
+                                <span className="text-warning fw-bold">{unstakedAmountNEAR.toFixed(4)} NEAR</span>
                             </div>
                         )}
 
@@ -317,6 +350,16 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         <div className="d-flex justify-content-between pt-1 mt-1">
                             <small className="text-white-50">{t.staking?.total_shares || "Total Shares (Inc. Hold)"}</small>
                             <span className="text-info fw-bold">{totalShares.toFixed(4)} LiNEAR</span>
+                        </div>
+
+                        <div className="d-flex justify-content-between pt-2 mt-2 border-top border-secondary">
+                            <small className="text-white-50">{t.staking?.lifetime_profit || "Lifetime Earned"}</small>
+                            <span
+                                className="text-success fw-bold"
+                                style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.5px' }}
+                            >
+                                +{lifetimeProfit} NEAR
+                            </span>
                         </div>
                     </div>
                 </>
@@ -408,7 +451,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                                     return (
                                         <div className="p-2 bg-dark rounded border border-secondary d-flex justify-content-between align-items-center">
                                             <div>
-                                                <div className="fw-bold text-white">{Number(formatNearAmount(pendingRequest.amount)).toFixed(2)} NEAR</div>
+                                                <div className="fw-bold text-white">{Number(formatNearAmount(pendingRequest.amount)).toFixed(2)} Shares</div>
                                                 <div className="small fw-bold" style={{ color: isReady ? '#28a745' : '#ffc107', letterSpacing: '0.5px' }}>
                                                     {isReady ? (t.staking?.status_ready || "Ready") : `⏳ ~${timeLeftString}`}
                                                 </div>
