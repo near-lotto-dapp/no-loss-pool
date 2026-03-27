@@ -1,0 +1,7 @@
+{
+  "imports": {
+    "std/": "https://deno.land/std@0.168.0/",
+    "supabase": "https://esm.sh/@supabase/supabase-js@2.39.7",
+    "near-api-js": "npm:near-api-js@2.1.4"
+  }
+}

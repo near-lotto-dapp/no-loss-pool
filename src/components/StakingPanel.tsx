@@ -303,7 +303,9 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
             <div className="mb-3">
                 <div className="d-flex justify-content-between">
-                    <label className="text-white-50 small mb-1">{t.staking?.stakeAmount || "Amount (NEAR)"}</label>
+                    <label className="text-white-50 small mb-1">
+                        {activeTab === 'stake' ? (t.staking?.stakeAmount || "Amount (NEAR)") : (t.staking?.amount_shares || "Amount (Shares)")}
+                    </label>
                     <small className="text-white-50">
                         {t.staking?.available || "Available:"} {isLoadingData
                         ? <span className="spinner-border spinner-border-sm ms-1" style={{width: '10px', height: '10px'}}></span>
@@ -337,7 +339,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         {t.maxBtn || "MAX"}
                     </button>
                 </div>
-                {/* Validation messages */}
                 {inputError && (
                     <div className="text-danger small mt-1 animate__animated animate__fadeIn">
                         <i className="bi bi-exclamation-circle me-1"></i> {inputError}
