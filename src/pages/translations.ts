@@ -215,6 +215,8 @@ export const translations: Record<Language, any> = {
         cloudWalletNote: "Ваші приватні ключі будуть шифруватися виключно на вашому пристрої за допомогою особистого пароля. Ви отримаєте секретну фразу (Seed Phrase) як головний резервний інструмент.",
         trueWeb3Rule: "Справжнє правило Web3: Ви володієте своїми ключами. Якщо ви втратите і пароль, і свою Seed-фразу, ваші кошти будуть втрачені назавжди.",
         inUnstakeProcess: "В процесі виводу",
+        marketOverview: "Ринок NEAR наживо",
+        marketOverviewDesc: "Відстежуйте динаміку ціни токена NEAR у реальному часі.",
 
         wallet_types: {
             custodial_title: "Кастодіальний гаманець",
@@ -509,6 +511,8 @@ export const translations: Record<Language, any> = {
         cloudWalletNote: "Your private keys will be encrypted entirely client-side using your personal password. You will receive a Secret Recovery Phrase (Seed Phrase) as your ultimate backup.",
         trueWeb3Rule: "True Web3 Rule: You hold your own keys. If you lose both your password and your Seed Phrase, your funds are lost forever.",
         inUnstakeProcess: "In Unstaking",
+        marketOverview: "Live NEAR Market",
+        marketOverviewDesc: "Track the real-time price dynamics of the NEAR token.",
 
         wallet_types: {
             custodial_title: "Custodial Wallet",
@@ -792,6 +796,8 @@ export const translations: Record<Language, any> = {
         cloudWalletNote: "Tus claves privadas se cifrarán completamente en tu dispositivo utilizando tu contraseña personal. Recibirás una Frase Semilla (Seed Phrase) como tu respaldo definitivo.",
         trueWeb3Rule: "Regla de Web3: Tú controlas tus propias claves. Si pierdes tanto tu contraseña como tu Frase Semilla, tus fondos se perderán para siempre.",
         inUnstakeProcess: "En proceso de retiro",
+        marketOverview: "Mercado NEAR en vivo",
+        marketOverviewDesc: "Sigue la dinámica del precio del token NEAR en tiempo real.",
 
         wallet_types: {
             custodial_title: "Billetera Custodia",

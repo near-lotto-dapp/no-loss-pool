@@ -211,10 +211,16 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
         return true;
     };
 
-    const formatAddress = (address: string) => {
+    const formatAddressShort = (address: string) => {
         if (!address) return '';
         if (address.length <= 15) return address;
         return `${address.slice(0, 6)}...${address.slice(-6)}`;
+    };
+
+    const formatAddressLong = (address: string) => {
+        if (!address) return '';
+        if (address.length <= 35) return address;
+        return `${address.slice(0, 16)}...${address.slice(-16)}`;
     };
 
     return (
@@ -261,8 +267,13 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                         <span className="spinner-border spinner-border-sm text-info mx-auto"></span>
                     ) : walletAddress ? (
                         <>
-                            <span className="text-info fw-bold font-monospace ps-2" style={{ fontSize: '0.85rem' }}>
-                                {formatAddress(walletAddress)}
+                            {/* Mobile view */}
+                            <span className="text-info fw-bold font-monospace ps-2 d-md-none" style={{ fontSize: '0.85rem' }}>
+                                {formatAddressShort(walletAddress)}
+                            </span>
+                            {/* PC view */}
+                            <span className="text-info fw-bold font-monospace ps-2 d-none d-md-inline" style={{ fontSize: '0.85rem' }}>
+                                {formatAddressLong(walletAddress)}
                             </span>
                             <button onClick={() => { navigator.clipboard.writeText(walletAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className={`btn btn-sm ${copied ? 'btn-success' : 'btn-outline-secondary'}`}>
                                 {copied ? (t.copiedBtn || t.copied) : (t.copyBtn)}

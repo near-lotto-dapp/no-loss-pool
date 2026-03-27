@@ -5,6 +5,7 @@ import { usePageTitle } from "@/hooks/usePageTitle.ts";
 import { useLanguage } from "@/hooks/useLanguage.ts";
 import { TopNav } from "@/components/top_nav.tsx";
 import { FooterWallet } from "@/components/FooterWallet.tsx";
+import { NearPriceChart } from "@/components/NearPriceChart.tsx";
 
 export default function LandingPage() {
     const { lang, setLang, t } = useLanguage();
@@ -221,6 +222,19 @@ export default function LandingPage() {
                         </div>
                     </div>
                 </section>
+
+                {/* --- LIVE PRICE --- */}
+                <section className="container py-4 mt-2 border-top border-secondary">
+                    <div className="text-center mb-4">
+                        <h3 className="fw-bold text-white">{t.marketOverview || "Live NEAR Market"}</h3>
+                        <p className="text-white-50 small">{t.marketOverviewDesc || "Track the real-time price dynamics of the NEAR token."}</p>
+                    </div>
+
+                    <div className="card bg-black border-secondary rounded-4 shadow-lg overflow-hidden mx-auto" style={{ height: '400px', maxWidth: '1000px' }}>
+                        <NearPriceChart />
+                    </div>
+                </section>
+
             </main>
             <FooterWallet t={t} />
         </div>

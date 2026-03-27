@@ -8,9 +8,9 @@ interface LanguageSwitcherProps {
 }
 
 const LANGUAGES = [
-    { code: 'ua', label: 'UA', flag: '🇺🇦' },
     { code: 'en', label: 'EN', flag: '🇬🇧' },
     { code: 'es', label: 'ES', flag: '🇪🇸' },
+    { code: 'ua', label: 'UA', flag: '🇺🇦' },
 ] as const;
 
 export const LanguageSwitcher = ({ lang, setLang }: LanguageSwitcherProps) => {
