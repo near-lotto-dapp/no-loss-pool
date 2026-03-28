@@ -33,8 +33,8 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const [metrics, setMetrics] = useState<UserMetrics | null>(null);
     const [currentEpoch, setCurrentEpoch] = useState<number>(0);
     const [isLoadingData, setIsLoadingData] = useState(false);
+    const [isClaimReady, setIsClaimReady] = useState(false);
 
-    // Використовуємо константу для початкового стану прибутку
     const [lifetimeProfit, setLifetimeProfit] = useState<string>((0).toFixed(PROFIT_DECIMALS));
     const [linearPrice, setLinearPrice] = useState<string>('1000000000000000000000000');
 
@@ -113,16 +113,12 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     useEffect(() => {
         if (!pendingRequest) {
             setTimeLeftString('');
+            setIsClaimReady(false);
             return;
         }
 
         const safeUnlockEpoch = pendingRequest.unlock_epoch + 1;
-        const epochsLeft = safeUnlockEpoch - currentEpoch;
-
-        if (epochsLeft <= 0) {
-            setTimeLeftString(t.staking?.status_ready || 'Ready');
-            return;
-        }
+        const epochsLeft = Math.max(0, safeUnlockEpoch - currentEpoch);
 
         const maxMsLeft = epochsLeft * 12 * 60 * 60 * 1000;
         const storageKey = `jomo_unstake_${walletAddress}_${safeUnlockEpoch}`;
@@ -141,10 +137,14 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             if (difference <= 0) {
                 if (currentEpoch >= safeUnlockEpoch) {
                     setTimeLeftString(t.staking?.status_ready || 'Ready');
+                    setIsClaimReady(true);
                 } else {
                     setTimeLeftString(t.staking?.processing || 'Processing...');
+                    setIsClaimReady(false);
                 }
             } else {
+                setIsClaimReady(false);
+
                 const d = Math.floor(difference / (1000 * 60 * 60 * 24));
                 const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
                 const m = Math.floor((difference / 1000 / 60) % 60);
@@ -165,6 +165,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
         return () => clearInterval(interval);
     }, [pendingRequest, currentEpoch, t, walletAddress]);
+    // --------------------------------
 
     // --- Validation ---
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -460,7 +461,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         ) : (
                             <div className="d-flex flex-column gap-2">
                                 {(() => {
-                                    const isReady = pendingRequest ? currentEpoch > pendingRequest.unlock_epoch : false;
+                                    const isReady = pendingRequest ? isClaimReady : false;
                                     return (
                                         <div className="p-2 bg-dark rounded border border-secondary d-flex justify-content-between align-items-center">
                                             <div>
