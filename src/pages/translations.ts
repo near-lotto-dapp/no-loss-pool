@@ -222,7 +222,7 @@ export const translations: Record<Language, any> = {
             custodial_title: "Кастодіальний гаманець",
             custodial_desc: "Керується JOMO для максимальної простоти. Захищений 2FA та професійною інфраструктурою. Ми дбаємо про технічну сторону.",
             non_custodial_title: "Хмарний гаманець (Self-Custody)",
-            non_custodial_desc: "Ви маєте повний контроль над ключами. Зашифровано вашим паролем. Увага: JOMO не зможе відновити кошти у разі втрати пароля.",
+            non_custodial_desc: "Ви маєте повний контроль над своїми ключами. Вони зашифровані вашим паролем. Примітка: JOMO не може відновити ваші кошти, якщо ви втратите seed-фразу та пароль.",
             coming_soon: "В розробці",
             security_note_title: "Безпека",
             security_note_desc: "Бережіть свою Seed-фразу. Втрата пароля ТА Seed-фрази = втрата коштів.",
@@ -259,6 +259,7 @@ export const translations: Record<Language, any> = {
             amount_shares: "Сума (Shares)",
             reservedBalance: "Зарезервовано 0.05 NEAR для мережевих комісій.",
             lifetime_profit: "Загальний прибуток",
+            epoch_sync_error: "Мережа завершує поточну епоху. Будь ласка, спробуйте забрати кошти пізніше.",
         },
 
         actions: {
@@ -519,7 +520,7 @@ export const translations: Record<Language, any> = {
             custodial_title: "Custodial Wallet",
             custodial_desc: "Managed by JOMO for maximum simplicity. Secured by 2FA and professional infrastructure. We take care of the technical side.",
             non_custodial_title: "Cloud Wallet (Non-Custodial)",
-            non_custodial_desc: "You have full control over your keys. Encrypted with your password. Note: JOMO cannot recover your funds if you lose your password.",
+            non_custodial_desc: "You have full control over your keys. Encrypted with your password. Note: JOMO cannot recover your funds if you lose your Seed Phrase and password.",
             coming_soon: "In development",
             security_note_title: "Security",
             security_note_desc: "Keep your Seed Phrase safe. Loss of both password AND Seed Phrase = loss of funds.",
@@ -557,6 +558,7 @@ export const translations: Record<Language, any> = {
             amount_shares: "Amount (Shares)",
             reservedBalance: "Reserved 0.05 NEAR for network fees.",
             lifetime_profit: "Lifetime Earned",
+            epoch_sync_error: "The network is finalizing the current epoch. Please try claiming again later.",
         },
 
         actions: {
@@ -805,7 +807,7 @@ export const translations: Record<Language, any> = {
             custodial_title: "Billetera Custodia",
             custodial_desc: "Gestionada por JOMO para máxima simplicidad. Protegida por 2FA e infraestructura profesional. Nosotros nos encargamos de lo técnico.",
             non_custodial_title: "Billetera en la Nube (No Custodia)",
-            non_custodial_desc: "Tienes control total sobre tus llaves. Cifrado con tu contraseña. Nota: JOMO no puede recuperar tus fondos si pierdes tu contraseña.",
+            non_custodial_desc: "Tienes control total sobre tus claves. Están cifradas con tu contraseña. Nota: JOMO no puede recuperar tus fondos si pierdes tu frase semilla y contraseña.",
             coming_soon: "En desarrollo",
             security_note_title: "Seguridad",
             security_note_desc: "Guarda tu Frase Semilla. Pérdida de contraseña Y Frase Semilla = pérdida de fondos.",
@@ -842,6 +844,7 @@ export const translations: Record<Language, any> = {
             amount_shares: "Cantidad (Shares)",
             reservedBalance: "Se han reservado 0.05 NEAR para las comisiones de red.",
             lifetime_profit: "Ganancia total",
+            epoch_sync_error: "La red está finalizando la época actual. Por favor, intenta reclamar de nuevo más tarde.",
         },
 
         actions: {

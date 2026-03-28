@@ -3,6 +3,7 @@ import { stakingService, UnstakeRequest, UserMetrics } from '../services/near.ts
 import { formatNearAmount } from "@near-js/utils";
 import { supabase } from '@/utils/supabaseClient';
 import Big from 'big.js';
+import { UI_DISPLAY_DECIMALS, PROFIT_DECIMALS } from '@/utils/constants';
 
 interface StakingPanelProps {
     balance: string | null;
@@ -32,7 +33,9 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const [metrics, setMetrics] = useState<UserMetrics | null>(null);
     const [currentEpoch, setCurrentEpoch] = useState<number>(0);
     const [isLoadingData, setIsLoadingData] = useState(false);
-    const [lifetimeProfit, setLifetimeProfit] = useState<string>('0.000000');
+
+    // Використовуємо константу для початкового стану прибутку
+    const [lifetimeProfit, setLifetimeProfit] = useState<string>((0).toFixed(PROFIT_DECIMALS));
     const [linearPrice, setLinearPrice] = useState<string>('1000000000000000000000000');
 
     const [isProcessing, setIsProcessing] = useState(false);
@@ -54,7 +57,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                 stakingService.getUserUnstakeRequest(walletAddress),
                 stakingService.getCurrentEpoch(),
                 stakingService.getUserMetrics(walletAddress),
-                stakingService.getLinearPrice() // <-- НОВИЙ ВИКЛИК
+                stakingService.getLinearPrice()
             ]);
 
             setStakedBalance(formatNearAmount(sharesYocto));
@@ -87,7 +90,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
                 if (profit.lt(0)) profit = new Big(0);
 
-                setLifetimeProfit(profit.toFixed(6));
+                setLifetimeProfit(profit.toFixed(PROFIT_DECIMALS));
             }
 
         } catch (err) {
@@ -108,19 +111,25 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
     // --- Timer ---
     useEffect(() => {
-        if (!pendingRequest || currentEpoch >= pendingRequest.unlock_epoch) {
+        if (!pendingRequest) {
             setTimeLeftString('');
             return;
         }
 
-        const epochsLeft = pendingRequest.unlock_epoch - currentEpoch;
-        const maxMsLeft = epochsLeft * 12 * 60 * 60 * 1000;
+        const safeUnlockEpoch = pendingRequest.unlock_epoch + 1;
+        const epochsLeft = safeUnlockEpoch - currentEpoch;
 
-        const storageKey = `jomo_unstake_${walletAddress}_${pendingRequest.unlock_epoch}`;
+        if (epochsLeft <= 0) {
+            setTimeLeftString(t.staking?.status_ready || 'Ready');
+            return;
+        }
+
+        const maxMsLeft = epochsLeft * 12 * 60 * 60 * 1000;
+        const storageKey = `jomo_unstake_${walletAddress}_${safeUnlockEpoch}`;
         let targetDate = parseInt(localStorage.getItem(storageKey) || '0', 10);
         const now = Date.now();
 
-        if (!targetDate || targetDate <= now || (targetDate - now > maxMsLeft + 60000)) {
+        if (!targetDate || (targetDate - now > maxMsLeft + 60 * 60 * 1000)) {
             targetDate = now + maxMsLeft;
             localStorage.setItem(storageKey, targetDate.toString());
         }
@@ -130,9 +139,8 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             const difference = targetDate - currentTime;
 
             if (difference <= 0) {
-                if (currentEpoch >= pendingRequest.unlock_epoch) {
+                if (currentEpoch >= safeUnlockEpoch) {
                     setTimeLeftString(t.staking?.status_ready || 'Ready');
-                    clearInterval(interval);
                 } else {
                     setTimeLeftString(t.staking?.processing || 'Processing...');
                 }
@@ -157,7 +165,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
         return () => clearInterval(interval);
     }, [pendingRequest, currentEpoch, t, walletAddress]);
-    // --------------------------------
 
     // --- Validation ---
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,13 +185,13 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         const numVal = parseFloat(val);
 
         if (currentTab === 'stake') {
-            const maxStakeAllowed = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6));
+            const maxStakeAllowed = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6)); // Залишаємо 6 для точних математичних розрахунків газу
 
             if (numVal < MIN_STAKE_AMOUNT) {
                 setInputError(t.staking?.min_stake_error || `Minimum stake is ${MIN_STAKE_AMOUNT} NEAR`);
             } else if (numVal > maxStakeAllowed) {
                 setInputError(t.insufficientBalanceGas || `Leave ${STAKING_GAS_RESERVE} NEAR for gas.`);
-            } else if (numVal === parseFloat(safeTruncate(maxStakeAllowed, 5))) {
+            } else if (numVal === parseFloat(safeTruncate(maxStakeAllowed, UI_DISPLAY_DECIMALS))) {
                 setInputInfo(`Reserved ${STAKING_GAS_RESERVE} NEAR for network fees.`);
             }
         } else {
@@ -239,7 +246,13 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             await fetchStakingData(false);
         } catch (err: any) {
             console.error("Transaction failed:", err);
-            setTxError(err.message || "Action failed. Please try again.");
+
+            const errMsg = err.message || "";
+            if (errMsg.includes("not yet available due to unstaking delay")) {
+                setTxError(t.staking?.epoch_sync_error || "The network is finalizing the current epoch. Please try claiming again later.");
+            } else {
+                setTxError(errMsg || "Action failed. Please try again.");
+            }
         } finally {
             setIsProcessing(false);
         }
@@ -332,24 +345,24 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         <h6 className="text-white mb-3" style={{ fontSize: '0.85rem' }}>{t.staking?.performance || "Your Performance"}</h6>
                         <div className="d-flex justify-content-between mb-1">
                             <small className="text-white-50">{t.staking?.total_deposited || "Total Deposited"}</small>
-                            <span className="text-white fw-bold">{totalDeposited.toFixed(2)} NEAR</span>
+                            <span className="text-white fw-bold">{totalDeposited.toFixed(UI_DISPLAY_DECIMALS)} NEAR</span>
                         </div>
 
                         {unstakedAmountNEAR > 0 && (
                             <div className="d-flex justify-content-between mb-1">
                                 <small className="text-white-50">{t.inUnstakeProcess || "In Unstaking"}</small>
-                                <span className="text-warning fw-bold">{unstakedAmountNEAR.toFixed(4)} NEAR</span>
+                                <span className="text-warning fw-bold">{unstakedAmountNEAR.toFixed(UI_DISPLAY_DECIMALS)} NEAR</span>
                             </div>
                         )}
 
                         <div className="d-flex justify-content-between mb-1">
                             <small className="text-white-50">{t.staking?.total_withdrawn || "Total Withdrawn"}</small>
-                            <span className="text-white fw-bold">{totalWithdrawn.toFixed(2)} NEAR</span>
+                            <span className="text-white fw-bold">{totalWithdrawn.toFixed(UI_DISPLAY_DECIMALS)} NEAR</span>
                         </div>
 
                         <div className="d-flex justify-content-between pt-1 mt-1">
                             <small className="text-white-50">{t.staking?.total_shares || "Total Shares (Inc. Hold)"}</small>
-                            <span className="text-info fw-bold">{totalShares.toFixed(4)} LiNEAR</span>
+                            <span className="text-info fw-bold">{totalShares.toFixed(UI_DISPLAY_DECIMALS)} LiNEAR</span>
                         </div>
 
                         <div className="d-flex justify-content-between pt-2 mt-2 border-top border-secondary">
@@ -373,7 +386,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                     <small className="text-white-50">
                         {t.staking?.available || "Available:"} {isLoadingData
                         ? <span className="spinner-border spinner-border-sm ms-1" style={{width: '10px', height: '10px'}}></span>
-                        : (activeTab === 'stake' ? `${balance || '0.00'} NEAR` : `${Number(stakedBalance).toFixed(4)} Shares`)}
+                        : (activeTab === 'stake' ? `${balance || (0).toFixed(UI_DISPLAY_DECIMALS)} NEAR` : `${Number(stakedBalance).toFixed(UI_DISPLAY_DECIMALS)} Shares`)}
                     </small>
                 </div>
                 <div className="input-group">
@@ -392,10 +405,10 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                             let valToSet = '';
                             if (activeTab === 'stake') {
                                 const maxStakeNum = Math.max(0, parseFloat(balance || '0') - STAKING_GAS_RESERVE);
-                                valToSet = maxStakeNum > 0 ? safeTruncate(maxStakeNum, 5) : '0';
+                                valToSet = maxStakeNum > 0 ? safeTruncate(maxStakeNum, UI_DISPLAY_DECIMALS) : '0';
                             } else {
                                 const sharesNum = parseFloat(stakedBalance || '0');
-                                valToSet = sharesNum > 0 ? safeTruncate(sharesNum, 6) : '0';
+                                valToSet = sharesNum > 0 ? safeTruncate(sharesNum, UI_DISPLAY_DECIMALS) : '0';
                             }
                             setAmount(valToSet);
                             validateInput(valToSet, activeTab);
@@ -447,11 +460,11 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         ) : (
                             <div className="d-flex flex-column gap-2">
                                 {(() => {
-                                    const isReady = currentEpoch >= pendingRequest.unlock_epoch;
+                                    const isReady = pendingRequest ? currentEpoch > pendingRequest.unlock_epoch : false;
                                     return (
                                         <div className="p-2 bg-dark rounded border border-secondary d-flex justify-content-between align-items-center">
                                             <div>
-                                                <div className="fw-bold text-white">{Number(formatNearAmount(pendingRequest.amount)).toFixed(2)} Shares</div>
+                                                <div className="fw-bold text-white">{Number(formatNearAmount(pendingRequest.amount)).toFixed(UI_DISPLAY_DECIMALS)} Shares</div>
                                                 <div className="small fw-bold" style={{ color: isReady ? '#28a745' : '#ffc107', letterSpacing: '0.5px' }}>
                                                     {isReady ? (t.staking?.status_ready || "Ready") : `⏳ ~${timeLeftString}`}
                                                 </div>

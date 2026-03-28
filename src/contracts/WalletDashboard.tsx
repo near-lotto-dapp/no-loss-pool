@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
 import { supabase } from '@/utils/supabaseClient';
 import { StakingPanel } from "@/components/StakingPanel.tsx";
+import { UI_DISPLAY_DECIMALS } from '@/utils/constants';
 
 interface WalletDashboardProps {
     user: any;
@@ -49,9 +50,9 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                 body: JSON.stringify({ jsonrpc: "2.0", id: "dontcare", method: "query", params: { request_type: "view_account", finality: "optimistic", account_id: accountId } })
             });
             const data = await res.json();
-            setBalance(data.result?.amount ? (Number(data.result.amount) / 1e24).toFixed(4) : "0.0000");
+            setBalance(data.result?.amount ? (Number(data.result.amount) / 1e24).toFixed(UI_DISPLAY_DECIMALS) : (0).toFixed(UI_DISPLAY_DECIMALS));
         } catch (err) {
-            setBalance("0.00");
+            setBalance((0).toFixed(UI_DISPLAY_DECIMALS));
         } finally {
             if (!isSilent) setLoadingBalance(false);
         }
@@ -254,7 +255,7 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                         <div className="spinner-border spinner-border-sm text-info mt-2" role="status"></div>
                     ) : (
                         <h2 className="text-white m-0 fw-bold">
-                            {balance !== null ? parseFloat(balance).toFixed(4) : "0.0000"} <span className="text-info fs-4">NEAR</span>
+                            {balance !== null ? parseFloat(balance).toFixed(UI_DISPLAY_DECIMALS) : (0).toFixed(UI_DISPLAY_DECIMALS)} <span className="text-info fs-4">NEAR</span>
                         </h2>
                     )}
                 </div>
@@ -375,7 +376,7 @@ export function WalletDashboard({ user, t, onLogout }: WalletDashboardProps) {
                                 />
                                 <button className="btn btn-outline-secondary" onClick={() => {
                                     const maxAmountNum = Math.max(0, parseFloat(balance || '0') - GAS_RESERVE);
-                                    const valToSet = maxAmountNum > 0 ? safeTruncate(maxAmountNum, 5) : '0';
+                                    const valToSet = maxAmountNum > 0 ? safeTruncate(maxAmountNum, UI_DISPLAY_DECIMALS) : '0';
                                     setWithdrawAmount(valToSet);
                                     validateAmount(valToSet);
                                 }}>{t.withdrawMax || t.maxBtn}</button>
