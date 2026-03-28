@@ -432,7 +432,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
             {activeTab === 'stake' ? (
                 <button className="btn btn-success w-100 fw-bold py-2" disabled={!isStakeValid || isProcessing || isLoadingData} onClick={handleStake}>
-                    {isProcessing ? <span className="spinner-border spinner-border-sm me-2"></span> : `${t.actions?.stake || 'Stake'} ${amount || '0'} NEAR`}
+                    {isProcessing ? <span className="spinner-border spinner-border-sm me-2"></span> : `${t.actions?.stakeBtn || 'Stake'} ${amount || '0'} NEAR`}
                 </button>
             ) : (
                 <>

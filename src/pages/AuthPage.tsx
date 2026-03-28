@@ -333,22 +333,22 @@ export default function AuthPage() {
                         <div
                             className={`${styles.card} ${styles.stakingCard} text-center d-flex flex-column align-items-center`}
                             style={{maxWidth: '650px', width: '100%'}}>
-                            <h3 className="text-white mb-2 w-100 text-center">{t.welcomeUser}</h3>
-                            <div className="mb-4 w-100 text-center">
-                                  <span className="text-light d-block" style={{fontSize: '1rem', fontWeight: '500'}}>
+
+                            {/* --- GLOBAL ACCOUNT HEADER --- */}
+                            <div className="d-flex justify-content-between align-items-center w-100 mb-4 bg-dark p-3 rounded border border-secondary shadow-sm">
+                                <div className="text-start text-truncate me-3">
+                                    <h5 className="text-white m-0 mb-1" style={{ fontSize: '1.05rem' }}>
+                                        {t.welcomeSecure || t.welcomeUser || "Welcome to your secure account"}
+                                    </h5>
+                                    <div className="text-info small text-truncate d-flex align-items-center" style={{ fontSize: '0.85rem' }}>
+                                        <i className="bi bi-envelope-check me-2"></i>
                                         {user.email}
-                                  </span>
-                                {mfaStatus !== 'verified' && (
-                                    <button
-                                        type="button"
-                                        onClick={handleLogout}
-                                        className="btn btn-link text-white-50 text-decoration-none p-0 mt-1 d-inline-flex align-items-center gap-1"
-                                        style={{ fontSize: '0.85rem' }}
-                                    >
-                                        <i className="bi bi-box-arrow-right"></i>
-                                        <span>{t.logoutBtn}</span>
-                                    </button>
-                                )}
+                                    </div>
+                                </div>
+                                <button onClick={handleLogout} className="btn btn-sm btn-outline-danger fw-bold d-flex align-items-center flex-shrink-0" title={t.logoutBtn || "Log Out"}>
+                                    <i className="bi bi-box-arrow-right me-md-2"></i>
+                                    <span className="d-none d-md-inline">{t.logoutBtn || "Log Out"}</span>
+                                </button>
                             </div>
 
                             {mfaStatus === 'loading' && (
@@ -621,7 +621,7 @@ export default function AuthPage() {
                             )}
 
                             {mfaStatus === 'verified' && (
-                                <WalletDashboard user={user} t={t} onLogout={handleLogout}/>
+                                <WalletDashboard user={user} t={t} />
                             )}
                         </div>
                     )}

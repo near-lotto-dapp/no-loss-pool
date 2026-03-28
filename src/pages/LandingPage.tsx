@@ -10,7 +10,7 @@ import { NearPriceChart } from "@/components/NearPriceChart.tsx";
 export default function LandingPage() {
     const { lang, setLang, t } = useLanguage();
     const [user, setUser] = useState<any>(null);
-    const [isLoading, setIsLoading] = useState(true); // Стан для запобігання блиманню кнопки
+    const [isLoading, setIsLoading] = useState(true); // State to prevent button flickering
 
     usePageTitle(t.homePageTitle);
 
@@ -116,7 +116,7 @@ export default function LandingPage() {
                         <div className="col-md-4">
                             <div className="card h-100 bg-black border-secondary p-4 text-center hover-lift transition-all">
                                 <div className="mb-3">
-                                    <i className="bi bi-wallet2 text-info" style={{ fontSize: '2.5rem' }}></i>
+                                    <i className="bi bi-cloud text-info" style={{ fontSize: '2.5rem' }}></i>
                                 </div>
                                 <h5 className="text-white fw-bold">{t.hwStep2Title}</h5>
                                 <p className="text-white-50 small mb-0 mt-2" dangerouslySetInnerHTML={{ __html: t.hwStep2Desc }}></p>
@@ -137,7 +137,7 @@ export default function LandingPage() {
                     </div>
                 </section>
 
-                {/* Staking & Future Cloud Wallet Section */}
+                {/* Staking & Future Private Wallet Section */}
                 <section className="container py-5">
                     <div className="row g-4">
 
@@ -160,11 +160,11 @@ export default function LandingPage() {
                             </div>
                         </div>
 
-                        {/* Cloud Wallet Block (Non-Custodial) */}
+                        {/* Private Wallet Block (Non-Custodial) */}
                         <div className="col-md-6">
                             <div className="card h-100 bg-dark border-secondary p-4 position-relative overflow-hidden" style={{ filter: 'grayscale(0.3)' }}>
                                 <div className="position-absolute top-0 end-0 p-3 opacity-25">
-                                    <i className="bi bi-cloud-slash-fill text-secondary" style={{ fontSize: '8rem' }}></i>
+                                    <i className="bi bi-shield-lock-fill text-secondary" style={{ fontSize: '8rem' }}></i>
                                 </div>
                                 <span className="badge bg-secondary text-light mb-3 w-auto align-self-start px-3 py-2">
                                     <i className="bi bi-tools me-1"></i> {t.wallet_types?.coming_soon}
@@ -185,7 +185,7 @@ export default function LandingPage() {
                     </div>
                 </section>
 
-                {/* Security Section (Original) */}
+                {/* Security Section */}
                 <section className="container py-5 border-top border-secondary mt-2">
                     <div className="row align-items-center">
                         <div className="col-md-7">
