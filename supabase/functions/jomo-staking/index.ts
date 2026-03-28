@@ -52,14 +52,14 @@ serve(async (req) => {
     const decryptedKey = await decrypt(profile.encrypted_private_key, masterSecret);
     const PROXY_CONTRACT = Deno.env.get("CONTRACT_ID") || "proxy.jomo-vault.near";
     const MAX_GAS = "300000000000000";
-    const BATCH_GAS = "150000000000000";
+    const BATCH_GAS = "100000000000000";
 
     let result;
     let lastRpcError;
 
     for (const nodeUrl of RPC_NODES) {
       try {
-        const { KeyPair, keyStores, connect } = nearAPI;
+        const { KeyPair, keyStores, connect, providers } = nearAPI;
         const myKeyStore = new keyStores.InMemoryKeyStore();
         const keyPair = KeyPair.fromString(decryptedKey);
         await myKeyStore.setKey("mainnet", profile.near_account_id, keyPair);
@@ -89,13 +89,39 @@ serve(async (req) => {
             if (!amount) throw new Error("Amount is required");
             const yoctoAmount = toYocto(amount);
 
-            await account.functionCall({
+            try {
+              const storage = await account.viewFunction({
+                contractId: providerId,
+                methodName: 'storage_balance_of',
+                args: { account_id: profile.near_account_id }
+              });
+
+              if (!storage) {
+                console.log(`[STORAGE] Registering ${profile.near_account_id} on ${providerId}`);
+                await account.functionCall({
+                  contractId: providerId,
+                  methodName: 'storage_deposit',
+                  args: { account_id: profile.near_account_id },
+                  gas: "30000000000000",
+                  attachedDeposit: "1250000000000000000000",
+                });
+              }
+            } catch (e) {
+              console.warn("Storage check skipped or failed, proceeding...", e);
+            }
+
+            const tx1 = await account.functionCall({
               contractId: PROXY_CONTRACT,
               methodName: 'delayed_withdraw_shares',
               args: { amount: String(yoctoAmount), provider_id: providerId },
               gas: BATCH_GAS,
               attachedDeposit: "1",
             });
+
+            const isSuccess = providers.getTransactionLastResult(tx1);
+            if (isSuccess === false) {
+              throw new Error("Internal transfer failed. Contract rolled back the shares.");
+            }
 
             const amountBig = BigInt(yoctoAmount);
             const feeBig = (amountBig * 30n) / 10000n;
@@ -105,7 +131,7 @@ serve(async (req) => {
               contractId: providerId,
               methodName: 'unstake',
               args: { amount: payoutBig.toString() },
-              gas: BATCH_GAS,
+              gas: "150000000000000",
               attachedDeposit: "0",
             });
             break;
@@ -151,10 +177,9 @@ serve(async (req) => {
         lastRpcError = err;
         const msg = err.message || "";
 
-        if (msg.includes("panic") || msg.includes("ExecutionError") || msg.includes("Smart contract")) {
+        if (msg.includes("panic") || msg.includes("ExecutionError") || msg.includes("Smart contract") || msg.includes("Internal transfer failed")) {
           throw err;
         }
-
         console.warn(`[RPC Backend Warning] Node ${nodeUrl} failed: ${msg}. Trying next...`);
         continue;
       }
