@@ -271,11 +271,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             if (!session?.access_token) throw new Error("Session expired. Please log in again.");
 
             const { data, error } = await supabase.functions.invoke('jomo-staking', {
-                body: payload,
-                headers: {
-                    Authorization: `Bearer ${session.access_token}`,
-                    apikey: import.meta.env.VITE_NEXT_PUBLIC_SUPABASE_ANON_KEY
-                }
+                body: payload
             });
 
             if (error) throw new Error(error.message);
