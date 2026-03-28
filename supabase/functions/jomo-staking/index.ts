@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "npm:@supabase/supabase-js@2"
 import * as nearAPI from "npm:near-api-js@2.1.4"
 import { decrypt } from "../withdraw-near/crypto.ts"
+import { RPC_NODES } from "../_shared/near-rpc-base.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,7 +23,8 @@ serve(async (req) => {
   }
 
   try {
-    const { action, amount, providerId = 'linear-protocol.near' } = await req.json();
+    const payload = await req.json();
+    const { action, amount, claimType, providerId = 'linear-protocol.near' } = payload;
 
     const supabaseAdmin = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
@@ -32,7 +34,8 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('Missing Authorization header');
 
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     if (authError || !user) throw new Error('Unauthorized');
 
     const { data: profile, error: profileError } = await supabaseAdmin
@@ -47,95 +50,139 @@ serve(async (req) => {
     if (!masterSecret) throw new Error('Server configuration error');
 
     const decryptedKey = await decrypt(profile.encrypted_private_key, masterSecret);
-
-    const { KeyPair, keyStores, connect } = nearAPI;
-    const myKeyStore = new keyStores.InMemoryKeyStore();
-    const keyPair = KeyPair.fromString(decryptedKey);
-    await myKeyStore.setKey("mainnet", profile.near_account_id, keyPair);
-
-    const near = await connect({
-      networkId: "mainnet",
-      keyStore: myKeyStore,
-      nodeUrl: "https://rpc.mainnet.near.org",
-    });
-
-    const account = await near.account(profile.near_account_id);
     const PROXY_CONTRACT = Deno.env.get("CONTRACT_ID") || "proxy.jomo-vault.near";
     const MAX_GAS = "300000000000000";
+    const BATCH_GAS = "150000000000000";
 
     let result;
+    let lastRpcError;
 
-    switch (action) {
-      case 'stake': {
-        if (!amount) throw new Error("Amount is required");
-        console.log(`[STAKE] Depositing ${amount} NEAR to ${providerId}`);
+    for (const nodeUrl of RPC_NODES) {
+      try {
+        const { KeyPair, keyStores, connect } = nearAPI;
+        const myKeyStore = new keyStores.InMemoryKeyStore();
+        const keyPair = KeyPair.fromString(decryptedKey);
+        await myKeyStore.setKey("mainnet", profile.near_account_id, keyPair);
 
-        result = await account.functionCall({
-          contractId: PROXY_CONTRACT,
-          methodName: 'deposit_and_stake',
-          args: { provider_id: providerId },
-          gas: MAX_GAS,
-          attachedDeposit: toYocto(amount),
-        });
-        break;
-      }
-
-      case 'unstake': {
-        if (!amount) throw new Error("Amount is required");
-        const yoctoAmount = toYocto(amount);
-        console.log(`[DELAYED_UNSTAKE] Initiating unstake of ${amount} shares for ${profile.near_account_id}`);
-
-        result = await account.functionCall({
-          contractId: PROXY_CONTRACT,
-          methodName: 'delayed_unstake',
-          args: { amount: String(yoctoAmount), provider_id: providerId },
-          gas: MAX_GAS,
-          attachedDeposit: "0",
-        });
-        break;
-      }
-
-      case 'claim': {
-        console.log(`[CLAIM] Claiming ready funds for ${profile.near_account_id}`);
-
-        result = await account.functionCall({
-          contractId: PROXY_CONTRACT,
-          methodName: 'claim_unstaked',
-          args: {},
-          gas: MAX_GAS,
-          attachedDeposit: "0",
-        });
-        break;
-      }
-
-      case 'instant_unstake': {
-        if (!amount) throw new Error("Amount is required");
-        const yoctoAmount = toYocto(amount);
-        console.log(`[INSTANT_UNSTAKE] Converting ${amount} Shares to NEAR via PROXY for ${profile.near_account_id}`);
-
-        result = await account.functionCall({
-          contractId: PROXY_CONTRACT,
-          methodName: 'instant_withdraw_shares',
-          args: { amount: String(yoctoAmount), provider_id: providerId },
-          gas: MAX_GAS,
-          attachedDeposit: "1",
+        const near = await connect({
+          networkId: "mainnet",
+          keyStore: myKeyStore,
+          nodeUrl: nodeUrl,
         });
 
-        console.log("Instant Unstake successful, proxy distributed NEAR");
-        break;
-      }
+        const account = await near.account(profile.near_account_id);
 
-      default:
-        throw new Error(`Invalid action provided: ${action}`);
+        switch (action) {
+          case 'stake': {
+            if (!amount) throw new Error("Amount is required");
+            result = await account.functionCall({
+              contractId: PROXY_CONTRACT,
+              methodName: 'deposit_and_stake',
+              args: { provider_id: providerId },
+              gas: MAX_GAS,
+              attachedDeposit: toYocto(amount),
+            });
+            break;
+          }
+
+          case 'unstake': {
+            if (!amount) throw new Error("Amount is required");
+            const yoctoAmount = toYocto(amount);
+
+            await account.functionCall({
+              contractId: PROXY_CONTRACT,
+              methodName: 'delayed_withdraw_shares',
+              args: { amount: String(yoctoAmount), provider_id: providerId },
+              gas: BATCH_GAS,
+              attachedDeposit: "1",
+            });
+
+            const amountBig = BigInt(yoctoAmount);
+            const feeBig = (amountBig * 30n) / 10000n;
+            const payoutBig = amountBig - feeBig;
+
+            result = await account.functionCall({
+              contractId: providerId,
+              methodName: 'unstake',
+              args: { amount: payoutBig.toString() },
+              gas: BATCH_GAS,
+              attachedDeposit: "0",
+            });
+            break;
+          }
+
+          case 'claim': {
+            if (claimType === 'legacy') {
+              result = await account.functionCall({
+                contractId: PROXY_CONTRACT,
+                methodName: 'claim_unstaked',
+                args: {},
+                gas: MAX_GAS,
+                attachedDeposit: "0",
+              });
+            } else {
+              result = await account.functionCall({
+                contractId: providerId,
+                methodName: 'withdraw_all',
+                args: {},
+                gas: MAX_GAS,
+                attachedDeposit: "0",
+              });
+            }
+            break;
+          }
+
+          case 'instant_unstake': {
+            const yoctoAmount = toYocto(amount);
+            result = await account.functionCall({
+              contractId: PROXY_CONTRACT,
+              methodName: 'instant_withdraw_shares',
+              args: { amount: String(yoctoAmount), provider_id: providerId },
+              gas: MAX_GAS,
+              attachedDeposit: "1",
+            });
+            break;
+          }
+        }
+
+        break;
+
+      } catch (err: any) {
+        lastRpcError = err;
+        const msg = err.message || "";
+
+        if (msg.includes("panic") || msg.includes("ExecutionError") || msg.includes("Smart contract")) {
+          throw err;
+        }
+
+        console.warn(`[RPC Backend Warning] Node ${nodeUrl} failed: ${msg}. Trying next...`);
+        continue;
+      }
+    }
+
+    if (!result && lastRpcError) throw lastRpcError;
+
+    if (result?.transaction?.hash) {
+      if (action === 'unstake') {
+        await supabaseAdmin
+            .from('profiles')
+            .update({ unstake_start_time: new Date().toISOString() })
+            .eq('id', user.id);
+      } else if (action === 'claim') {
+        await supabaseAdmin
+            .from('profiles')
+            .update({ unstake_start_time: null })
+            .eq('id', user.id);
+      }
     }
 
     return new Response(
-        JSON.stringify({ success: true, hash: result.transaction?.hash }),
+        JSON.stringify({ success: true, hash: result?.transaction?.hash }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error: any) {
-    console.error("Error:", error.message);
+    console.error("Final Error:", error.message);
     return new Response(
         JSON.stringify({ error: error.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }

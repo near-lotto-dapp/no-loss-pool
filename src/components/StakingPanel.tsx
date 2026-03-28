@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { stakingService, UnstakeRequest, UserMetrics } from '../services/near.ts';
+import { stakingService, UserMetrics } from '../services/near.ts';
 import { formatNearAmount } from "@near-js/utils";
 import { supabase } from '@/utils/supabaseClient';
 import Big from 'big.js';
 import { UI_DISPLAY_DECIMALS, PROFIT_DECIMALS } from '@/utils/constants';
+import { fetchWithFallback, checkContractClaimReadiness } from '@/utils/rpc';
 
 interface StakingPanelProps {
     balance: string | null;
@@ -29,11 +30,19 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const [selectedProvider, setSelectedProvider] = useState('linear-protocol.near');
 
     const [stakedBalance, setStakedBalance] = useState<string>('0');
-    const [pendingRequest, setPendingRequest] = useState<UnstakeRequest | null>(null);
     const [metrics, setMetrics] = useState<UserMetrics | null>(null);
     const [currentEpoch, setCurrentEpoch] = useState<number>(0);
     const [isLoadingData, setIsLoadingData] = useState(false);
-    const [isClaimReady, setIsClaimReady] = useState(false);
+
+    // DUAL CHANNEL REQUESTS
+    const [legacyRequest, setLegacyRequest] = useState<any>(null);
+    const [directRequest, setDirectRequest] = useState<any>(null);
+
+    // UI states
+    const [isLegacyReady, setIsLegacyReady] = useState(false);
+    const [legacyTimeStr, setLegacyTimeStr] = useState<string>('');
+    const [directTimeStr, setDirectTimeStr] = useState<string>('');
+    const [unstakeStartTime, setUnstakeStartTime] = useState<string | null>(null);
 
     const [lifetimeProfit, setLifetimeProfit] = useState<string>((0).toFixed(PROFIT_DECIMALS));
     const [linearPrice, setLinearPrice] = useState<string>('1000000000000000000000000');
@@ -41,7 +50,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const [isProcessing, setIsProcessing] = useState(false);
     const [txError, setTxError] = useState<string | null>(null);
     const [successHash, setSuccessHash] = useState<string | null>(null);
-    const [timeLeftString, setTimeLeftString] = useState<string>('');
 
     const [inputError, setInputError] = useState<string | null>(null);
     const [inputInfo, setInputInfo] = useState<string | null>(null);
@@ -52,42 +60,97 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         if (!isSilent) setIsLoadingData(true);
 
         try {
-            const [sharesYocto, requestData, epoch, userMetrics, priceYocto] = await Promise.all([
+            // Fetch DB start time
+            const { data: { session } } = await supabase.auth.getSession();
+            let dbStartTime = null;
+            if (session?.user?.id) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('unstake_start_time')
+                    .eq('id', session.user.id)
+                    .single();
+                dbStartTime = profile?.unstake_start_time;
+            }
+            setUnstakeStartTime(dbStartTime);
+
+            // Fetch JOMO blockchain data
+            const [sharesYocto, requestData, userMetrics, priceYocto, epochNum] = await Promise.all([
                 stakingService.getUserShares(walletAddress, selectedProvider),
                 stakingService.getUserUnstakeRequest(walletAddress),
-                stakingService.getCurrentEpoch(),
                 stakingService.getUserMetrics(walletAddress),
-                stakingService.getLinearPrice()
+                stakingService.getLinearPrice(),
+                stakingService.getCurrentEpoch()
             ]);
 
             setStakedBalance(formatNearAmount(sharesYocto));
-            setPendingRequest(requestData && !requestData.is_claimed ? requestData : null);
-            setCurrentEpoch(epoch);
+            setCurrentEpoch(epochNum);
             setMetrics(userMetrics);
 
-            // --- Total profit ---
-            setLinearPrice(priceYocto);
+            // 1. LEGACY REQUEST (JOMO Proxy)
+            let activeLegacy = null;
+            if (requestData && !requestData.is_claimed) {
+                activeLegacy = requestData;
+                const isJomoEpochReady = epochNum > requestData.unlock_epoch;
+                const proxyAccountId = import.meta.env.VITE_CONTRACT_ID || "proxy.jomo-vault.near";
 
+                if (isJomoEpochReady) {
+                    const isPoolReady = await checkContractClaimReadiness(proxyAccountId, selectedProvider);
+                    setIsLegacyReady(isPoolReady);
+                } else {
+                    setIsLegacyReady(false);
+                }
+            } else {
+                setIsLegacyReady(false);
+            }
+            setLegacyRequest(activeLegacy);
+
+            // 2. DIRECT REQUEST (LiNEAR Pool)
+            let activeDirect = null;
+            try {
+                const linearAcc = await fetchWithFallback({
+                    jsonrpc: "2.0",
+                    id: "dontcare",
+                    method: "query",
+                    params: {
+                        request_type: "call_function",
+                        finality: "optimistic",
+                        account_id: selectedProvider,
+                        method_name: "get_account",
+                        args_base64: btoa(JSON.stringify({ account_id: walletAddress }))
+                    }
+                });
+
+                if (linearAcc.result?.result) {
+                    const accInfo = JSON.parse(String.fromCharCode(...linearAcc.result.result));
+                    if (BigInt(accInfo.unstaked_balance || "0") > 0n) {
+                        activeDirect = {
+                            amount: accInfo.unstaked_balance,
+                            can_withdraw: accInfo.can_withdraw
+                        };
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch direct pool data", e);
+            }
+            setDirectRequest(activeDirect);
+
+            // --- Total Wealth & Profit Logic ---
+            setLinearPrice(priceYocto);
             if (userMetrics) {
                 const price = new Big(priceYocto || '1000000000000000000000000').div(1e24);
-
-                // 1. (Shares * Price)
                 const shares = new Big(sharesYocto || '0').div(1e24);
-                const currentValueNEAR = shares.times(price);
 
-                // 2. (Pending Unstake)
-                const pendingSharesBig = requestData && !requestData.is_claimed
-                    ? new Big(requestData.amount).div(1e24)
-                    : new Big(0);
-                const pendingValueNEAR = pendingSharesBig.times(price);
+                const legacySharesBig = activeLegacy ? new Big(activeLegacy.amount).div(1e24) : new Big(0);
+                const directNearBig = activeDirect ? new Big(activeDirect.amount).div(1e24) : new Big(0);
 
-                const totalCurrentWealth = currentValueNEAR.plus(pendingValueNEAR);
+                const activeValueNEAR = shares.times(price);
+                const legacyValueNEAR = legacySharesBig.times(price);
+                const totalCurrentWealth = activeValueNEAR.plus(legacyValueNEAR).plus(directNearBig);
 
                 const withdrawn = new Big(userMetrics.total_withdrawn || '0').div(1e24);
                 const deposited = new Big(userMetrics.total_deposited || '0').div(1e24);
 
                 let profit = totalCurrentWealth.plus(withdrawn).minus(deposited);
-
                 if (profit.lt(0)) profit = new Big(0);
 
                 setLifetimeProfit(profit.toFixed(PROFIT_DECIMALS));
@@ -100,80 +163,64 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         }
     }, [walletAddress, selectedProvider]);
 
+    // Global fetch interval
     useEffect(() => {
         fetchStakingData(false);
-        const intervalId = setInterval(() => {
-            fetchStakingData(true);
-        }, 15000);
-
+        const intervalId = setInterval(() => fetchStakingData(true), 60000);
         return () => clearInterval(intervalId);
     }, [fetchStakingData]);
 
-    // --- Timer ---
+    // --- TIMERS FOR BOTH CHANNELS ---
     useEffect(() => {
-        if (!pendingRequest) {
-            setTimeLeftString('');
-            setIsClaimReady(false);
-            return;
-        }
-
-        const safeUnlockEpoch = pendingRequest.unlock_epoch + 1;
-        // Reset old browser timer by updating key
-        const storageKey = `jomo_unstake_time_${walletAddress}_${pendingRequest.unlock_epoch}`;
-        let targetDate = parseInt(localStorage.getItem(storageKey) || '0', 10);
-        const now = Date.now();
-
-        // Hard physics time (force 12h per epoch buffer)
-        if (!targetDate || targetDate < now - (24 * 60 * 60 * 1000)) {
-            const epochsLeft = Math.max(1, safeUnlockEpoch - currentEpoch);
-            const msToWait = epochsLeft * 12 * 60 * 60 * 1000;
-            targetDate = now + msToWait;
-            localStorage.setItem(storageKey, targetDate.toString());
-        }
-
-        const interval = setInterval(() => {
-            const currentTime = Date.now();
-            const difference = targetDate - currentTime;
-
-            if (difference <= 0) {
-                if (currentEpoch >= safeUnlockEpoch) {
-                    setTimeLeftString(t.staking?.status_ready || 'Ready');
-                    setIsClaimReady(true);
+        const updateTimers = () => {
+            // Legacy Timer
+            if (legacyRequest) {
+                const isJomoEpochReady = currentEpoch > legacyRequest.unlock_epoch;
+                if (isLegacyReady) {
+                    setLegacyTimeStr(t.staking?.status_ready || 'Ready');
+                } else if (isJomoEpochReady) {
+                    setLegacyTimeStr('⏳ Finalizing in proxy...');
                 } else {
-                    setTimeLeftString(t.staking?.processing || 'Processing...');
-                    setIsClaimReady(false);
+                    const epochs = Math.max(1, (legacyRequest.unlock_epoch + 1) - currentEpoch);
+                    setLegacyTimeStr(epochs === 1 ? t.staking?.unlocks_soon || '~ 12h' : `~ ${epochs * 12}h`);
                 }
-            } else {
-                setIsClaimReady(false); // Lock claim button
-
-                const d = Math.floor(difference / (1000 * 60 * 60 * 24));
-                const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
-                const m = Math.floor((difference / 1000 / 60) % 60);
-                const s = Math.floor((difference / 1000) % 60);
-
-                const dayStr = t.time?.day_short || 'd';
-                const hourStr = t.time?.hour_short || 'h';
-                const minStr = t.time?.min_short || 'm';
-                const secStr = t.time?.sec_short || 's';
-
-                const daysDisplay = d > 0 ? `${d}${dayStr} ` : '';
-
-                setTimeLeftString(
-                    `${daysDisplay}${h.toString().padStart(2, '0')}${hourStr} ${m.toString().padStart(2, '0')}${minStr} ${s.toString().padStart(2, '0')}${secStr}`
-                );
             }
-        }, 1000);
 
+            // Direct Timer (Web2.5 Smooth UX)
+            if (directRequest) {
+                if (directRequest.can_withdraw) {
+                    setDirectTimeStr(t.staking?.status_ready || 'Ready');
+                } else if (unstakeStartTime) {
+                    const diff = (new Date(unstakeStartTime).getTime() + 72 * 3600 * 1000) - Date.now();
+                    if (diff <= 0) {
+                        setDirectTimeStr('⏳ Pool is unlocking funds...');
+                    } else {
+                        const d = Math.floor(diff / 86400000);
+                        const h = Math.floor((diff / 3600000) % 24);
+                        const m = Math.floor((diff / 60000) % 60);
+
+                        const dayStr = t.time?.day_short || 'd';
+                        const hourStr = t.time?.hour_short || 'h';
+                        const minStr = t.time?.min_short || 'm';
+                        const daysDisplay = d > 0 ? `${d}${dayStr} ` : '';
+
+                        setDirectTimeStr(`~ ${daysDisplay}${h.toString().padStart(2, '0')}${hourStr} ${m.toString().padStart(2, '0')}${minStr}`);
+                    }
+                } else {
+                    setDirectTimeStr('⏳ Processing...');
+                }
+            }
+        };
+
+        updateTimers();
+        const interval = setInterval(updateTimers, 60000);
         return () => clearInterval(interval);
-    }, [pendingRequest, currentEpoch, t, walletAddress]);
-    // --------------------------------
+    }, [legacyRequest, directRequest, isLegacyReady, currentEpoch, unstakeStartTime, t]);
 
     // --- Validation ---
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
-
         if (val !== '' && !/^\d*\.?\d*$/.test(val)) return;
-
         setAmount(val);
         validateInput(val, activeTab);
     };
@@ -181,14 +228,11 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const validateInput = (val: string, currentTab: 'stake' | 'unstake') => {
         setInputError(null);
         setInputInfo(null);
-
         if (!val) return;
-
         const numVal = parseFloat(val);
 
         if (currentTab === 'stake') {
             const maxStakeAllowed = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6));
-
             if (numVal < MIN_STAKE_AMOUNT) {
                 setInputError(t.staking?.min_stake_error || `Minimum stake is ${MIN_STAKE_AMOUNT} NEAR`);
             } else if (numVal > maxStakeAllowed) {
@@ -215,7 +259,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const maxStakeAmount = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6));
     const isStakeValid = parseFloat(amount) >= MIN_STAKE_AMOUNT && parseFloat(amount) <= maxStakeAmount;
     const isUnstakeValid = parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(stakedBalance);
-    const canCreateDelayedUnstake = isUnstakeValid && pendingRequest === null;
+    const canCreateDelayedUnstake = isUnstakeValid && !legacyRequest && !directRequest;
 
     const invokeStakingAction = async (payload: any) => {
         setIsProcessing(true);
@@ -243,21 +287,15 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                 let attempts = 0;
                 let isFound = false;
 
-                // Checking actual network receipt
                 while (!isFound && attempts < 4) {
                     await new Promise(res => setTimeout(res, 2000));
                     try {
-                        const res = await fetch(import.meta.env.VITE_NEAR_URL, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                jsonrpc: "2.0",
-                                id: "dontcare",
-                                method: "EXPERIMENTAL_tx_status",
-                                params: [data.hash, walletAddress]
-                            })
+                        const txData = await fetchWithFallback({
+                            jsonrpc: "2.0",
+                            id: "dontcare",
+                            method: "EXPERIMENTAL_tx_status",
+                            params: [data.hash, walletAddress]
                         });
-                        const txData = await res.json();
 
                         if (txData.error) {
                             attempts++;
@@ -302,7 +340,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             const errMsg = err.message || "";
 
             if (errMsg.includes("not yet available due to unstaking delay") || errMsg.includes("Smart contract panicked")) {
-                setTxError(t.staking?.epoch_sync_error || "The network is finalizing the current epoch. Please try claiming again later.");
+                setTxError(t.staking?.epoch_sync_error || "The pool is unlocking funds. Please wait.");
             } else if (errMsg.includes("TxOnChainFailure")) {
                 setTxError("Transaction failed on the blockchain. See explorer for details.");
             } else {
@@ -315,17 +353,18 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
     const handleStake = () => invokeStakingAction({ action: 'stake', amount, providerId: selectedProvider });
     const handleUnstake = () => invokeStakingAction({ action: 'unstake', amount, providerId: selectedProvider });
-    const handleClaim = () => invokeStakingAction({ action: 'claim', providerId: selectedProvider });
+    const handleClaimLegacy = () => invokeStakingAction({ action: 'claim', claimType: 'legacy', providerId: selectedProvider });
+    const handleClaimDirect = () => invokeStakingAction({ action: 'claim', claimType: 'direct', providerId: selectedProvider });
 
-    // --- Performance ---
-    const activeShares = parseFloat(stakedBalance);
-    const pendingShares = pendingRequest ? parseFloat(formatNearAmount(pendingRequest.amount)) : 0;
-    const totalShares = activeShares + pendingShares;
+    const activeSharesNum = parseFloat(stakedBalance);
+    const legacySharesNum = legacyRequest ? parseFloat(formatNearAmount(legacyRequest.amount)) : 0;
+    const directNearNum = directRequest ? parseFloat(formatNearAmount(directRequest.amount)) : 0;
+    const priceNum = parseFloat(formatNearAmount(linearPrice)) || 1;
 
+    const totalShares = activeSharesNum + legacySharesNum;
+    const unstakedAmountNEAR = (legacySharesNum * priceNum) + directNearNum;
     const totalDeposited = metrics ? parseFloat(formatNearAmount(metrics.total_deposited)) : 0;
     const totalWithdrawn = metrics ? parseFloat(formatNearAmount(metrics.total_withdrawn)) : 0;
-    const priceNum = parseFloat(formatNearAmount(linearPrice)) || 1;
-    const unstakedAmountNEAR = pendingShares * priceNum;
 
     return (
         <div className="mt-3 p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn">
@@ -371,7 +410,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
             {activeTab === 'stake' && (
                 <>
-                    {/* APY */}
                     <div className="mb-3 p-3 bg-dark rounded border border-secondary">
                         <div className="row text-center mb-3">
                             <div className="col-6 border-end border-secondary">
@@ -395,7 +433,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         </div>
                     </div>
 
-                    {/* P&L */}
                     <div className="mb-3 p-3 bg-dark rounded border border-secondary">
                         <h6 className="text-white mb-3" style={{ fontSize: '0.85rem' }}>{t.staking?.performance || "Your Performance"}</h6>
                         <div className="d-flex justify-content-between mb-1">
@@ -496,7 +533,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                             className="btn btn-warning w-100 fw-bold position-relative text-dark"
                             disabled={!canCreateDelayedUnstake || isProcessing}
                             onClick={handleUnstake}
-                            title={pendingRequest ? (t.staking?.active_req_tooltip || "You already have an active request") : ""}
+                            title={(legacyRequest || directRequest) ? (t.staking?.active_req_tooltip || "You already have an active request") : ""}
                         >
                             {isProcessing ? <span className="spinner-border spinner-border-sm"></span> : (t.staking?.delayed_btn || "Unstake")}
                         </button>
@@ -510,30 +547,49 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
                     <div className="mt-4 border-top border-secondary pt-3">
                         <h6 className="text-white mb-3">{t.staking?.unstake_request || "Unstake Request"}</h6>
-                        {!pendingRequest ? (
+                        {!legacyRequest && !directRequest ? (
                             <p className="text-white-50 small text-center">{t.staking?.no_active_requests || "No active requests"}</p>
                         ) : (
                             <div className="d-flex flex-column gap-2">
-                                {(() => {
-                                    const isReady = pendingRequest ? isClaimReady : false;
-                                    return (
-                                        <div className="p-2 bg-dark rounded border border-secondary d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div className="fw-bold text-white">{Number(formatNearAmount(pendingRequest.amount)).toFixed(UI_DISPLAY_DECIMALS)} Shares</div>
-                                                <div className="small fw-bold" style={{ color: isReady ? '#28a745' : '#ffc107', letterSpacing: '0.5px' }}>
-                                                    {isReady ? (t.staking?.status_ready || "Ready") : `⏳ ~${timeLeftString}`}
-                                                </div>
+
+                                {/* old unstake logic */}
+                                {legacyRequest && (
+                                    <div className="p-2 bg-dark rounded border border-secondary d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div className="fw-bold text-white">{Number(formatNearAmount(legacyRequest.amount)).toFixed(UI_DISPLAY_DECIMALS)} Shares</div>
+                                            <div className="small fw-bold" style={{ color: isLegacyReady ? '#28a745' : '#ffc107', letterSpacing: '0.5px' }}>
+                                                {isLegacyReady ? (t.staking?.status_ready || "Ready") : legacyTimeStr}
                                             </div>
-                                            <button
-                                                className={`btn btn-sm fw-bold ${isReady ? 'btn-success' : 'btn-outline-secondary'}`}
-                                                disabled={!isReady || isProcessing}
-                                                onClick={handleClaim}
-                                            >
-                                                {t.staking?.claim_btn || "Claim"}
-                                            </button>
                                         </div>
-                                    );
-                                })()}
+                                        <button
+                                            className={`btn btn-sm fw-bold ${isLegacyReady ? 'btn-success' : 'btn-outline-secondary'}`}
+                                            disabled={!isLegacyReady || isProcessing}
+                                            onClick={handleClaimLegacy}
+                                        >
+                                            {t.staking?.claim_btn || "Claim"}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* direct unstake*/}
+                                {directRequest && (
+                                    <div className="p-2 bg-dark rounded border border-info d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <div className="small text-info mb-1" style={{fontSize: '0.65rem', letterSpacing: '0.5px'}}>DIRECT POOL UNSTAKE</div>
+                                            <div className="fw-bold text-white">{Number(formatNearAmount(directRequest.amount)).toFixed(UI_DISPLAY_DECIMALS)} NEAR</div>
+                                            <div className="small fw-bold" style={{ color: directRequest.can_withdraw ? '#28a745' : '#ffc107', letterSpacing: '0.5px' }}>
+                                                {directRequest.can_withdraw ? (t.staking?.status_ready || "Ready") : directTimeStr}
+                                            </div>
+                                        </div>
+                                        <button
+                                            className={`btn btn-sm fw-bold ${directRequest.can_withdraw ? 'btn-success' : 'btn-outline-secondary'}`}
+                                            disabled={!directRequest.can_withdraw || isProcessing}
+                                            onClick={handleClaimDirect}
+                                        >
+                                            {t.staking?.claim_btn || "Claim"}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
