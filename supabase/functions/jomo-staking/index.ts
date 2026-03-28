@@ -125,12 +125,22 @@ serve(async (req) => {
 
             const amountBig = BigInt(yoctoAmount);
             const feeBig = (amountBig * 30n) / 10000n;
-            const payoutBig = amountBig - feeBig;
+            const payoutSharesBig = amountBig - feeBig;
+
+            // КОНВЕРТАЦІЯ SHARES У NEAR
+            const priceStr = await account.viewFunction({
+              contractId: providerId,
+              methodName: 'ft_price',
+            });
+            const priceBig = BigInt(priceStr);
+
+            // (Shares * Price) / 1e24 = NEAR
+            const nearAmountToUnstake = (payoutSharesBig * priceBig) / 1000000000000000000000000n;
 
             result = await account.functionCall({
               contractId: providerId,
               methodName: 'unstake',
-              args: { amount: payoutBig.toString() },
+              args: { amount: nearAmountToUnstake.toString() },
               gas: "150000000000000",
               attachedDeposit: "0",
             });
