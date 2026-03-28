@@ -118,15 +118,16 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         }
 
         const safeUnlockEpoch = pendingRequest.unlock_epoch + 1;
-        const epochsLeft = Math.max(0, safeUnlockEpoch - currentEpoch);
-
-        const maxMsLeft = epochsLeft * 12 * 60 * 60 * 1000;
-        const storageKey = `jomo_unstake_${walletAddress}_${safeUnlockEpoch}`;
+        // Reset old browser timer by updating key
+        const storageKey = `jomo_unstake_time_${walletAddress}_${pendingRequest.unlock_epoch}`;
         let targetDate = parseInt(localStorage.getItem(storageKey) || '0', 10);
         const now = Date.now();
 
-        if (!targetDate || (targetDate - now > maxMsLeft + 60 * 60 * 1000)) {
-            targetDate = now + maxMsLeft;
+        // Hard physics time (force 12h per epoch buffer)
+        if (!targetDate || targetDate < now - (24 * 60 * 60 * 1000)) {
+            const epochsLeft = Math.max(1, safeUnlockEpoch - currentEpoch);
+            const msToWait = epochsLeft * 12 * 60 * 60 * 1000;
+            targetDate = now + msToWait;
             localStorage.setItem(storageKey, targetDate.toString());
         }
 
@@ -143,7 +144,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                     setIsClaimReady(false);
                 }
             } else {
-                setIsClaimReady(false);
+                setIsClaimReady(false); // Lock claim button
 
                 const d = Math.floor(difference / (1000 * 60 * 60 * 24));
                 const h = Math.floor((difference / (1000 * 60 * 60)) % 24);
@@ -186,7 +187,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         const numVal = parseFloat(val);
 
         if (currentTab === 'stake') {
-            const maxStakeAllowed = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6)); // Залишаємо 6 для точних математичних розрахунків газу
+            const maxStakeAllowed = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6));
 
             if (numVal < MIN_STAKE_AMOUNT) {
                 setInputError(t.staking?.min_stake_error || `Minimum stake is ${MIN_STAKE_AMOUNT} NEAR`);
@@ -237,6 +238,56 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             if (data?.error) throw new Error(data.error);
 
             if (data?.hash) {
+                let txFailed = false;
+                let txErrorMsg = "";
+                let attempts = 0;
+                let isFound = false;
+
+                // Checking actual network receipt
+                while (!isFound && attempts < 4) {
+                    await new Promise(res => setTimeout(res, 2000));
+                    try {
+                        const res = await fetch(import.meta.env.VITE_NEAR_URL, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                jsonrpc: "2.0",
+                                id: "dontcare",
+                                method: "EXPERIMENTAL_tx_status",
+                                params: [data.hash, walletAddress]
+                            })
+                        });
+                        const txData = await res.json();
+
+                        if (txData.error) {
+                            attempts++;
+                            continue;
+                        }
+
+                        isFound = true;
+
+                        if (txData.result?.status?.Failure) {
+                            txFailed = true;
+                            txErrorMsg = JSON.stringify(txData.result.status.Failure);
+                        } else {
+                            const outcomes = txData.result?.receipts_outcome || [];
+                            for (const outcome of outcomes) {
+                                if (outcome.outcome?.status?.Failure) {
+                                    txFailed = true;
+                                    txErrorMsg = JSON.stringify(outcome.outcome.status.Failure);
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        attempts++;
+                    }
+                }
+
+                if (txFailed) {
+                    throw new Error(`TxOnChainFailure: ${txErrorMsg}`);
+                }
+
                 setSuccessHash(data.hash);
             }
 
@@ -249,8 +300,11 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             console.error("Transaction failed:", err);
 
             const errMsg = err.message || "";
-            if (errMsg.includes("not yet available due to unstaking delay")) {
+
+            if (errMsg.includes("not yet available due to unstaking delay") || errMsg.includes("Smart contract panicked")) {
                 setTxError(t.staking?.epoch_sync_error || "The network is finalizing the current epoch. Please try claiming again later.");
+            } else if (errMsg.includes("TxOnChainFailure")) {
+                setTxError("Transaction failed on the blockchain. See explorer for details.");
             } else {
                 setTxError(errMsg || "Action failed. Please try again.");
             }
@@ -433,7 +487,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
             {activeTab === 'stake' ? (
                 <button className="btn btn-success w-100 fw-bold py-2" disabled={!isStakeValid || isProcessing || isLoadingData} onClick={handleStake}>
-                    {isProcessing ? <span className="spinner-border spinner-border-sm me-2"></span> : `${t.actions?.stakeBtn || 'Stake'} ${amount || '0'} NEAR`}
+                    {isProcessing ? <span className="spinner-border spinner-border-sm me-2"></span> : `${t.actions?.stake || 'Stake'} ${amount || '0'} NEAR`}
                 </button>
             ) : (
                 <>
