@@ -75,13 +75,14 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                     if (data?.user) {
                         setSuccessMsg(t.generatingWallet);
                         try {
-                            await fetch('/api/auth/setup-wallet', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ user_id: data.user.id, email: data.user.email })
+                            const { error: invokeError } = await supabase.functions.invoke('create-near-wallet', {
+                                body: { email: data.user.email }
                             });
+
+                            if (invokeError) throw invokeError;
+
                         } catch (apiError) {
-                            console.error("Wallet generation failed:", apiError);
+                            console.error("Secure wallet generation failed:", apiError);
                         }
                     }
                 }
