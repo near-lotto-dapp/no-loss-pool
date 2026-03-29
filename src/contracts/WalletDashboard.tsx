@@ -38,7 +38,7 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
     const [addressError, setAddressError] = useState<string | null>(null);
     const [amountError, setAmountError] = useState<string | null>(null);
 
-    const GAS_RESERVE = 0.001;
+    const GAS_RESERVE = 0.015;
 
     const safeTruncate = (value: string | number, decimals: number) => {
         const str = typeof value === 'number' ? value.toFixed(10) : value.toString();

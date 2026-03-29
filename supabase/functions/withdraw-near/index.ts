@@ -82,7 +82,7 @@ serve(async (req) => {
     const availableBalance = BigInt(state.amount);
     const requestedAmount = BigInt(amountInYocto);
 
-    const reserveForGasString = utils.format.parseNearAmount("0.001");
+    const reserveForGasString = utils.format.parseNearAmount("0.015");
     if (!reserveForGasString) {
       throw new Error('Failed to calculate gas reserve');
     }
