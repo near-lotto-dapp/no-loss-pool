@@ -69,17 +69,43 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
             if (!user) return;
             setLoadingWallet(true);
             try {
-                const { data } = await supabase.from('profiles').select('near_account_id').eq('id', user.id).maybeSingle();
-                if (data && data.near_account_id) {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('near_account_id, encrypted_private_key')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                if (data && data.near_account_id && data.encrypted_private_key) {
                     setWalletAddress(data.near_account_id);
                     await fetchBalance(data.near_account_id);
+                } else {
+                    console.log("No wallet found. Auto-generating securely...");
+                    setIsGeneratingWallet(true);
+
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session?.access_token) {
+                        const { data: invokeData, error } = await supabase.functions.invoke('create-near-wallet', {
+                            headers: { Authorization: `Bearer ${session.access_token}` }
+                        });
+
+                        if (error) throw new Error(error.message);
+
+                        if (invokeData && invokeData.account_id) {
+                            setWalletAddress(invokeData.account_id);
+                            await fetchBalance(invokeData.account_id);
+                            console.log("Wallet auto-generated successfully!");
+                        }
+                    }
+                    setIsGeneratingWallet(false);
                 }
+
                 await supabase
                     .from('profiles')
                     .update({ last_activity: new Date().toISOString() })
                     .eq('id', user.id);
             } catch (err) {
-                console.error(err);
+                console.error("Wallet initialization error:", err);
+                setIsGeneratingWallet(false);
             } finally {
                 setLoadingWallet(false);
             }
@@ -309,7 +335,10 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                     {/* WALLET ADDRESS BLOCK */}
                     <div className="d-flex justify-content-between align-items-center bg-black p-2 rounded border border-dark mb-4 min-vh-10">
                         {loadingWallet ? (
-                            <span className="spinner-border spinner-border-sm text-info mx-auto"></span>
+                            <div className="d-flex align-items-center mx-auto text-info small gap-2">
+                                <span className="spinner-border spinner-border-sm"></span>
+                                {isGeneratingWallet ? "Generating Secure Wallet..." : "Loading Wallet..."}
+                            </div>
                         ) : walletAddress ? (
                             <>
                                 {/* Mobile view */}
@@ -322,19 +351,19 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                             </>
                         ) : (
                             <div className="d-flex flex-column align-items-center justify-content-center gap-2 py-2 mx-auto w-100">
-                                <span className="text-warning small fw-bold">{t.walletError || "Wallet error"}</span>
+                                <span className="text-warning small fw-bold">{t.walletError || "Wallet not generated"}</span>
                                 <button className="btn btn-sm btn-outline-warning" onClick={handleRegenerateWallet} disabled={isGeneratingWallet} style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}>
-                                    {isGeneratingWallet ? <><span className="spinner-border spinner-border-sm me-1"></span> Generating...</> : <><i className="bi bi-arrow-clockwise me-1"></i> Regenerate Wallet</>}
+                                    {isGeneratingWallet ? <><span className="spinner-border spinner-border-sm me-1"></span> Generating...</> : <><i className="bi bi-arrow-clockwise me-1"></i> Generate Wallet</>}
                                 </button>
                             </div>
                         )}
                     </div>
 
                     <div className="d-flex gap-2 mb-2">
-                        <button onClick={() => { setShowDeposit(!showDeposit); setShowWithdraw(false); }} className={`btn flex-grow-1 fw-bold py-2 ${showDeposit ? 'btn-secondary' : 'btn-info'}`} style={{ fontSize: '0.9rem' }} disabled={!walletAddress}>
+                        <button onClick={() => { setShowDeposit(!showDeposit); setShowWithdraw(false); }} className={`btn flex-grow-1 fw-bold py-2 ${showDeposit ? 'btn-secondary' : 'btn-info'}`} style={{ fontSize: '0.9rem' }} disabled={!walletAddress || loadingWallet}>
                             <i className="bi bi-qr-code me-2"></i>{t.depositBtn}
                         </button>
-                        <button onClick={() => { setShowWithdraw(!showWithdraw); setShowDeposit(false); }} className={`btn flex-grow-1 fw-bold py-2 ${showWithdraw ? 'btn-secondary' : 'btn-warning'}`} style={{ fontSize: '0.9rem' }} disabled={!walletAddress}>
+                        <button onClick={() => { setShowWithdraw(!showWithdraw); setShowDeposit(false); }} className={`btn flex-grow-1 fw-bold py-2 ${showWithdraw ? 'btn-secondary' : 'btn-warning'}`} style={{ fontSize: '0.9rem' }} disabled={!walletAddress || loadingWallet}>
                             <i className="bi bi-send me-2"></i>{t.withdrawBtn}
                         </button>
                     </div>
