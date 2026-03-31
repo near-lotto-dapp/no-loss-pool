@@ -9,12 +9,9 @@ interface WalletDashboardProps {
     t: any;
 }
 
-// Define possible view tabs
 type ViewType = 'cloud' | 'stake' | 'private';
 
 export function WalletDashboard({ user, t }: WalletDashboardProps) {
-
-    // --- Navigation State ---
     const [currentView, setCurrentView] = useState<ViewType>('cloud');
     const [hoveredTab, setHoveredTab] = useState<ViewType | null>(null);
 
@@ -38,7 +35,8 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
     const [addressError, setAddressError] = useState<string | null>(null);
     const [amountError, setAmountError] = useState<string | null>(null);
 
-    const GAS_RESERVE = 0.015;
+    // Immutable safety buffer for storage staking and transaction gas
+    const GAS_RESERVE = 0.05;
 
     const safeTruncate = (value: string | number, decimals: number) => {
         const str = typeof value === 'number' ? value.toFixed(10) : value.toString();
@@ -56,7 +54,15 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                 body: JSON.stringify({ jsonrpc: "2.0", id: "dontcare", method: "query", params: { request_type: "view_account", finality: "optimistic", account_id: accountId } })
             });
             const data = await res.json();
-            setBalance(data.result?.amount ? (Number(data.result.amount) / 1e24).toFixed(UI_DISPLAY_DECIMALS) : (0).toFixed(UI_DISPLAY_DECIMALS));
+
+            if (data.result?.amount) {
+                const rawBalance = Number(data.result.amount) / 1e24;
+                // Subtract the safety buffer. If balance is less than buffer, display 0.
+                const spendableBalance = Math.max(0, rawBalance - GAS_RESERVE);
+                setBalance(spendableBalance.toFixed(UI_DISPLAY_DECIMALS));
+            } else {
+                setBalance((0).toFixed(UI_DISPLAY_DECIMALS));
+            }
         } catch (err) {
             setBalance((0).toFixed(UI_DISPLAY_DECIMALS));
         } finally {
@@ -202,13 +208,12 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
     const validateAmount = (val: string) => {
         if (!val) { setAmountError(null); return true; }
         const numVal = parseFloat(val);
+        // The balance state already represents the safe, spendable amount
         const maxBalance = parseFloat(balance || '0');
 
         if (isNaN(numVal) || numVal <= 0) { setAmountError(t.invalidAmountZero || "Amount must be greater than 0"); return false; }
-        const maxAllowed = parseFloat((maxBalance - GAS_RESERVE).toFixed(6));
-        if (numVal > maxAllowed) {
-            const errorMsg = (t.insufficientGasReserve || `Insufficient balance. Reserve ${GAS_RESERVE} NEAR for gas.`).replace('{{reserve}}', GAS_RESERVE.toString());
-            setAmountError(errorMsg);
+        if (numVal > maxBalance) {
+            setAmountError(t.insufficientBalance || "Insufficient spendable balance.");
             return false;
         }
         setAmountError(null);
@@ -296,7 +301,6 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                 </button>
             </div>
 
-
             {/* ========================================== */}
             {/* 1. CLOUD WALLET (CUSTODIAL) VIEW           */}
             {/* ========================================== */}
@@ -324,9 +328,16 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                         {loadingBalance && !balance ? (
                             <div className="spinner-border spinner-border-sm text-info mt-2" role="status"></div>
                         ) : (
-                            <h2 className="text-white m-0 fw-bold">
-                                {balance !== null ? parseFloat(balance).toFixed(UI_DISPLAY_DECIMALS) : (0).toFixed(UI_DISPLAY_DECIMALS)} <span className="text-info fs-4">NEAR</span>
-                            </h2>
+                            <>
+                                <h2 className="text-white m-0 fw-bold">
+                                    {balance !== null ? parseFloat(balance).toFixed(UI_DISPLAY_DECIMALS) : (0).toFixed(UI_DISPLAY_DECIMALS)} <span className="text-info fs-4">NEAR</span>
+                                </h2>
+                                <div className="text-white-50 small mt-1 d-flex justify-content-center align-items-center gap-1">
+                                    <i className="bi bi-shield-lock-fill text-secondary"></i>
+                                    <span>Gas reserved: {GAS_RESERVE} NEAR</span>
+                                    <i className="bi bi-info-circle text-secondary" style={{cursor: 'help'}} title={t.gasReserveTooltip || "This amount is locked to guarantee storage and transaction fees for your wallet."}></i>
+                                </div>
+                            </>
                         )}
                     </div>
 
@@ -390,9 +401,32 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                                 <label className="text-white-50 small mb-1">{t.withdrawAmount}</label>
                                 <div className="input-group">
                                     <input type="text" inputMode="decimal" className={`form-control bg-dark text-white ${amountError ? 'border-danger' : 'border-secondary'}`} placeholder="0.0" value={withdrawAmount} onChange={handleAmountChange} />
-                                    <button className="btn btn-outline-secondary" onClick={() => { const maxAmountNum = Math.max(0, parseFloat(balance || '0') - GAS_RESERVE); const valToSet = maxAmountNum > 0 ? safeTruncate(maxAmountNum, UI_DISPLAY_DECIMALS) : '0'; setWithdrawAmount(valToSet); validateAmount(valToSet); }}>{t.withdrawMax || t.maxBtn}</button>
+                                    <button className="btn btn-outline-secondary" onClick={() => {
+                                        // The balance variable is strictly the spendable amount
+                                        const maxAmountNum = parseFloat(balance || '0');
+                                        const valToSet = maxAmountNum > 0 ? safeTruncate(maxAmountNum, UI_DISPLAY_DECIMALS) : '0';
+                                        setWithdrawAmount(valToSet);
+                                        validateAmount(valToSet);
+                                    }}>{t.withdrawMax || t.maxBtn}</button>
                                 </div>
                                 {amountError && <div className="text-danger small mt-1 animate__animated animate__fadeIn"><i className="bi bi-exclamation-circle me-1"></i> {amountError}</div>}
+
+                                {withdrawAmount && !amountError && parseFloat(withdrawAmount) > 0 && (
+                                    <div className="mt-2 p-2 bg-black rounded border border-secondary" style={{ fontSize: '0.75rem' }}>
+                                        <div className="d-flex justify-content-between text-white-50 mb-1">
+                                            <span>{t.withdraw_amount || "Withdrawal Amount"}:</span>
+                                            <span>{withdrawAmount} NEAR</span>
+                                        </div>
+                                        <div className="d-flex justify-content-between text-warning mb-1">
+                                            <span>Secure Service Fee JOMO (0.1%):</span>
+                                            <span>-{(parseFloat(withdrawAmount) * 0.001).toFixed(5)} NEAR</span>
+                                        </div>
+                                        <div className="d-flex justify-content-between text-white fw-bold pt-1 border-top border-dark">
+                                            <span>{t.you_will_receive || "You will receive"}:</span>
+                                            <span className="text-success">{(parseFloat(withdrawAmount) * 0.999).toFixed(5)} NEAR</span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             {withdrawError && <div className="alert alert-danger py-2 small text-center">{withdrawError}</div>}
                             {withdrawSuccess && (
@@ -414,8 +448,6 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
             {/* ========================================== */}
             {currentView === 'stake' && walletAddress && (
                 <div className="p-4 bg-dark rounded mb-4 border border-secondary text-start position-relative animate__animated animate__fadeIn">
-
-
                     <StakingPanel
                         balance={balance}
                         walletAddress={walletAddress}
@@ -449,7 +481,6 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                     </div>
                 </div>
             )}
-
         </div>
     );
 }

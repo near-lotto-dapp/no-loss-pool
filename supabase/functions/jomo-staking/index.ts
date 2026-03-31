@@ -54,12 +54,15 @@ serve(async (req) => {
     const MAX_GAS = "300000000000000";
     const BATCH_GAS = "100000000000000";
 
+    // Standard immutable safety reserve for gas and storage
+    const SAFE_RESERVE_NEAR = "0.05";
+
     let result;
     let lastRpcError;
 
     for (const nodeUrl of RPC_NODES) {
       try {
-        const { KeyPair, keyStores, connect, providers } = nearAPI;
+        const { KeyPair, keyStores, connect, providers, utils } = nearAPI;
         const myKeyStore = new keyStores.InMemoryKeyStore();
         const keyPair = KeyPair.fromString(decryptedKey);
         await myKeyStore.setKey("mainnet", profile.near_account_id, keyPair);
@@ -75,6 +78,17 @@ serve(async (req) => {
         switch (action) {
           case 'stake': {
             if (!amount) throw new Error("Amount is required");
+
+            // Prevent staking the safety reserve
+            const state = await account.state();
+            const availableBalance = BigInt(state.amount);
+            const reserveYocto = BigInt(utils.format.parseNearAmount(SAFE_RESERVE_NEAR)!);
+            const requestedYocto = BigInt(toYocto(amount));
+
+            if (requestedYocto + reserveYocto > availableBalance) {
+              throw new Error("Insufficient balance. 0.05 NEAR is reserved to guarantee transaction stability.");
+            }
+
             result = await account.functionCall({
               contractId: PROXY_CONTRACT,
               methodName: 'deposit_and_stake',
@@ -103,7 +117,7 @@ serve(async (req) => {
                   methodName: 'storage_deposit',
                   args: { account_id: profile.near_account_id },
                   gas: "30000000000000",
-                  attachedDeposit: "1250000000000000000000",
+                  attachedDeposit: "1250000000000000000000", // 0.00125 NEAR
                 });
               }
             } catch (e) {
@@ -127,7 +141,6 @@ serve(async (req) => {
             const feeBig = (amountBig * 30n) / 10000n;
             const payoutSharesBig = amountBig - feeBig;
 
-            // КОНВЕРТАЦІЯ SHARES У NEAR
             const priceStr = await account.viewFunction({
               contractId: providerId,
               methodName: 'ft_price',
@@ -187,7 +200,7 @@ serve(async (req) => {
         lastRpcError = err;
         const msg = err.message || "";
 
-        if (msg.includes("panic") || msg.includes("ExecutionError") || msg.includes("Smart contract") || msg.includes("Internal transfer failed")) {
+        if (msg.includes("panic") || msg.includes("ExecutionError") || msg.includes("Smart contract") || msg.includes("Internal transfer failed") || msg.includes("Insufficient balance")) {
           throw err;
         }
         console.warn(`[RPC Backend Warning] Node ${nodeUrl} failed: ${msg}. Trying next...`);

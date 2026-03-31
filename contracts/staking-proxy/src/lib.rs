@@ -98,10 +98,31 @@ impl JomoStakingProxy {
 
     pub fn fix_broken_map(&mut self) {
         require!(env::predecessor_account_id() == self.owner_id, "Only owner can fix state");
-        
+
         self.user_unstake_requests = IterableMap::new(b"req_v2".to_vec());
 
         log!("State fixed: user_unstake_requests mapped to a clean prefix.");
+    }
+
+    pub fn withdraw_treasury_near(&mut self, amount: U128) -> Promise {
+        require!(env::predecessor_account_id() == self.owner_id, "Only owner can withdraw treasury");
+
+        Promise::new(self.owner_id.clone()).transfer(NearToken::from_yoctonear(amount.0))
+    }
+
+    #[payable]
+    pub fn withdraw_treasury_shares(&mut self, provider_id: AccountId, amount: U128) -> Promise {
+        require!(env::predecessor_account_id() == self.owner_id, "Only owner can withdraw treasury");
+        require!(env::attached_deposit().as_yoctonear() >= 1, "Requires 1 yoctoNEAR attached for NEP-141 transfer");
+
+        ext_nep141::ext(provider_id)
+            .with_attached_deposit(NearToken::from_yoctonear(1))
+            .with_static_gas(GAS_FOR_FT_TRANSFER)
+            .ft_transfer(
+                self.owner_id.clone(),
+                amount,
+                Some("JOMO Treasury Withdraw".to_string())
+            )
     }
 
     pub fn add_provider(&mut self, provider_id: AccountId) {
@@ -442,6 +463,16 @@ impl JomoStakingProxy {
     }
 
     pub fn get_current_epoch(&self) -> u64 { env::epoch_height() }
+
+    pub fn get_total_user_shares(&self) -> U128 {
+        let mut total_user_shares: Balance = 0;
+
+        for (_, shares) in self.user_shares.iter() {
+            total_user_shares += shares;
+        }
+
+        U128(total_user_shares)
+    }
 }
 
 #[cfg(test)]

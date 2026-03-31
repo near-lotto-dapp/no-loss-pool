@@ -14,7 +14,9 @@ interface StakingPanelProps {
 }
 
 const MIN_STAKE_AMOUNT = 1;
-const STAKING_GAS_RESERVE = 0.05;
+
+// Only used for UI display purposes, actual math is handled by WalletDashboard and Edge Function
+const DISPLAY_GAS_RESERVE = 0.05;
 
 const safeTruncate = (value: string | number, decimals: number) => {
     const str = typeof value === 'number' ? value.toFixed(10) : value.toString();
@@ -33,7 +35,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const [metrics, setMetrics] = useState<UserMetrics | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(false);
 
-    // DIRECT CHANNEL REQUEST (LiNEAR Pool)
+    // Direct channel request (LiNEAR Pool)
     const [directRequest, setDirectRequest] = useState<any>(null);
 
     // UI states
@@ -55,7 +57,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         if (!isSilent) setIsLoadingData(true);
 
         try {
-            // Fetch DB start time
+            // Fetch DB start time for unstaking
             const { data: { session } } = await supabase.auth.getSession();
             let dbStartTime = null;
             if (session?.user?.id) {
@@ -78,7 +80,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             setStakedBalance(formatNearAmount(sharesYocto));
             setMetrics(userMetrics);
 
-            // DIRECT REQUEST (LiNEAR Pool)
+            // Fetch direct request from LiNEAR Pool
             let activeDirect = null;
             try {
                 const linearAcc = await fetchWithFallback({
@@ -108,7 +110,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             }
             setDirectRequest(activeDirect);
 
-            // --- Total Wealth & Profit Logic ---
+            // Calculate Total Wealth & Profit Logic
             if (userMetrics) {
                 const price = new Big(priceYocto || '1000000000000000000000000').div(1e24);
                 const shares = new Big(sharesYocto || '0').div(1e24);
@@ -141,7 +143,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         return () => clearInterval(intervalId);
     }, [fetchStakingData]);
 
-    // --- TIMERS FOR DIRECT CHANNEL ---
+    // Timers for direct channel unstaking
     useEffect(() => {
         const updateTimers = () => {
             if (directRequest) {
@@ -174,7 +176,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         return () => clearInterval(interval);
     }, [directRequest, unstakeStartTime, t]);
 
-    // --- Validation ---
+    // Input Validation
     const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
         if (val !== '' && !/^\d*\.?\d*$/.test(val)) return;
@@ -189,13 +191,13 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         const numVal = parseFloat(val);
 
         if (currentTab === 'stake') {
-            const maxStakeAllowed = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6));
+            // The balance prop is already the SAFE spendable amount (raw balance - 0.05)
+            const maxStakeAllowed = parseFloat(balance || '0');
+
             if (numVal < MIN_STAKE_AMOUNT) {
                 setInputError(t.staking?.min_stake_error || `Minimum stake is ${MIN_STAKE_AMOUNT} NEAR`);
             } else if (numVal > maxStakeAllowed) {
-                setInputError(t.insufficientBalanceGas || `Leave ${STAKING_GAS_RESERVE} NEAR for gas.`);
-            } else if (numVal === parseFloat(safeTruncate(maxStakeAllowed, UI_DISPLAY_DECIMALS))) {
-                setInputInfo(`Reserved ${STAKING_GAS_RESERVE} NEAR for network fees.`);
+                setInputError(t.insufficientBalance || "Insufficient spendable balance.");
             }
         } else {
             const currentShares = parseFloat(stakedBalance);
@@ -205,6 +207,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         }
     };
 
+    // Reset state on tab switch
     useEffect(() => {
         setInputError(null);
         setInputInfo(null);
@@ -213,7 +216,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         setSuccessHash(null);
     }, [activeTab]);
 
-    const maxStakeAmount = parseFloat((parseFloat(balance || '0') - STAKING_GAS_RESERVE).toFixed(6));
+    const maxStakeAmount = parseFloat(balance || '0');
     const isStakeValid = parseFloat(amount) >= MIN_STAKE_AMOUNT && parseFloat(amount) <= maxStakeAmount;
     const isUnstakeValid = parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(stakedBalance);
     const canCreateDelayedUnstake = isUnstakeValid && !directRequest;
@@ -240,6 +243,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                 let attempts = 0;
                 let isFound = false;
 
+                // Wait for blockchain indexing to catch up
                 while (!isFound && attempts < 4) {
                     await new Promise(res => setTimeout(res, 2000));
                     try {
@@ -421,16 +425,19 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             )}
 
             <div className="mb-3">
-                <div className="d-flex justify-content-between">
-                    <label className="text-white-50 small mb-1">
+                <div className="d-flex justify-content-between align-items-end mb-1">
+                    <label className="text-white-50 small mb-0">
                         {activeTab === 'stake' ? (t.staking?.amount_near || "Amount (NEAR)") : (t.staking?.amount_shares || "Amount (Shares)")}
                     </label>
-                    <small className="text-white-50">
-                        {t.staking?.available || "Available:"} {isLoadingData
-                        ? <span className="spinner-border spinner-border-sm ms-1" style={{width: '10px', height: '10px'}}></span>
-                        : (activeTab === 'stake' ? `${balance || (0).toFixed(UI_DISPLAY_DECIMALS)} NEAR` : `${Number(stakedBalance).toFixed(UI_DISPLAY_DECIMALS)} Shares`)}
-                    </small>
+                    <div className="text-end">
+                        <small className="text-white-50 d-block">
+                            {t.staking?.available || "Available:"} {isLoadingData
+                            ? <span className="spinner-border spinner-border-sm ms-1" style={{width: '10px', height: '10px'}}></span>
+                            : (activeTab === 'stake' ? `${balance || (0).toFixed(UI_DISPLAY_DECIMALS)} NEAR` : `${Number(stakedBalance).toFixed(UI_DISPLAY_DECIMALS)} Shares`)}
+                        </small>
+                    </div>
                 </div>
+
                 <div className="input-group">
                     <input
                         type="text"
@@ -446,7 +453,8 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         onClick={() => {
                             let valToSet = '';
                             if (activeTab === 'stake') {
-                                const maxStakeNum = Math.max(0, parseFloat(balance || '0') - STAKING_GAS_RESERVE);
+                                // Balance is already pre-calculated to be the safe spendable amount
+                                const maxStakeNum = parseFloat(balance || '0');
                                 valToSet = maxStakeNum > 0 ? safeTruncate(maxStakeNum, UI_DISPLAY_DECIMALS) : '0';
                             } else {
                                 const sharesNum = parseFloat(stakedBalance || '0');
@@ -460,6 +468,16 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         {t.maxBtn || "MAX"}
                     </button>
                 </div>
+
+                {/* VISUAL RESERVE INDICATOR */}
+                {activeTab === 'stake' && (
+                    <div className="text-secondary mt-1" style={{ fontSize: '0.65rem' }}>
+                        <i className="bi bi-shield-lock-fill me-1"></i>
+                        <span>{t.gasReservedLabel || "Gas reserved:"} {DISPLAY_GAS_RESERVE} NEAR</span>
+                        <i className="bi bi-info-circle ms-1" style={{ cursor: 'help' }} title={t.gasReserveTooltip || "This amount is locked to guarantee storage and transaction fees for your wallet."}></i>
+                    </div>
+                )}
+
                 {inputError && (
                     <div className="text-danger small mt-1 animate__animated animate__fadeIn">
                         <i className="bi bi-exclamation-circle me-1"></i> {inputError}

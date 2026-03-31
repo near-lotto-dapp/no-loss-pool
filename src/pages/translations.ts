@@ -193,6 +193,14 @@ export const translations: Record<Language, any> = {
         insufficientGasReserve: "Недостатньо коштів. Залиште {{reserve}} NEAR для оплати газу.",
         walletError: "Помилка гаманця",
 
+        // НОВІ КЛЮЧІ З БУФЕРОМ ТА КОМІСІЄЮ
+        gasReserveTooltip: "Ця сума заблокована для гарантування оплати зберігання та комісій мережі для вашого гаманця.",
+        gasReservedLabel: "Зарезервовано газу:",
+        insufficientBalance: "Недостатньо доступних коштів.",
+        withdraw_amount: "Сума виведення",
+        secureServiceFee: "Сервісна комісія JOMO (0.1%):",
+        you_will_receive: "Ви отримаєте",
+
         // --- LANDING ---
         landingHeroTitle: "Безпечно. Просто. JOMO.",
         landingSubtitle: "Ваш безпечний шлюз до екосистеми NEAR. Відчуйте безперебійний стейкінг та бездоганну безпеку.",
@@ -494,6 +502,14 @@ export const translations: Record<Language, any> = {
         insufficientGasReserve: "Insufficient balance. Reserve {{reserve}} NEAR for gas.",
         walletError: "Wallet error",
 
+        // NEW KEYS FOR BUFFER & FEE
+        gasReserveTooltip: "This amount is locked to guarantee storage and transaction fees for your wallet.",
+        gasReservedLabel: "Gas reserved:",
+        insufficientBalance: "Insufficient spendable balance.",
+        withdraw_amount: "Withdrawal Amount",
+        secureServiceFee: "Secure Service Fee JOMO (0.1%):",
+        you_will_receive: "You will receive",
+
         // --- NEW LANDING PAGE KEYS ---
         landingHeroTitle: "Secure. Simple. JOMO.",
         landingSubtitle: "Your secure gateway to the NEAR ecosystem. Experience seamless staking and bulletproof security.",
@@ -783,6 +799,14 @@ export const translations: Record<Language, any> = {
         liveBadge: "En vivo",
         insufficientGasReserve: "Saldo insuficiente. Reserva {{reserve}} NEAR para gas.",
         walletError: "Error de billetera",
+
+        // NUEVAS CLAVES PARA RESERVA Y TARIFA
+        gasReserveTooltip: "Esta cantidad está bloqueada para garantizar las tarifas de almacenamiento y transacción de su billetera.",
+        gasReservedLabel: "Gas reservado:",
+        insufficientBalance: "Saldo disponible insuficiente.",
+        withdraw_amount: "Cantidad de retiro",
+        secureServiceFee: "Tarifa de servicio JOMO (0.1%):",
+        you_will_receive: "Recibirás",
 
         // --- LANDING PAGE KEYS ---
         landingHeroTitle: "Seguro. Simple. JOMO.",

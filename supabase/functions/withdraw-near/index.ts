@@ -15,7 +15,12 @@ serve(async (req) => {
 
   try {
     const { recipientId, amount } = await req.json()
-    console.log(`WD ${amount} NEAR to ${recipientId}`);
+    console.log(`WD Request: ${amount} NEAR to ${recipientId}`);
+
+    const JOMO_TREASURY = Deno.env.get('VITE_STAKING_PROXY_CONTRACT_ID');
+    if (!JOMO_TREASURY) {
+      throw new Error('Server configuration error: Treasury ID missing');
+    }
 
     const supabaseAdmin = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
@@ -23,37 +28,23 @@ serve(async (req) => {
     )
 
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      console.error("Missing Authorization header");
-      throw new Error('Missing Authorization header');
-    }
+    if (!authHeader) throw new Error('Missing Authorization header');
 
-    console.log("Check user transaction...");
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''))
+    if (authError || !user) throw new Error('Unauthorized');
 
-    if (authError || !user) {
-      console.error("Unauthorized:", authError?.message);
-      throw new Error('Unauthorized');
-    }
-    console.log(`User is active: ${user.email} (ID: ${user.id})`);
+    console.log(`Processing withdrawal for: ${user.email}`);
 
-    console.log("Check wallet...");
     const { data: profile, error: profileError } = await supabaseAdmin
         .from('profiles')
         .select('encrypted_private_key, near_account_id')
         .eq('id', user.id)
         .single()
 
-    if (profileError || !profile) {
-      console.error("Profile not found:", profileError?.message);
-      throw new Error('Profile not found');
-    }
-    console.log(`Profile was found: ${profile.near_account_id}`);
+    if (profileError || !profile) throw new Error('Profile/Wallet not found');
 
     const masterSecret = Deno.env.get('ENCRYPTION_SECRET');
-    if (!masterSecret) {
-      throw new Error('Server configuration error');
-    }
+    if (!masterSecret) throw new Error('Server configuration error: Secret missing');
 
     const decryptedKey = await decrypt(profile.encrypted_private_key, masterSecret);
 
@@ -61,9 +52,8 @@ serve(async (req) => {
     const myKeyStore = new keyStores.InMemoryKeyStore();
     const keyPair = KeyPair.fromString(decryptedKey);
     await myKeyStore.setKey("mainnet", profile.near_account_id, keyPair);
-    const nodeUrl = Deno.env.get("VITE_NEAR_MAINNET_URL");
-    console.log(`Connecting to NEAR RPC: ${nodeUrl}`);
 
+    const nodeUrl = Deno.env.get("VITE_NEAR_MAINNET_URL");
     const near = await connect({
       networkId: "mainnet",
       keyStore: myKeyStore,
@@ -71,41 +61,59 @@ serve(async (req) => {
     });
 
     const account = await near.account(profile.near_account_id);
-    const amountInYocto = utils.format.parseNearAmount(amount.toString());
 
-    if (!amountInYocto) {
-      throw new Error('Invalid amount format');
-    }
+    // --- Ensure 0.05 NEAR buffer remains untouched ---
+    const SAFE_RESERVE_NEAR = "0.05";
+    const reserveYocto = BigInt(utils.format.parseNearAmount(SAFE_RESERVE_NEAR)!);
 
-    console.log("Verifying balance...");
+    // Calculate requested amount
+    const totalAmountYocto = BigInt(utils.format.parseNearAmount(amount.toString()) || "0");
+    if (totalAmountYocto <= 0n) throw new Error('Invalid amount');
+
+    // Verify state balance against the requested amount + our strict reserve buffer
     const state = await account.state();
     const availableBalance = BigInt(state.amount);
-    const requestedAmount = BigInt(amountInYocto);
 
-    const reserveForGasString = utils.format.parseNearAmount("0.015");
-    if (!reserveForGasString) {
-      throw new Error('Failed to calculate gas reserve');
-    }
-    const reserveForGas = BigInt(reserveForGasString);
-
-    if (requestedAmount + reserveForGas > availableBalance) {
-      const maxAvailable = availableBalance > reserveForGas ? availableBalance - reserveForGas : 0n;
+    if (totalAmountYocto + reserveYocto > availableBalance) {
+      // Calculate how much they can safely withdraw without breaching the reserve
+      const maxAvailable = availableBalance > reserveYocto ? availableBalance - reserveYocto : 0n;
       const maxAvailableNear = utils.format.formatNearAmount(maxAvailable.toString());
-
-      throw new Error(`Insufficient balance. You can withdraw up to ${maxAvailableNear} NEAR.`);
+      throw new Error(`Insufficient balance. Maximum allowed withdrawal is ${maxAvailableNear} NEAR.`);
     }
 
-    console.log(`Sending ${amountInYocto} yoctoNEAR to ${recipientId}...`);
-    const result = await account.sendMoney(recipientId, amountInYocto);
-    console.log("Success! Hash:", result.transaction.hash);
+    // --- Commission calculation (0.1% service security fee) ---
+    const jomoFeeYocto = totalAmountYocto / 1000n;
+
+    // 99.9% goes to the requested user address
+    const userReceiveYocto = totalAmountYocto - jomoFeeYocto;
+
+    console.log(`Splitting payout: User gets ${userReceiveYocto}, JOMO gets ${jomoFeeYocto}`);
+
+    // Execute the main transaction
+    const result = await account.sendMoney(recipientId, userReceiveYocto.toString());
+    console.log("Main transfer success! Hash:", result.transaction.hash);
+
+    // Collect the fee
+    if (jomoFeeYocto > 0n && recipientId !== JOMO_TREASURY) {
+      try {
+        await account.sendMoney(JOMO_TREASURY, jomoFeeYocto.toString());
+        console.log(`Fee of ${utils.format.formatNearAmount(jomoFeeYocto.toString())} NEAR sent to treasury.`);
+      } catch (feeError) {
+        console.error("Failed to collect JOMO fee:", feeError.message);
+      }
+    }
 
     return new Response(
-        JSON.stringify({ success: true, hash: result.transaction.hash }),
+        JSON.stringify({
+          success: true,
+          hash: result.transaction.hash,
+          fee_collected: utils.format.formatNearAmount(jomoFeeYocto.toString())
+        }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
   } catch (error: any) {
-    console.error("Error:", error.message);
+    console.error("Final Error:", error.message);
     return new Response(
         JSON.stringify({ error: error.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
