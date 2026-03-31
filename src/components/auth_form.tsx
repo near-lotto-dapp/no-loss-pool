@@ -73,13 +73,20 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                     userData = data;
 
                     if (data?.user) {
-                        setSuccessMsg(t.generatingWallet);
+                        setSuccessMsg(t.generatingWallet || "Generating wallet...");
                         try {
-                            const { error: invokeError } = await supabase.functions.invoke('create-near-wallet', {
-                                body: { email: data.user.email }
-                            });
+                            const { data: { session } } = await supabase.auth.getSession();
 
-                            if (invokeError) throw invokeError;
+                            if (session?.access_token) {
+                                const { error: invokeError } = await supabase.functions.invoke('create-near-wallet', {
+                                    body: { email: data.user.email },
+                                    headers: { Authorization: `Bearer ${session.access_token}` }
+                                });
+
+                                if (invokeError) throw invokeError;
+                            } else {
+                                console.warn("No active session yet (Email confirmation might be required). Wallet generation deferred.");
+                            }
 
                         } catch (apiError) {
                             console.error("Secure wallet generation failed:", apiError);
