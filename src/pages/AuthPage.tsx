@@ -428,7 +428,11 @@ export default function AuthPage() {
                                                     <label
                                                         className="text-white-50 small mb-2 d-block text-center">{t.verificationCode}</label>
                                                     <input
-                                                        type="text" required maxLength={6} value={mfaCode}
+                                                        type="text"
+                                                        required
+                                                        maxLength={6}
+                                                        value={mfaCode}
+                                                        autoFocus
                                                         onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
                                                         className="form-control form-control-lg bg-black text-white border-secondary text-center fw-bold mx-auto"
                                                         placeholder="000000" style={{
@@ -484,7 +488,11 @@ export default function AuthPage() {
                                     <form onSubmit={handleMfaChallengeVerify}
                                           className="d-flex flex-column align-items-center gap-3 w-100">
                                         <input
-                                            type="text" required maxLength={6} value={mfaCode}
+                                            type="text"
+                                            required
+                                            maxLength={6}
+                                            value={mfaCode}
+                                            autoFocus
                                             onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
                                             className="form-control form-control-lg bg-black text-white border-secondary text-center fw-bold mx-auto"
                                             placeholder="000000"
@@ -590,6 +598,7 @@ export default function AuthPage() {
                                             type="text"
                                             required
                                             value={recoveryInput}
+                                            autoFocus
                                             onChange={(e) => setRecoveryInput(e.target.value.toUpperCase())}
                                             className="form-control form-control-lg bg-black text-danger border-secondary text-center fw-bold mx-auto font-monospace"
                                             placeholder="XXXX-XXXX"
