@@ -1,9 +1,8 @@
 import { JsonRpcProvider } from '@near-js/providers';
 import { parseNearAmount } from '@near-js/utils';
 import { PoolContractId, RpcUrl } from '../config';
-import {WinnerRecord} from "@/components/winners_history.tsx";
-
-const GAS = '300000000000000';
+import {WinnerRecord} from "@/components/pool/winners_history.tsx";
+import {MAX_GAS} from "@/utils/constants.ts";
 
 const provider = new JsonRpcProvider({ url: RpcUrl });
 
@@ -106,7 +105,7 @@ export const poolContract = {
             contractId: PoolContractId,
             method: 'claim',
             args: {},
-            gas: GAS,
+            gas: MAX_GAS,
             deposit: '0',
         });
     },
@@ -119,7 +118,7 @@ export const poolContract = {
             contractId: PoolContractId,
             method: 'deposit',
             args: {},
-            gas: GAS,
+            gas: MAX_GAS,
             deposit: depositInYocto,
         });
     },
@@ -132,7 +131,7 @@ export const poolContract = {
             contractId: PoolContractId,
             method: 'withdraw',
             args: { amount: amountInYocto },
-            gas: GAS,
+            gas: MAX_GAS,
             deposit: '1',
         });
     },

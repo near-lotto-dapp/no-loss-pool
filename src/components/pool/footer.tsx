@@ -10,11 +10,11 @@ export const Footer = ({ t }: { t: any }) => {
                     <div className="mb-3 d-flex justify-content-center gap-3 flex-wrap" style={{ fontSize: '0.85rem' }}>
                         <span className="text-white-50 opacity-25">|</span>
                         <a href="https://nearblocks.io/address/jomo-pool-v2.near" target="_blank" rel="noreferrer" className="text-white-50 text-decoration-none">
-                            <i className="bi bi-code-slash me-1"></i> {t.smartContract}
+                            <i className="bi bi-code-slash me-1"></i> {t('smartContract')}
                         </a>
                         <span className="text-white-50 opacity-25">|</span>
                         <a href="https://github.com/near-lotto-dapp/no-loss-pool" target="_blank" rel="noreferrer" className="text-white-50 text-decoration-none">
-                            <i className="bi bi-github me-1"></i> {t.githubRepo}
+                            <i className="bi bi-github me-1"></i> {t('githubRepo')}
                         </a>
                     </div>
 
@@ -28,16 +28,16 @@ export const Footer = ({ t }: { t: any }) => {
                             }}
                             className="footer-link text-info text-decoration-none fw-bold"
                         >
-                            {t.termsTitle}
+                            {t('termsTitle')}
                         </a>
                     </p>
 
                     <p className="footer-text mt-3 px-3 mx-auto" style={{ fontSize: '0.75rem', maxWidth: '700px', color: '#cbd5e1', opacity: 0.6, lineHeight: '1.4' }}>
-                        {t.shortDisclaimer}
+                        {t('shortDisclaimer')}
                     </p>
 
                     <p className="footer-text mt-4" style={{ fontSize: '0.7rem', color: '#ffffff', opacity: 0.3 }}>
-                        {t.footerText}
+                        {t('footerText')}
                     </p>
                 </div>
             </footer>
@@ -66,7 +66,7 @@ export const Footer = ({ t }: { t: any }) => {
                             <div className="modal-header border-bottom" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
                                 <h5 className="modal-title fw-bold text-info">
                                     <i className="bi bi-file-earmark-text me-2"></i>
-                                    {t.termsTitle}
+                                    {t('termsTitle')}
                                 </h5>
                                 <button
                                     type="button"
@@ -76,7 +76,7 @@ export const Footer = ({ t }: { t: any }) => {
                             </div>
                             <div className="modal-body text-start p-4">
                                 <p style={{ fontSize: '0.9rem', color: '#cbd5e1', whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>
-                                    {t.fullTerms}
+                                    {t('fullTerms')}
                                 </p>
                             </div>
                             <div className="modal-footer border-0 p-4 pt-0">
@@ -86,7 +86,7 @@ export const Footer = ({ t }: { t: any }) => {
                                     style={{ borderRadius: '10px' }}
                                     onClick={() => setShowTerms(false)}
                                 >
-                                    {t.confirmBtn}
+                                    {t('confirmBtn')}
                                 </button>
                             </div>
                         </div>

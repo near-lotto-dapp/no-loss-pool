@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
-import { Footer } from '@/components/footer';
+import { Footer } from '@/components/pool/footer';
 import { supabase } from '@/utils/supabaseClient';
-import { StakingPanel } from '@/components/staking_panel';
-import {WinnerRecord, WinnersHistory} from "@/components/winners_history.tsx";
-import HowItWorks from "@/pages/how_it_works.tsx";
-import About from "@/pages/about.tsx";
-import {poolContract} from "@/contracts/pool_contract.ts";
+import { StakingPanel } from '@/components/pool/staking_panel';
+import {WinnerRecord, WinnersHistory} from "@/components/pool/winners_history.tsx";
+import HowItWorks from "@/pages/pool/HowItWorks.tsx";
+import {poolContract} from "@/contracts/poolContract.ts";
 import {usePageTitle} from "@/hooks/usePageTitle.ts";
 import {useLanguage} from "@/hooks/useLanguage.ts";
-import {TopNav} from "@/components/top_nav.tsx";
+import {TopNav} from "@/components/TopNav.tsx";
+import About from "@/pages/pool/about.tsx";
 
 export default function NoLossPoolPage() {
     const { lang, setLang, t } = useLanguage();
-    usePageTitle(t.noLossPageTitle);
+    usePageTitle(t('noLossPageTitle'));
 
     const [dbTvl, setDbTvl] = useState<number>(0);
     const [dbPrizePool, setDbPrizePool] = useState<number>(0);
@@ -59,7 +59,7 @@ export default function NoLossPoolPage() {
             <TopNav
                 lang={lang}
                 setLang={setLang}
-                title={t.homeBtn}
+                title={t('homeBtn')}
             />
 
             <main className="flex-grow-1 container py-4 d-flex flex-column align-items-center">
@@ -74,8 +74,8 @@ export default function NoLossPoolPage() {
                 </div>
 
                 <WinnersHistory t={t} winners={winners} />
-                <HowItWorks lang={lang}/>
-                <About lang={lang} contractId={import.meta.env.VITE_CONTRACT_ID}/>
+                <HowItWorks />
+                <About contractId={import.meta.env.VITE_CONTRACT_ID}/>
             </main>
 
 

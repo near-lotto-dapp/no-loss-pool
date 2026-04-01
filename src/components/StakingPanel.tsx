@@ -3,7 +3,7 @@ import { stakingService, UserMetrics } from '../services/near.ts';
 import { formatNearAmount } from "@near-js/utils";
 import { supabase } from '@/utils/supabaseClient';
 import Big from 'big.js';
-import { UI_DISPLAY_DECIMALS, PROFIT_DECIMALS } from '@/utils/constants';
+import {UI_DISPLAY_DECIMALS, PROFIT_DECIMALS, APY_VALUE, MIN_STAKE_AMOUNT} from '@/utils/constants';
 import { fetchWithFallback } from '@/utils/rpc';
 
 interface StakingPanelProps {
@@ -12,11 +12,6 @@ interface StakingPanelProps {
     t: any;
     onSuccess: () => void;
 }
-
-const MIN_STAKE_AMOUNT = 1;
-
-// Only used for UI display purposes, actual math is handled by WalletDashboard and Edge Function
-const DISPLAY_GAS_RESERVE = 0.05;
 
 const safeTruncate = (value: string | number, decimals: number) => {
     const str = typeof value === 'number' ? value.toFixed(10) : value.toString();
@@ -30,24 +25,16 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const [activeTab, setActiveTab] = useState<'stake' | 'unstake'>('stake');
     const [amount, setAmount] = useState('');
     const [selectedProvider, setSelectedProvider] = useState('linear-protocol.near');
-
     const [stakedBalance, setStakedBalance] = useState<string>('0');
     const [metrics, setMetrics] = useState<UserMetrics | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(false);
-
-    // Direct channel request (LiNEAR Pool)
     const [directRequest, setDirectRequest] = useState<any>(null);
-
-    // UI states
     const [directTimeStr, setDirectTimeStr] = useState<string>('');
     const [unstakeStartTime, setUnstakeStartTime] = useState<string | null>(null);
-
     const [lifetimeProfit, setLifetimeProfit] = useState<string>((0).toFixed(PROFIT_DECIMALS));
-
     const [isProcessing, setIsProcessing] = useState(false);
     const [txError, setTxError] = useState<string | null>(null);
     const [successHash, setSuccessHash] = useState<string | null>(null);
-
     const [inputError, setInputError] = useState<string | null>(null);
     const [inputInfo, setInputInfo] = useState<string | null>(null);
 
@@ -57,7 +44,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         if (!isSilent) setIsLoadingData(true);
 
         try {
-            // Fetch DB start time for unstaking
             const { data: { session } } = await supabase.auth.getSession();
             let dbStartTime = null;
             if (session?.user?.id) {
@@ -70,7 +56,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             }
             setUnstakeStartTime(dbStartTime);
 
-            // Fetch JOMO blockchain data
             const [sharesYocto, userMetrics, priceYocto] = await Promise.all([
                 stakingService.getUserShares(walletAddress, selectedProvider),
                 stakingService.getUserMetrics(walletAddress),
@@ -148,7 +133,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         const updateTimers = () => {
             if (directRequest) {
                 if (directRequest.can_withdraw) {
-                    setDirectTimeStr(t.staking?.status_ready || 'Ready');
+                    setDirectTimeStr(t('staking.status_ready'));
                 } else if (unstakeStartTime) {
                     const diff = (new Date(unstakeStartTime).getTime() + 72 * 3600 * 1000) - Date.now();
                     if (diff <= 0) {
@@ -158,9 +143,9 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         const h = Math.floor((diff / 3600000) % 24);
                         const m = Math.floor((diff / 60000) % 60);
 
-                        const dayStr = t.time?.day_short || 'd';
-                        const hourStr = t.time?.hour_short || 'h';
-                        const minStr = t.time?.min_short || 'm';
+                        const dayStr = t('time.day_short');
+                        const hourStr = t('time.hour_short');
+                        const minStr = t('time.min_short');
                         const daysDisplay = d > 0 ? `${d}${dayStr} ` : '';
 
                         setDirectTimeStr(`~ ${daysDisplay}${h.toString().padStart(2, '0')}${hourStr} ${m.toString().padStart(2, '0')}${minStr}`);
@@ -195,14 +180,14 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             const maxStakeAllowed = parseFloat(balance || '0');
 
             if (numVal < MIN_STAKE_AMOUNT) {
-                setInputError(t.staking?.min_stake_error || `Minimum stake is ${MIN_STAKE_AMOUNT} NEAR`);
+                setInputError(t('staking.min_stake_error'));
             } else if (numVal > maxStakeAllowed) {
-                setInputError(t.insufficientBalance || "Insufficient spendable balance.");
+                setInputError(t('insufficientBalance'));
             }
         } else {
             const currentShares = parseFloat(stakedBalance);
             if (numVal > currentShares) {
-                setInputError(t.insufficientBalanceError || "Insufficient shares balance.");
+                setInputError(t('insufficientBalanceError'));
             }
         }
     };
@@ -297,7 +282,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             const errMsg = err.message || "";
 
             if (errMsg.includes("not yet available due to unstaking delay") || errMsg.includes("Smart contract panicked")) {
-                setTxError(t.staking?.epoch_sync_error || "The pool is unlocking funds. Please wait.");
+                setTxError(t('staking.epoch_sync_error'));
             } else if (errMsg.includes("TxOnChainFailure")) {
                 setTxError("Transaction failed on the blockchain. See explorer for details.");
             } else {
@@ -325,11 +310,11 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             {successHash && (
                 <div className="alert alert-success py-2 small mb-3 animate__animated animate__bounceIn">
                     <div className="d-flex justify-content-between align-items-center">
-                        <span><i className="bi bi-check-circle-fill me-2"></i>{t.successTx || "Success!"}</span>
+                        <span><i className="bi bi-check-circle-fill me-2"></i>{t('successTx')}</span>
                         <button type="button" className="btn-close btn-close-white" style={{fontSize: '0.6rem'}} onClick={() => setSuccessHash(null)}></button>
                     </div>
                     <a href={`https://nearblocks.io/txns/${successHash}`} target="_blank" rel="noopener noreferrer" className="text-decoration-underline text-success d-block mt-1">
-                        {t.viewExplorer || "View on Near Explorer"}
+                        {t('viewExplorer')}
                     </a>
                 </div>
             )}
@@ -345,18 +330,18 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                     className={`btn flex-grow-1 rounded-0 border-0 ${activeTab === 'stake' ? 'btn-success text-dark fw-bold' : 'text-white-50'}`}
                     onClick={() => setActiveTab('stake')}
                 >
-                    {t.actions?.stake || 'Stake'}
+                    {t('actions.stake')}
                 </button>
                 <button
                     className={`btn flex-grow-1 rounded-0 border-0 ${activeTab === 'unstake' ? 'btn-warning text-dark fw-bold' : 'text-white-50'}`}
                     onClick={() => setActiveTab('unstake')}
                 >
-                    {t.actions?.withdraw || 'Unstake'}
+                    {t('actions.withdraw')}
                 </button>
             </div>
 
             <div className="mb-3">
-                <label className="text-white-50 small mb-1">{t.chooseValidator || "Validator"}</label>
+                <label className="text-white-50 small mb-1">{t('chooseValidator')}</label>
                 <select className="form-select bg-dark text-white border-secondary" value={selectedProvider} onChange={(e) => setSelectedProvider(e.target.value)} disabled={isProcessing}>
                     <option value="linear-protocol.near">Linear Protocol</option>
                 </select>
@@ -368,13 +353,13 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         <div className="row text-center mb-3">
                             <div className="col-6 border-end border-secondary">
                                 <div className="text-white-50 fw-semibold mb-1" style={{ fontSize: '0.7rem', letterSpacing: '0.5px' }}>
-                                    {t.staking?.estimated_apy?.toUpperCase() || "ESTIMATED APY"}
+                                    {t('staking.estimated_apy').toUpperCase()}
                                 </div>
-                                <div className="text-success fw-bold fs-4">~4.3%</div>
+                                <div className="text-success fw-bold fs-4">{ APY_VALUE }</div>
                             </div>
                             <div className="col-6">
                                 <div className="text-white-50 fw-semibold mb-1" style={{ fontSize: '0.7rem', letterSpacing: '0.5px' }}>
-                                    {t.staking?.mint_token?.toUpperCase() || "MINT TOKEN"}
+                                    {t('staking.mint_token').toUpperCase()}
                                 </div>
                                 <div className="text-info fw-bold fs-4">LiNEAR</div>
                             </div>
@@ -382,37 +367,37 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         <div className="text-center border-top border-secondary pt-2">
                             <small className="text-info" style={{ fontSize: '0.75rem' }}>
                                 <i className="bi bi-info-circle me-1"></i>
-                                {t.staking?.liquid_token_info || "You receive liquid tokens instantly while earning rewards"}
+                                {t('staking.liquid_token_info')}
                             </small>
                         </div>
                     </div>
 
                     <div className="mb-3 p-3 bg-dark rounded border border-secondary">
-                        <h6 className="text-white mb-3" style={{ fontSize: '0.85rem' }}>{t.staking?.performance || "Your Performance"}</h6>
+                        <h6 className="text-white mb-3" style={{ fontSize: '0.85rem' }}>{t('staking.performance')}</h6>
                         <div className="d-flex justify-content-between mb-1">
-                            <small className="text-white-50">{t.staking?.total_deposited || "Total Deposited"}</small>
+                            <small className="text-white-50">{t('staking.total_deposited')}</small>
                             <span className="text-white fw-bold">{totalDeposited.toFixed(UI_DISPLAY_DECIMALS)} NEAR</span>
                         </div>
 
                         {unstakedAmountNEAR > 0 && (
                             <div className="d-flex justify-content-between mb-1">
-                                <small className="text-white-50">{t.inUnstakeProcess || "In Unstaking"}</small>
+                                <small className="text-white-50">{t('inUnstakeProcess')}</small>
                                 <span className="text-warning fw-bold">{unstakedAmountNEAR.toFixed(UI_DISPLAY_DECIMALS)} NEAR</span>
                             </div>
                         )}
 
                         <div className="d-flex justify-content-between mb-1">
-                            <small className="text-white-50">{t.staking?.total_withdrawn || "Total Withdrawn"}</small>
+                            <small className="text-white-50">{t('staking.total_withdrawn')}</small>
                             <span className="text-white fw-bold">{totalWithdrawn.toFixed(UI_DISPLAY_DECIMALS)} NEAR</span>
                         </div>
 
                         <div className="d-flex justify-content-between pt-1 mt-1">
-                            <small className="text-white-50">{t.staking?.total_shares || "Total Shares (Inc. Hold)"}</small>
+                            <small className="text-white-50">{t('staking.total_shares')}</small>
                             <span className="text-info fw-bold">{totalShares.toFixed(UI_DISPLAY_DECIMALS)} LiNEAR</span>
                         </div>
 
                         <div className="d-flex justify-content-between pt-2 mt-2 border-top border-secondary">
-                            <small className="text-white-50">{t.staking?.lifetime_profit || "Lifetime Earned"}</small>
+                            <small className="text-white-50">{t('staking.lifetime_profit')}</small>
                             <span
                                 className="text-success fw-bold"
                                 style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.5px' }}
@@ -427,11 +412,11 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             <div className="mb-3">
                 <div className="d-flex justify-content-between align-items-end mb-1">
                     <label className="text-white-50 small mb-0">
-                        {activeTab === 'stake' ? (t.staking?.amount_near || "Amount (NEAR)") : (t.staking?.amount_shares || "Amount (Shares)")}
+                        {activeTab === 'stake' ? t('staking.stakeAmount') : t('staking.amount_shares')}
                     </label>
                     <div className="text-end">
                         <small className="text-white-50 d-block">
-                            {t.staking?.available || "Available:"} {isLoadingData
+                            {t('staking.available')} {isLoadingData
                             ? <span className="spinner-border spinner-border-sm ms-1" style={{width: '10px', height: '10px'}}></span>
                             : (activeTab === 'stake' ? `${balance || (0).toFixed(UI_DISPLAY_DECIMALS)} NEAR` : `${Number(stakedBalance).toFixed(UI_DISPLAY_DECIMALS)} Shares`)}
                         </small>
@@ -465,18 +450,9 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         }}
                         disabled={isProcessing}
                     >
-                        {t.maxBtn || "MAX"}
+                        {t('maxBtn')}
                     </button>
                 </div>
-
-                {/* VISUAL RESERVE INDICATOR */}
-                {activeTab === 'stake' && (
-                    <div className="text-secondary mt-1" style={{ fontSize: '0.65rem' }}>
-                        <i className="bi bi-shield-lock-fill me-1"></i>
-                        <span>{t.gasReservedLabel || "Gas reserved:"} {DISPLAY_GAS_RESERVE} NEAR</span>
-                        <i className="bi bi-info-circle ms-1" style={{ cursor: 'help' }} title={t.gasReserveTooltip || "This amount is locked to guarantee storage and transaction fees for your wallet."}></i>
-                    </div>
-                )}
 
                 {inputError && (
                     <div className="text-danger small mt-1 animate__animated animate__fadeIn">
@@ -492,7 +468,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
             {activeTab === 'stake' ? (
                 <button className="btn btn-success w-100 fw-bold py-2" disabled={!isStakeValid || isProcessing || isLoadingData} onClick={handleStake}>
-                    {isProcessing ? <span className="spinner-border spinner-border-sm me-2"></span> : `${t.actions?.stake || 'Stake'} ${amount || '0'} NEAR`}
+                    {isProcessing ? <span className="spinner-border spinner-border-sm me-2"></span> : `${t('actions.stakeBtn')} ${amount || '0'} NEAR`}
                 </button>
             ) : (
                 <>
@@ -501,22 +477,22 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                             className="btn btn-warning w-100 fw-bold position-relative text-dark"
                             disabled={!canCreateDelayedUnstake || isProcessing}
                             onClick={handleUnstake}
-                            title={directRequest ? (t.staking?.active_req_tooltip || "You already have an active request") : ""}
+                            title={directRequest ? t('staking.active_req_tooltip') : ""}
                         >
-                            {isProcessing ? <span className="spinner-border spinner-border-sm"></span> : (t.staking?.delayed_btn || "Unstake")}
+                            {isProcessing ? <span className="spinner-border spinner-border-sm"></span> : t('staking.delayed_btn')}
                         </button>
                     </div>
 
                     <div className="d-flex justify-content-center mt-2 px-1 text-white-50" style={{ fontSize: '0.65rem', lineHeight: '1.2' }}>
                         <span className="text-center">
-                            {t.staking?.delayed_desc || "⏳ Unstaking takes ~2-3 days. Fee: 0.3% JOMO."}
+                            {t('staking.delayed_desc')}
                         </span>
                     </div>
 
                     <div className="mt-4 border-top border-secondary pt-3">
-                        <h6 className="text-white mb-3">{t.staking?.unstake_request || "Unstake Request"}</h6>
+                        <h6 className="text-white mb-3">{t('staking.unstake_request')}</h6>
                         {!directRequest ? (
-                            <p className="text-white-50 small text-center">{t.staking?.no_active_requests || "No active requests"}</p>
+                            <p className="text-white-50 small text-center">{t('staking.no_active_requests')}</p>
                         ) : (
                             <div className="d-flex flex-column gap-2">
                                 <div className="p-2 bg-dark rounded border border-info d-flex justify-content-between align-items-center">
@@ -524,7 +500,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                                         <div className="small text-info mb-1" style={{fontSize: '0.65rem', letterSpacing: '0.5px'}}>DIRECT POOL UNSTAKE</div>
                                         <div className="fw-bold text-white">{Number(formatNearAmount(directRequest.amount)).toFixed(UI_DISPLAY_DECIMALS)} NEAR</div>
                                         <div className="small fw-bold" style={{ color: directRequest.can_withdraw ? '#28a745' : '#ffc107', letterSpacing: '0.5px' }}>
-                                            {directRequest.can_withdraw ? (t.staking?.status_ready || "Ready") : directTimeStr}
+                                            {directRequest.can_withdraw ? t('staking.status_ready') : directTimeStr}
                                         </div>
                                     </div>
                                     <button
@@ -532,7 +508,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                                         disabled={!directRequest.can_withdraw || isProcessing}
                                         onClick={handleClaimDirect}
                                     >
-                                        {t.staking?.claim_btn || "Claim"}
+                                        {t('staking.claim_btn')}
                                     </button>
                                 </div>
                             </div>

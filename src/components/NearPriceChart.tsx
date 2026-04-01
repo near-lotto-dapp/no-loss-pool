@@ -6,7 +6,15 @@ export function NearPriceChart() {
     useEffect(() => {
         if (!container.current) return;
 
-        container.current.innerHTML = '';
+        const widgetDiv = container.current.querySelector('.tradingview-widget-container__widget');
+        if (widgetDiv) {
+            widgetDiv.innerHTML = '';
+        }
+
+        const existingScript = container.current.querySelector('script');
+        if (existingScript) {
+            existingScript.remove();
+        }
 
         const script = document.createElement("script");
         script.src = "https://s3.tradingview.com/external-embedding/embed-widget-symbol-overview.js";
@@ -60,6 +68,16 @@ export function NearPriceChart() {
         }`;
 
         container.current.appendChild(script);
+
+        return () => {
+            if (container.current) {
+                const s = container.current.querySelector('script');
+                if (s) s.remove();
+
+                const w = container.current.querySelector('.tradingview-widget-container__widget');
+                if (w) w.innerHTML = '';
+            }
+        };
     }, []);
 
     return (

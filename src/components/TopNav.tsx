@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { LanguageSwitcher } from '@/components/language_switcher';
-import { Language } from '@/pages/translations';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher.tsx';
+import type { Language } from '@/hooks/useLanguage.ts';
 
 interface TopNavProps {
     lang: Language;

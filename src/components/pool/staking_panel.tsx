@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNearWallet } from 'near-connect-hooks';
-import { poolContract } from '@/contracts/pool_contract';
+import { poolContract } from '@/contracts/poolContract.ts';
 import { formatNearAmount } from '@near-js/utils';
 import styles from '@/styles/app.module.css';
+import { APY_VALUE } from "@/utils/constants.ts";
 
 interface StakingPanelProps {
     t: any;
@@ -63,7 +64,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
     const [unlockTime, setUnlockTime] = useState<number>(0);
     const [now, setNow] = useState<number>(Date.now());
 
-    const drawTimeLeft = useNextDrawTimer(t.drawingNow || "Draw...");
+    const drawTimeLeft = useNextDrawTimer(t('drawingNow'));
     const hasActiveUnstake = Number(unstakingBalance) > 0;
 
     useEffect(() => {
@@ -205,12 +206,12 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
     return (
         <div className={styles.center}>
             <div className={`${styles.card} ${styles.stakingCard}`}>
-                <h2 className="text-center mb-4">{t.title}</h2>
+                <h2 className="text-center mb-4">{t('title')}</h2>
 
                 <div className="w-100 mb-4">
                     <div className="text-center mb-4">
                         <div className="badge bg-dark border border-secondary p-2 mt-2 shadow-sm">
-                            <span className="text-white-50 me-2">{t.nextDrawIn}</span>
+                            <span className="text-white-50 me-2">{t('nextDrawIn')}</span>
                             <span className="text-info fw-bold font-monospace timer-text" style={{ fontSize: '1.05rem' }}>
                                 {drawTimeLeft}
                             </span>
@@ -218,19 +219,19 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                     </div>
 
                     <div className="bg-dark rounded p-3 mb-4 text-center tvl-card">
-                        <h6 className="text-white-50 mb-2">{t.poolTvl}</h6>
+                        <h6 className="text-white-50 mb-2">{t('poolTvl')}</h6>
                         <h3 className="text-success m-0 fw-bold text-glow-success">
                             {isLoadingDb ? "..." : `${formatNear(dbTvl, 4)} NEAR`}
                         </h3>
                         <div className="mt-2 d-flex justify-content-center align-items-center gap-2">
                             <span className="badge bg-success-subtle text-success border border-success-subtle small">
-                                {t.apyLabel}
+                                {t('apyLabel', { apy: APY_VALUE })}
                             </span>
                         </div>
                     </div>
 
                     <div className="bg-dark rounded p-3 mb-4 text-center border border-warning prize-card">
-                        <h6 className="text-warning mb-1">{t.prizePoolLabel}</h6>
+                        <h6 className="text-warning mb-1">{t('prizePoolLabel')}</h6>
                         <h4 className="text-warning m-0 fw-bold text-glow-warning">
                             {isLoadingDb ? "..." : `${formatNear(dbPrizePool, 5)} NEAR`}
                         </h4>
@@ -252,16 +253,16 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                 className="btn btn-sm btn-outline-secondary text-white-50 border-0 flex-shrink-0"
                                 style={{ fontSize: '0.85rem' }}
                             >
-                                <i className="bi bi-box-arrow-right me-1"></i> {t.logoutBtn}
+                                <i className="bi bi-box-arrow-right me-1"></i> {t('logoutBtn')}
                             </button>
                         </div>
 
                         <div className={`${styles.description} d-flex flex-column gap-2 py-3`}>
-                            <h6 className="text-center text-white-50 mb-3">{t.yourTickets}</h6>
+                            <h6 className="text-center text-white-50 mb-3">{t('yourTickets')}</h6>
 
                             <div className="d-flex flex-column flex-sm-row align-items-center justify-content-sm-between w-100 px-3 mb-3 gap-2">
                                 <span className="text-white-50 text-center text-sm-start mb-1 mb-sm-0">
-                                    {t.activeBalanceLabel}:
+                                    {t('activeBalanceLabel')}:
                                 </span>
                                 <div className="text-center text-sm-end">
                                     <code className={`${styles.code} ${styles.stakedBalance} d-block fs-5`}>
@@ -269,7 +270,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                     </code>
                                     {userActiveNum > 0 && (
                                         <span className="badge bg-info text-dark mt-1" style={{ fontSize: '0.75rem', boxShadow: '0 0 8px rgba(13, 202, 240, 0.5)' }}>
-                                            🍀 {winChance}% {t.winChance}
+                                            🍀 {winChance}% {t('winChance')}
                                         </span>
                                     )}
                                 </div>
@@ -277,7 +278,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
 
                             <div className="d-flex flex-column flex-sm-row align-items-center justify-content-sm-between w-100 px-3 mb-3 gap-2">
                                 <span className="text-white-50 text-center text-sm-start mb-1 mb-sm-0">
-                                    {t.pendingBalanceLabel}:
+                                    {t('pendingBalanceLabel')}:
                                 </span>
                                 <div className="text-center text-sm-end">
                                     <code className={`${styles.code} ${styles.pendingBalance} d-block fs-5`}>
@@ -295,7 +296,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                     }}
                                 >
                                     <span className="text-warning mb-2 text-center w-100" style={{ fontSize: '0.9rem', opacity: 0.9 }}>
-                                        <i className="bi bi-hourglass-split me-1"></i> {t.unstaking}
+                                        <i className="bi bi-hourglass-split me-1"></i> {t('unstaking')}
                                     </span>
 
                                     <h3 className="text-warning fw-bold mb-4 text-center w-100" style={{ textShadow: '0 0 10px rgba(255, 193, 7, 0.2)' }}>
@@ -316,11 +317,11 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                         {isLoading ? (
                                             <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
                                         ) : isReadyToClaim ? (
-                                            `${t.claimReady}`
+                                            `${t('claimReady')}`
                                         ) : timeLeft ? (
                                             `⏳ ${timeLeft.days > 0 ? timeLeft.days + 'd ' : ''}${timeLeft.hours}h ${timeLeft.minutes}m ${timeLeft.seconds}s`
                                         ) : (
-                                            `${t.calculating}`
+                                            `${t('calculating')}`
                                         )}
                                     </button>
                                 </div>
@@ -333,7 +334,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                     className={`nav-link fw-bold ${activeTab === 'deposit' ? `active ${styles.gradientPrimary}` : 'text-white-50'}`}
                                     onClick={() => { setActiveTab('deposit'); setAmount(""); }}
                                 >
-                                    {t.depositTab}
+                                    {t('depositTab')}
                                 </button>
                             </li>
                             <li className="nav-item">
@@ -341,14 +342,14 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                     className={`nav-link fw-bold ${activeTab === 'withdraw' ? `active ${styles.gradientPrimary}` : 'text-white-50'}`}
                                     onClick={() => { setActiveTab('withdraw'); setAmount(""); }}
                                 >
-                                    {t.withdrawTab}
+                                    {t('withdrawTab')}
                                 </button>
                             </li>
                         </ul>
 
                         <div className="form-group position-relative">
                             <label htmlFor="txAmount" className="mb-2 text-white-50">
-                                {activeTab === 'deposit' ? t.depositAmount : t.withdrawAmount}
+                                {activeTab === 'deposit' ? t('depositAmount') : t('withdrawAmount')}
                             </label>
                             <div className="input-group">
                                 <input
@@ -359,7 +360,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                     step={activeTab === 'deposit' ? "1" : "any"}
                                     value={amount}
                                     onChange={(e) => setAmount(e.target.value)}
-                                    placeholder={activeTab === 'deposit' ? (t.depositPlaceholder) : (t.withdrawPlaceholder)}
+                                    placeholder={activeTab === 'deposit' ? t('depositPlaceholder') : t('withdrawPlaceholder')}
                                     className={`form-control form-control-lg bg-dark text-white border-end-0 ${styles.customInput}`}
                                     disabled={activeTab === 'withdraw' && hasActiveUnstake}
                                 />
@@ -371,7 +372,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                         onClick={setMaxAmount}
                                         disabled={hasActiveUnstake}
                                     >
-                                        {t.maxBtn}
+                                        {t('maxBtn')}
                                     </button>
                                 )}
                             </div>
@@ -381,7 +382,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                     <div className="d-flex align-items-start">
                                         <i className="bi bi-exclamation-triangle-fill me-2 mt-1 fs-5"></i>
                                         <div>
-                                            <strong>{t.warning || "Warning"}:</strong> {t.activeUnstakeWarning || `You already have an active unstake request (${Number(unstakingBalance).toFixed(4)} NEAR). Please wait for the timer and click Claim before withdrawing new funds.`}
+                                            <strong>{t('warning')}:</strong> {t('activeUnstakeWarning')}
                                         </div>
                                     </div>
                                 </div>
@@ -392,7 +393,7 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                                     <div className="d-flex align-items-start">
                                         <i className="bi bi-info-circle me-2 mt-1 fs-5"></i>
                                         <div>
-                                            <strong>{t.withdrawWarningTitle}:</strong> {t.withdrawWarningDesc}
+                                            <strong>{t('withdrawWarningTitle')}:</strong> {t('withdrawWarningDesc')}
                                         </div>
                                     </div>
                                 </div>
@@ -408,10 +409,10 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                             {isLoading ? (
                                 <>
                                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                    {t.confirmingTx}
+                                    {t('confirmingTx')}
                                 </>
                             ) : (
-                                activeTab === 'deposit' ? t.makeDepositBtn : t.withdrawBtn
+                                activeTab === 'deposit' ? t('makeDepositBtn') : t('withdrawBtn')
                             )}
                         </button>
                     </div>
@@ -419,14 +420,14 @@ export const StakingPanel = ({ t, dbTvl, dbPrizePool, isLoadingDb }: StakingPane
                     <div className={`${styles.description} d-flex flex-column align-items-center justify-content-center p-4`}>
                         <i className="bi bi-wallet2 text-white-50 mb-3" style={{ fontSize: '2.5rem' }}></i>
                         <p className="w-100 text-center text-white-50 mb-4" style={{ fontSize: '0.95rem' }}>
-                            {t.connectToDeposit}
+                            {t('connectToDeposit')}
                         </p>
                         <button
                             onClick={() => signIn()}
                             className={`btn btn-lg w-100 fw-bold text-white ${styles.gradientPrimary}`}
                             style={{ borderRadius: '12px' }}
                         >
-                            {t.connectBtn}
+                            {t('connectBtn')}
                         </button>
                     </div>
                 )}

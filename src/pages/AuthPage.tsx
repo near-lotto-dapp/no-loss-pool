@@ -1,13 +1,14 @@
 import {useState, useEffect} from 'react';
-import {AuthForm} from '@/components/auth_form';
+import {AuthForm} from '@/components/AuthForm.tsx';
 import {supabase} from '@/utils/supabaseClient';
 import styles from '@/styles/app.module.css';
 import {usePageTitle} from "@/hooks/usePageTitle.ts";
 import {useLanguage} from "@/hooks/useLanguage.ts";
-import {TopNav} from "@/components/top_nav.tsx";
+import {TopNav} from "@/components/TopNav.tsx";
 import { QRCodeSVG } from 'qrcode.react';
-import {WalletDashboard} from "@/contracts/WalletDashboard.tsx";
 import {FooterWallet} from "@/components/FooterWallet.tsx";
+import {useNavigate} from "react-router-dom";
+import {AccountHeader} from "@/components/AccountHeader.tsx";
 
 let memoryMfaCache: { factorId: string, qrCode: string, secret: string } | null = null;
 
@@ -54,7 +55,8 @@ const clearMfaCache = (userId: string) => {
 
 export default function AuthPage() {
     const {lang, setLang, t} = useLanguage();
-    usePageTitle(t.accountPageTitle);
+    const navigate = useNavigate();
+    usePageTitle(t('accountPageTitle'));
 
     const [user, setUser] = useState<any>(null);
     const [loadingSession, setLoadingSession] = useState(true);
@@ -146,11 +148,19 @@ export default function AuthPage() {
         checkMfa();
     }, [user?.id]);
 
+    useEffect(() => {
+        if (mfaStatus === 'verified') {
+            navigate('/wallet');
+        }
+    }, [mfaStatus]);
+
     const generateRecoveryCodes = () => {
         const codes = [];
+        const array = new Uint32Array(2);
         for (let i = 0; i < 10; i++) {
-            const part1 = Math.random().toString(36).substring(2, 6).toUpperCase();
-            const part2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+            window.crypto.getRandomValues(array);
+            const part1 = array[0].toString(36).substring(0, 4).toUpperCase().padStart(4, '0');
+            const part2 = array[1].toString(36).substring(0, 4).toUpperCase().padStart(4, '0');
             codes.push(`${part1}-${part2}`);
         }
         return codes;
@@ -190,7 +200,7 @@ export default function AuthPage() {
             setMfaStatus('show_recovery_codes');
             setMfaCode('');
         } catch (err) {
-            setMfaError(t.mfaError);
+            setMfaError(t('mfaError'));
         } finally {
             setLoadingMfa(false);
         }
@@ -210,7 +220,7 @@ export default function AuthPage() {
             setMfaStatus('verified');
             setMfaCode('');
         } catch (err) {
-            setMfaError(t.mfaError);
+            setMfaError(t('mfaError'));
         } finally {
             setLoadingMfa(false);
         }
@@ -231,11 +241,11 @@ export default function AuthPage() {
             if (user?.id) clearMfaCache(user.id);
             await supabase.auth.signOut();
 
-            alert(t.recoverySuccessMsg);
+            alert(t('recoverySuccessMsg'));
             window.location.reload();
 
         } catch (err) {
-            setMfaError(t.invalidRecoveryCode);
+            setMfaError(t('invalidRecoveryCode'));
         } finally {
             setLoadingMfa(false);
         }
@@ -278,7 +288,7 @@ export default function AuthPage() {
     const handleDownloadCodes = () => {
         if (!recoveryCodes) return;
 
-        const text = `${t.recoveryFileHeader}\n\n${recoveryCodes.join('\n')}\n\n${t.recoveryFileFooter}`;
+        const text = `${t('recoveryFileHeader')}\n\n${recoveryCodes.join('\n')}\n\n${t('recoveryFileFooter')}`;
 
         const blob = new Blob([text], {type: 'text/plain'});
         const url = URL.createObjectURL(blob);
@@ -292,13 +302,13 @@ export default function AuthPage() {
     const handleCopyCodes = (e: React.MouseEvent<HTMLButtonElement>) => {
         if (!recoveryCodes) return;
 
-        const text = `${t.recoveryFileHeader}\n\n${recoveryCodes.join('\n')}\n\n${t.recoveryFileFooter}`;
+        const text = `${t('recoveryFileHeader')}\n\n${recoveryCodes.join('\n')}\n\n${t('recoveryFileFooter')}`;
 
         navigator.clipboard.writeText(text);
 
         const btn = e.currentTarget;
         const originalHtml = btn.innerHTML;
-        btn.innerHTML = `<i class="bi bi-check2-all"></i> ${t.copiedBtn}`;
+        btn.innerHTML = `<i class="bi bi-check2-all"></i> ${t('copiedBtn')}`;
         btn.classList.replace('btn-info', 'btn-success');
 
         setTimeout(() => {
@@ -321,7 +331,7 @@ export default function AuthPage() {
                 <TopNav
                     lang={lang}
                     setLang={setLang}
-                    title={t.homeBtn}
+                    title={t('homeBtn')}
                 />
 
                 <div className="row justify-content-center">
@@ -334,27 +344,16 @@ export default function AuthPage() {
                             className={`${styles.card} ${styles.stakingCard} text-center d-flex flex-column align-items-center`}
                             style={{maxWidth: '650px', width: '100%'}}>
 
-                            {/* --- GLOBAL ACCOUNT HEADER --- */}
-                            <div className="d-flex justify-content-between align-items-center w-100 mb-4 bg-dark p-3 rounded border border-secondary shadow-sm">
-                                <div className="text-start text-truncate me-3">
-                                    <h5 className="text-white m-0 mb-1" style={{ fontSize: '1.05rem' }}>
-                                        {t.welcomeSecure || t.welcomeUser || "Welcome to your secure account"}
-                                    </h5>
-                                    <div className="text-info small text-truncate d-flex align-items-center" style={{ fontSize: '0.85rem' }}>
-                                        <i className="bi bi-envelope-check me-2"></i>
-                                        {user.email}
-                                    </div>
-                                </div>
-                                <button onClick={handleLogout} className="btn btn-sm btn-outline-danger fw-bold d-flex align-items-center flex-shrink-0" title={t.logoutBtn || "Log Out"}>
-                                    <i className="bi bi-box-arrow-right me-md-2"></i>
-                                    <span className="d-none d-md-inline">{t.logoutBtn || "Log Out"}</span>
-                                </button>
-                            </div>
+                            <AccountHeader
+                                email={user.email}
+                                onLogout={handleLogout}
+                                t={t}
+                            />
 
                             {mfaStatus === 'loading' && (
                                 <div className="py-4 w-100 text-center">
                                     <div className="spinner-border text-info" role="status"></div>
-                                    <p className="text-white-50 mt-3 small text-center w-100">{t.securityStatus}</p>
+                                    <p className="text-white-50 mt-3 small text-center w-100">{t('securityStatus')}</p>
                                 </div>
                             )}
 
@@ -362,7 +361,7 @@ export default function AuthPage() {
                                 <div
                                     className="p-4 bg-dark rounded mb-4 border border-warning w-100 animate__animated animate__fadeIn">
                                     <h5 className="text-warning mb-3 d-flex justify-content-center align-items-center">
-                                        <i className="bi bi-shield-exclamation me-2"></i>{t.setupRequired}
+                                        <i className="bi bi-shield-exclamation me-2"></i>{t('setupRequired')}
                                     </h5>
 
                                     {mfaSetupData ? (
@@ -372,7 +371,7 @@ export default function AuthPage() {
                                                 <>
                                                     <p className="text-white-50 small mb-4 text-center mx-auto"
                                                        style={{maxWidth: '300px'}}>
-                                                        {t.setup2faDesc}
+                                                        {t('setup2faDesc')}
                                                     </p>
 
                                                     <div className="bg-white p-3 rounded mb-4 shadow-sm mx-auto d-inline-flex justify-content-center align-items-center">
@@ -384,7 +383,7 @@ export default function AuthPage() {
 
                                                     <div className="mb-4 w-100 d-flex flex-column align-items-center">
                                                         <p className="text-white-50 small mb-2 text-center w-100" style={{fontSize: '0.8rem'}}>
-                                                            {t.cantScanCode}
+                                                            {t('cantScanCode')}
                                                         </p>
                                                         <div className="input-group input-group-sm shadow-sm" style={{maxWidth: '280px'}}>
                                                             <input
@@ -417,7 +416,7 @@ export default function AuthPage() {
                                                     style={{backgroundColor: 'rgba(13, 202, 240, 0.1)'}}>
                                                     <i className="bi bi-info-circle-fill me-2 fs-5 float-start"></i>
                                                     <span style={{display: 'block', paddingLeft: '30px'}}>
-                                                        {t.pageRefreshedMsg}
+                                                        {t('pageRefreshedMsg')}
                                                     </span>
                                                 </div>
                                             )}
@@ -426,7 +425,7 @@ export default function AuthPage() {
                                                   className="w-100 d-flex flex-column gap-3 align-items-center">
                                                 <div className="w-100 text-center">
                                                     <label
-                                                        className="text-white-50 small mb-2 d-block text-center">{t.verificationCode}</label>
+                                                        className="text-white-50 small mb-2 d-block text-center">{t('verificationCode')}</label>
                                                     <input
                                                         type="text"
                                                         required
@@ -449,7 +448,7 @@ export default function AuthPage() {
                                                         className="btn btn-warning w-100 fw-bold mt-2"
                                                         style={{height: '50px'}}>
                                                     {loadingMfa ? <span
-                                                        className="spinner-border spinner-border-sm"></span> : (t.verifyAndEnable)}
+                                                        className="spinner-border spinner-border-sm"></span> : (t('verifyAndEnable'))}
                                                 </button>
 
                                                 <div
@@ -462,8 +461,8 @@ export default function AuthPage() {
                                                         <i className="bi bi-arrow-repeat"></i>
                                                         <span>
                                                               {mfaSetupData.qrCode
-                                                                  ? (t.restartSetup)
-                                                                  : (t.generateNewQr)}
+                                                                  ? (t('restartSetup'))
+                                                                  : (t('generateNewQr'))}
                                                         </span>
                                                     </button>
                                                 </div>
@@ -481,9 +480,9 @@ export default function AuthPage() {
                                 <div
                                     className="p-4 bg-dark rounded mb-4 border border-info w-100 animate__animated animate__fadeIn">
                                     <h5 className="text-info mb-3 d-flex justify-content-center align-items-center"><i
-                                        className="bi bi-shield-lock me-2"></i>{t.enter2faCode}</h5>
+                                        className="bi bi-shield-lock me-2"></i>{t('enter2faCode')}</h5>
                                     <p className="text-white-50 small mb-4 text-center mx-auto"
-                                       style={{maxWidth: '300px'}}>{t.enter2faDesc}</p>
+                                       style={{maxWidth: '300px'}}>{t('enter2faDesc')}</p>
 
                                     <form onSubmit={handleMfaChallengeVerify}
                                           className="d-flex flex-column align-items-center gap-3 w-100">
@@ -503,7 +502,7 @@ export default function AuthPage() {
                                         <button type="submit" disabled={loadingMfa || mfaCode.length < 6}
                                                 className="btn btn-info w-100 fw-bold">
                                             {loadingMfa ? <span
-                                                className="spinner-border spinner-border-sm"></span> : (t.verifyBtn)}
+                                                className="spinner-border spinner-border-sm"></span> : (t('verifyBtn'))}
                                         </button>
                                         <div className="pt-2 w-100 text-center">
                                             <button
@@ -513,23 +512,22 @@ export default function AuthPage() {
                                                 style={{ opacity: 0.8 }}
                                             >
                                                 <i className="bi bi-life-preserver"></i>
-                                                <span>{t.lostAuthenticatorBtn}</span>
+                                                <span>{t('lostAuthenticatorBtn')}</span>
                                             </button>
                                         </div>
                                     </form>
                                 </div>
                             )}
 
-                            {/* saving reserve codes */}
                             {mfaStatus === 'show_recovery_codes' && recoveryCodes && (
                                 <div
                                     className="p-4 bg-dark rounded mb-4 border border-success w-100 animate__animated animate__fadeIn">
                                     <h5 className="text-success mb-3 d-flex justify-content-center align-items-center">
-                                        <i className="bi bi-shield-check me-2"></i>{t.recoveryCodesTitle}
+                                        <i className="bi bi-shield-check me-2"></i>{t('recoveryCodesTitle')}
                                     </h5>
 
                                     <div className="alert alert-warning py-2 small text-start mb-3">
-                                        <strong>⚠️ {t.crucialStep}:</strong> {t.recoveryWarning}
+                                        <strong>⚠️ {t('crucialStep')}:</strong> {t('recoveryWarning')}
                                     </div>
 
                                     <div className="alert py-2 small text-start mb-4" style={{
@@ -539,8 +537,8 @@ export default function AuthPage() {
                                     }}>
                                         <i className="bi bi-info-circle-fill text-info me-2 float-start mt-1"></i>
                                         <div style={{marginLeft: '25px'}}>
-                                            <strong className="text-info">{t.securityTipTitle}</strong> <span
-                                            style={{opacity: 0.9}}>{t.securityTipDesc}</span>
+                                            <strong className="text-info">{t('securityTipTitle')}</strong> <span
+                                            style={{opacity: 0.9}}>{t('securityTipDesc')}</span>
                                         </div>
                                     </div>
 
@@ -560,14 +558,14 @@ export default function AuthPage() {
                                             onClick={handleCopyCodes}
                                             className="btn btn-info fw-bold d-flex justify-content-center align-items-center gap-2 py-2"
                                         >
-                                            <i className="bi bi-copy"></i> {t.copyCodesBtn}
+                                            <i className="bi bi-copy"></i> {t('copyCodesBtn')}
                                         </button>
 
                                         <button
                                             onClick={handleDownloadCodes}
                                             className="btn btn-outline-secondary d-flex justify-content-center align-items-center gap-2 py-2"
                                         >
-                                            <i className="bi bi-download"></i> {t.downloadTxtBtn}
+                                            <i className="bi bi-download"></i> {t('downloadTxtBtn')}
                                         </button>
                                     </div>
 
@@ -576,7 +574,7 @@ export default function AuthPage() {
                                         className="btn btn-success w-100 fw-bold py-3"
                                         style={{fontSize: '1.1rem'}}
                                     >
-                                        {t.iSavedThemBtn} <i className="bi bi-arrow-right ms-1"></i>
+                                        {t('iSavedThemBtn')} <i className="bi bi-arrow-right ms-1"></i>
                                     </button>
                                 </div>
                             )}
@@ -585,11 +583,11 @@ export default function AuthPage() {
                                 <div
                                     className="p-4 bg-dark rounded mb-4 border border-danger w-100 animate__animated animate__fadeIn">
                                     <h5 className="text-danger mb-3 d-flex justify-content-center align-items-center">
-                                        <i className="bi bi-life-preserver me-2"></i>{t.accountRecoveryTitle}
+                                        <i className="bi bi-life-preserver me-2"></i>{t('accountRecoveryTitle')}
                                     </h5>
                                     <p className="text-white-50 small mb-4 text-center mx-auto"
                                        style={{maxWidth: '300px'}}>
-                                        {t.enterRecoveryCodeDesc}
+                                        {t('enterRecoveryCodeDesc')}
                                     </p>
 
                                     <form onSubmit={handleRecoverySubmit}
@@ -611,7 +609,7 @@ export default function AuthPage() {
                                         <button type="submit" disabled={loadingMfa || recoveryInput.length < 8}
                                                 className="btn btn-danger w-100 fw-bold">
                                             {loadingMfa ? <span
-                                                className="spinner-border spinner-border-sm"></span> : (t.disable2faBtn)}
+                                                className="spinner-border spinner-border-sm"></span> : (t('disable2faBtn'))}
                                         </button>
 
                                         <button
@@ -623,14 +621,17 @@ export default function AuthPage() {
                                             }}
                                             className="btn btn-link text-white-50 small mt-2 p-0 text-decoration-none"
                                         >
-                                            <i className="bi bi-arrow-left"></i> {t.backToLoginBtn}
+                                            <i className="bi bi-arrow-left"></i> {t('backToLoginBtn')}
                                         </button>
                                     </form>
                                 </div>
                             )}
 
                             {mfaStatus === 'verified' && (
-                                <WalletDashboard user={user} t={t} />
+                                <div className="py-5 text-center w-100 animate__animated animate__fadeIn">
+                                    <div className="spinner-border text-success" role="status" style={{ width: '3rem', height: '3rem' }}></div>
+                                    <h5 className="text-success mt-4 fw-bold">{t('redirectingToWallet')}</h5>
+                                </div>
                             )}
                         </div>
                     )}

@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2"
 import * as nearAPI from "npm:near-api-js@2.1.4"
 import { decrypt } from "../withdraw-near/crypto.ts"
 import { RPC_NODES } from "../_shared/near-rpc-base.ts"
+import {GAS_RESERVE, MAX_GAS} from "../../../src/utils/constants.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,11 +52,7 @@ serve(async (req) => {
 
     const decryptedKey = await decrypt(profile.encrypted_private_key, masterSecret);
     const PROXY_CONTRACT = Deno.env.get("CONTRACT_ID") || "proxy.jomo-vault.near";
-    const MAX_GAS = "300000000000000";
     const BATCH_GAS = "100000000000000";
-
-    // Standard immutable safety reserve for gas and storage
-    const SAFE_RESERVE_NEAR = "0.05";
 
     let result;
     let lastRpcError;
@@ -82,7 +79,7 @@ serve(async (req) => {
             // Prevent staking the safety reserve
             const state = await account.state();
             const availableBalance = BigInt(state.amount);
-            const reserveYocto = BigInt(utils.format.parseNearAmount(SAFE_RESERVE_NEAR)!);
+            const reserveYocto = BigInt(utils.format.parseNearAmount(GAS_RESERVE)!);
             const requestedYocto = BigInt(toYocto(amount));
 
             if (requestedYocto + reserveYocto > availableBalance) {
@@ -116,7 +113,7 @@ serve(async (req) => {
                   contractId: providerId,
                   methodName: 'storage_deposit',
                   args: { account_id: profile.near_account_id },
-                  gas: "30000000000000",
+                  gas: MAX_GAS,
                   attachedDeposit: "1250000000000000000000", // 0.00125 NEAR
                 });
               }

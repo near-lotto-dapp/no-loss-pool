@@ -1,9 +1,7 @@
-import { useState } from "react";
+import { useState } from 'react';
 
 export const FooterWallet = ({ t }: { t: any }) => {
     const [showTerms, setShowTerms] = useState(false);
-
-    const wf = t.wallet_footer || {};
 
     return (
         <>
@@ -13,7 +11,7 @@ export const FooterWallet = ({ t }: { t: any }) => {
                     {/* Utility Links */}
                     <div className="mb-4 d-flex justify-content-center gap-3 flex-wrap" style={{ fontSize: '0.85rem' }}>
                         <a href="https://nearblocks.io/address/proxy.jomo-vault.near" target="_blank" rel="noreferrer" className="text-info text-decoration-none">
-                            <i className="bi bi-code-square me-1"></i> {wf.smartContract || "Vault Contract"}
+                            <i className="bi bi-code-square me-1"></i> {t('wallet_footer.smartContract')}
                         </a>
                         <span className="text-white-50 opacity-25">|</span>
                         <a
@@ -21,18 +19,18 @@ export const FooterWallet = ({ t }: { t: any }) => {
                             onClick={(e) => { e.preventDefault(); setShowTerms(true); }}
                             className="text-info text-decoration-none fw-bold"
                         >
-                            <i className="bi bi-shield-check me-1"></i> {wf.termsTitle || "Terms of Service"}
+                            <i className="bi bi-shield-check me-1"></i> {t('wallet_footer.termsTitle')}
                         </a>
                     </div>
 
                     {/* Disclaimer */}
                     <p className="px-3 mx-auto text-white-50" style={{ fontSize: '0.75rem', maxWidth: '700px', lineHeight: '1.6' }}>
-                        {wf.shortDisclaimer || t.shortDisclaimer}
+                        {t('wallet_footer.shortDisclaimer')}
                     </p>
 
                     {/* Copyright */}
                     <p className="mt-4 mb-0" style={{ fontSize: '0.75rem', color: '#ffffff', opacity: 0.3 }}>
-                        {wf.copyright || t.footerText}
+                        {t('wallet_footer.copyright')}
                     </p>
                 </div>
             </footer>
@@ -46,20 +44,20 @@ export const FooterWallet = ({ t }: { t: any }) => {
                             <div className="modal-header border-bottom" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
                                 <h5 className="modal-title fw-bold text-info">
                                     <i className="bi bi-file-earmark-text me-2"></i>
-                                    {wf.termsTitle || t.termsTitle}
+                                    {t('wallet_footer.termsTitle')}
                                 </h5>
                                 <button type="button" className="btn-close btn-close-white" onClick={() => setShowTerms(false)}></button>
                             </div>
 
                             <div className="modal-body text-start p-4">
                                 <p style={{ fontSize: '0.85rem', color: '#cbd5e1', whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>
-                                    {wf.fullTerms || t.fullTerms}
+                                    {t('wallet_footer.fullTerms')}
                                 </p>
                             </div>
 
                             <div className="modal-footer border-0 p-4 pt-0">
                                 <button type="button" className="btn btn-info w-100 fw-bold py-2 rounded-3" onClick={() => setShowTerms(false)}>
-                                    {t.confirmBtn}
+                                    {t('confirmBtn')}
                                 </button>
                             </div>
 

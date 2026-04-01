@@ -15,15 +15,15 @@ interface WinnersHistoryProps {
 export const WinnersHistory = ({ t, winners = [] }: WinnersHistoryProps) => {
     return (
         <div className={`${styles.card} ${styles.stakingCard} mt-4`} style={{ maxWidth: '650px' }}>
-            <h4 className="text-center mb-3 fw-bold text-white">🏆 {t.lastJackpot}</h4>
+            <h4 className="text-center mb-3 fw-bold text-white">🏆 {t('lastJackpot')}</h4>
 
             <div className="table-responsive">
                 <table className="table table-dark table-hover table-borderless text-center align-middle mb-0" style={{ backgroundColor: 'transparent' }}>
                     <thead style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                     <tr>
-                        <th className="text-white-50 fw-normal pb-2">{t.historyDate}</th>
-                        <th className="text-white-50 fw-normal pb-2">{t.historyWallet}</th>
-                        <th className="text-white-50 fw-normal pb-2">{t.historyAmount}</th>
+                        <th className="text-white-50 fw-normal pb-2">{t('historyDate')}</th>
+                        <th className="text-white-50 fw-normal pb-2">{t('historyWallet')}</th>
+                        <th className="text-white-50 fw-normal pb-2">{t('historyAmount')}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -46,7 +46,7 @@ export const WinnersHistory = ({ t, winners = [] }: WinnersHistoryProps) => {
                     ) : (
                         <tr>
                             <td colSpan={3} className="py-4 text-white-50">
-                                {t.emptyHistory}
+                                {t('emptyHistory')}
                             </td>
                         </tr>
                     )}

@@ -1,19 +1,35 @@
-import { useState, useEffect } from 'react';
-import { Language, translations } from '@/pages/translations';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+
+export type Language =
+    | 'en'
+    | 'ua'
+    | 'es'
+    | 'es-AR'
+    | 'pt-BR'
+    | 'vi'
+    | 'ko'
+    | 'id'
+    | 'ms'
+    | 'tl'
+    | 'pcm'
+    | 'sw';
 
 export const useLanguage = () => {
-    const [lang, setLang] = useState<Language>(() => {
-        if (typeof window !== 'undefined') {
-            return (localStorage.getItem('lang') as Language) || 'en';
-        }
-        return 'en';
-    });
+    const { t, i18n } = useTranslation();
+    const lang = (i18n.language || 'en') as Language;
+
+    const setLang = (newLang: Language) => {
+        i18n.changeLanguage(newLang);
+        localStorage.setItem('lang', newLang);
+    };
 
     useEffect(() => {
-        localStorage.setItem('lang', lang);
-    }, [lang]);
-
-    const t = translations[lang];
+        const savedLang = localStorage.getItem('lang') as Language;
+        if (savedLang && savedLang !== i18n.language) {
+            i18n.changeLanguage(savedLang);
+        }
+    }, [i18n]);
 
     return { lang, setLang, t };
 };

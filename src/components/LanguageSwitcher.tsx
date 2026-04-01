@@ -1,21 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
 import styles from '@/styles/app.module.css';
-import {Language} from "@/pages/translations.ts";
+import type { Language } from "@/hooks/useLanguage.ts";
 
 interface LanguageSwitcherProps {
     lang: Language;
     setLang: (lang: Language) => void;
 }
 
-const LANGUAGES = [
+const LANGUAGES: { code: Language; label: string; flag: string }[] = [
     { code: 'en', label: 'EN', flag: '🇬🇧' },
     { code: 'es', label: 'ES', flag: '🇪🇸' },
     { code: 'ua', label: 'UA', flag: '🇺🇦' },
-] as const;
+    { code: 'vi', label: 'VI', flag: '🇻🇳' },
+    { code: 'ko', label: 'KO', flag: '🇰🇷' },
+    { code: 'id', label: 'ID', flag: '🇮🇩' },
+    { code: 'ms', label: 'MS', flag: '🇲🇾' },
+    { code: 'tl', label: 'TL', flag: '🇵🇭' },
+    { code: 'pcm', label: 'NG', flag: '🇳🇬' },
+    { code: 'sw', label: 'SW', flag: '🇰🇪' },
+    { code: 'es-AR', label: 'AR', flag: '🇦🇷' },
+    { code: 'pt-BR', label: 'BR', flag: '🇧🇷' },
+];
 
 export const LanguageSwitcher = ({ lang, setLang }: LanguageSwitcherProps) => {
     const [isOpen, setIsOpen] = useState(false);
-
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const currentLang = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
@@ -60,7 +68,7 @@ export const LanguageSwitcher = ({ lang, setLang }: LanguageSwitcherProps) => {
                         role="option"
                         aria-selected={item.code === lang}
                         className={`${styles.dropdownItem} ${item.code === lang ? styles.activeLang : ''}`}
-                        onClick={() => handleLangChange(item.code as Language)}
+                        onClick={() => handleLangChange(item.code)}
                     >
                         <span className="fs-5">{item.flag}</span>
                         <span>{item.label}</span>

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
 import { supabase } from '@/utils/supabaseClient';
 import { StakingPanel } from "@/components/StakingPanel.tsx";
-import { UI_DISPLAY_DECIMALS } from '@/utils/constants';
+import {GAS_RESERVE, UI_DISPLAY_DECIMALS} from '@/utils/constants';
+import {InfoTooltip} from "@/components/InfoTooltip.tsx";
 
 interface WalletDashboardProps {
     user: any;
@@ -34,9 +35,6 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
     const [txHash, setTxHash] = useState<string | null>(null);
     const [addressError, setAddressError] = useState<string | null>(null);
     const [amountError, setAmountError] = useState<string | null>(null);
-
-    // Immutable safety buffer for storage staking and transaction gas
-    const GAS_RESERVE = 0.05;
 
     const safeTruncate = (value: string | number, decimals: number) => {
         const str = typeof value === 'number'
@@ -188,14 +186,14 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
 
     const validateNearAddress = (address: string) => {
         if (!address) { setAddressError(null); return true; }
-        if (address.length < 2 || address.length > 64) { setAddressError(t.invalidNearLength || "Address must be between 2 and 64 characters."); return false; }
-        if (address.startsWith('0x')) { setAddressError(t.invalidNearFormat || "NEAR addresses do not start with 0x."); return false; }
+        if (address.length < 2 || address.length > 64) { setAddressError(t('invalidNearLength')); return false; }
+        if (address.startsWith('0x')) { setAddressError(t('invalidNearFormat')); return false; }
         if (address === walletAddress) { setAddressError("You cannot withdraw to your own wallet."); return false; }
-        if (address.length !== 64 && !address.includes('.')) { setAddressError(t.invalidNearFormat || "Address must contain a domain (e.g. .near, .tg) or be 64 characters long."); return false; }
+        if (address.length !== 64 && !address.includes('.')) { setAddressError(t('invalidNearFormat')); return false; }
 
         const nearRegex = /^(([a-z\d]+[-_])*[a-z\d]+\.)*([a-z\d]+[-_])*[a-z\d]+$/;
-        if (!nearRegex.test(address)) { setAddressError(t.invalidNearFormat || "Invalid NEAR format."); return false; }
-        if (address.length === 64 && !/^[a-f0-9]{64}$/.test(address)) { setAddressError(t.invalidNearFormat || "Invalid 64-character account ID (must be hex)."); return false; }
+        if (!nearRegex.test(address)) { setAddressError(t('invalidNearFormat')); return false; }
+        if (address.length === 64 && !/^[a-f0-9]{64}$/.test(address)) { setAddressError(t('invalidNearFormat')); return false; }
 
         setAddressError(null);
         return true;
@@ -214,9 +212,9 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
         // The balance state already represents the safe, spendable amount
         const maxBalance = parseFloat(balance || '0');
 
-        if (isNaN(numVal) || numVal <= 0) { setAmountError(t.invalidAmountZero || "Amount must be greater than 0"); return false; }
+        if (isNaN(numVal) || numVal <= 0) { setAmountError(t('invalidAmountZero')); return false; }
         if (numVal > maxBalance) {
-            setAmountError(t.insufficientBalance || "Insufficient spendable balance.");
+            setAmountError(t('insufficientBalance'));
             return false;
         }
         setAmountError(null);
@@ -257,7 +255,7 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                     }}
                 >
                     <i className="bi bi-cloud fs-5"></i>
-                    <span className="d-none d-sm-inline">{t.wallet_types?.tab_cloud || "Cloud"}</span>
+                    <span className="d-none d-sm-inline">{t('wallet_types.tab_cloud')}</span>
                 </button>
 
                 <button
@@ -279,7 +277,7 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                     disabled={!walletAddress}
                 >
                     <i className="bi bi-layers fs-5"></i>
-                    <span className="d-none d-sm-inline">{t.actions?.stake || "Staking"}</span>
+                    <span className="d-none d-sm-inline">{t('actions.stake')}</span>
                 </button>
 
                 <button
@@ -300,7 +298,7 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                     }}
                 >
                     <i className="bi bi-shield-lock fs-5"></i>
-                    <span className="d-none d-sm-inline">{t.wallet_types?.tab_private || "Private"}</span>
+                    <span className="d-none d-sm-inline">{t('wallet_types.tab_private')}</span>
                 </button>
             </div>
 
@@ -311,19 +309,19 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                 <div className="p-4 bg-dark rounded mb-4 border border-secondary text-start position-relative animate__animated animate__fadeIn">
                     <div className="d-flex justify-content-between align-items-center mb-3">
                         <div>
-                            <h5 className="text-white m-0 d-inline-block me-2">{t.wallet_types?.custodial_title || "Cloud Wallet"}</h5>
-                            <i className="bi bi-info-circle text-white-50" title={t.wallet_types?.custodial_desc || "Managed by JOMO"} style={{cursor: 'help'}}></i>
+                            <h5 className="text-white m-0 d-inline-block me-2">{t('wallet_types.custodial_title')}</h5>
+                            <InfoTooltip text={t('wallet_types.custodial_desc')} />
                         </div>
                         <span className="badge bg-success-subtle text-success border border-success small" style={{fontSize: '0.65rem'}}>
-                            {t.activeBadge || "ACTIVE"}
+                            {t('activeBadge')}
                         </span>
                     </div>
 
                     <div className="d-flex justify-content-between align-items-center mb-1">
-                        <small className="text-white-50">{t.balance}</small>
+                        <small className="text-white-50">{t('balance')}</small>
                         <span className="badge bg-black border border-secondary text-white-50 d-flex align-items-center" style={{ fontSize: '0.7rem' }}>
                             <span className="spinner-grow spinner-grow-sm text-success me-1" style={{ width: '6px', height: '6px' }}></span>
-                            {t.liveBadge || "Live"}
+                            {t('liveBadge')}
                         </span>
                     </div>
 
@@ -337,14 +335,14 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                                 </h2>
                                 <div className="text-white-50 small mt-1 d-flex justify-content-center align-items-center gap-1">
                                     <i className="bi bi-shield-lock-fill text-secondary"></i>
-                                    <span>Gas reserved: {GAS_RESERVE} NEAR</span>
-                                    <i className="bi bi-info-circle text-secondary" style={{cursor: 'help'}} title={t.gasReserveTooltip || "This amount is locked to guarantee storage and transaction fees for your wallet."}></i>
+                                    <span>{t('gasReservedLabel')} {GAS_RESERVE} NEAR</span>
+                                    <InfoTooltip text={t('gasReserveTooltip')} />
                                 </div>
                             </>
                         )}
                     </div>
 
-                    <small className="text-white-50 d-block mb-2 text-center w-100">{t.yourWallet}</small>
+                    <small className="text-white-50 d-block mb-2 text-center w-100">{t('yourWallet')}</small>
 
                     {/* WALLET ADDRESS BLOCK */}
                     <div className="d-flex justify-content-between align-items-center bg-black p-2 rounded border border-dark mb-4 min-vh-10">
@@ -360,12 +358,12 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                                 {/* PC view */}
                                 <span className="text-info fw-bold font-monospace ps-2 d-none d-md-inline" style={{ fontSize: '0.85rem' }}>{formatAddressLong(walletAddress)}</span>
                                 <button onClick={() => { navigator.clipboard.writeText(walletAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className={`btn btn-sm ${copied ? 'btn-success' : 'btn-outline-secondary'}`}>
-                                    {copied ? (t.copiedBtn || t.copied) : (t.copyBtn)}
+                                    {copied ? t('copiedBtn') : t('copyBtn')}
                                 </button>
                             </>
                         ) : (
                             <div className="d-flex flex-column align-items-center justify-content-center gap-2 py-2 mx-auto w-100">
-                                <span className="text-warning small fw-bold">{t.walletError || "Wallet not generated"}</span>
+                                <span className="text-warning small fw-bold">{t('walletError')}</span>
                                 <button className="btn btn-sm btn-outline-warning" onClick={handleRegenerateWallet} disabled={isGeneratingWallet} style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}>
                                     {isGeneratingWallet ? <><span className="spinner-border spinner-border-sm me-1"></span> Generating...</> : <><i className="bi bi-arrow-clockwise me-1"></i> Generate Wallet</>}
                                 </button>
@@ -375,33 +373,33 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
 
                     <div className="d-flex gap-2 mb-2">
                         <button onClick={() => { setShowDeposit(!showDeposit); setShowWithdraw(false); }} className={`btn flex-grow-1 fw-bold py-2 ${showDeposit ? 'btn-secondary' : 'btn-info'}`} style={{ fontSize: '0.9rem' }} disabled={!walletAddress || loadingWallet}>
-                            <i className="bi bi-qr-code me-2"></i>{t.depositBtn}
+                            <i className="bi bi-qr-code me-2"></i>{t('depositBtn')}
                         </button>
                         <button onClick={() => { setShowWithdraw(!showWithdraw); setShowDeposit(false); }} className={`btn flex-grow-1 fw-bold py-2 ${showWithdraw ? 'btn-secondary' : 'btn-warning'}`} style={{ fontSize: '0.9rem' }} disabled={!walletAddress || loadingWallet}>
-                            <i className="bi bi-send me-2"></i>{t.withdrawBtn}
+                            <i className="bi bi-send me-2"></i>{t('withdrawBtn')}
                         </button>
                     </div>
 
                     {/* DEPOSIT SECTION */}
                     {showDeposit && walletAddress && (
                         <div className="mt-3 p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn d-flex flex-column align-items-center">
-                            <p className="text-white-50 small mb-3 text-center w-100">{t.scanToDeposit}</p>
+                            <p className="text-white-50 small mb-3 text-center w-100">{t('scanToDeposit')}</p>
                             <div className="bg-white p-2 d-inline-block rounded mb-2"><QRCode value={walletAddress} size={150} level="M" /></div>
-                            <p className="text-warning small m-0 mt-2 text-center w-100 mx-auto" style={{ maxWidth: '250px' }}>⚠️ {t.nearAlert}</p>
+                            <p className="text-warning small m-0 mt-2 text-center w-100 mx-auto" style={{ maxWidth: '250px' }}>⚠️ {t('nearAlert')}</p>
                         </div>
                     )}
 
                     {/* WITHDRAW SECTION */}
                     {showWithdraw && walletAddress && (
                         <div className="mt-3 p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn">
-                            <h6 className="text-white mb-3 text-center">{t.withdrawTitle}</h6>
+                            <h6 className="text-white mb-3 text-center">{t('withdrawTitle')}</h6>
                             <div className="mb-3 text-start">
-                                <label className="text-white-50 small mb-1">{t.withdrawAddress}</label>
+                                <label className="text-white-50 small mb-1">{t('withdrawAddress')}</label>
                                 <input type="text" className={`form-control bg-dark text-white font-monospace ${addressError ? 'border-danger' : 'border-secondary'}`} placeholder="example.near" value={withdrawAddress} onChange={(e) => { const val = e.target.value.toLowerCase().replace(/[^a-z0-9_.-]/g, ''); setWithdrawAddress(val); validateNearAddress(val); }} />
                                 {addressError && <div className="text-danger small mt-1 animate__animated animate__fadeIn"><i className="bi bi-exclamation-circle me-1"></i> {addressError}</div>}
                             </div>
                             <div className="mb-3 text-start">
-                                <label className="text-white-50 small mb-1">{t.withdrawAmount}</label>
+                                <label className="text-white-50 small mb-1">{t('withdrawAmount')}</label>
                                 <div className="input-group">
                                     <input type="text" inputMode="decimal" className={`form-control bg-dark text-white ${amountError ? 'border-danger' : 'border-secondary'}`} placeholder="0.0" value={withdrawAmount} onChange={handleAmountChange} />
                                     <button className="btn btn-outline-secondary" onClick={() => {
@@ -410,22 +408,22 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                                         const valToSet = maxAmountNum > 0 ? safeTruncate(maxAmountNum, UI_DISPLAY_DECIMALS) : '0';
                                         setWithdrawAmount(valToSet);
                                         validateAmount(valToSet);
-                                    }}>{t.withdrawMax || t.maxBtn}</button>
+                                    }}>{t('withdrawMax')}</button>
                                 </div>
                                 {amountError && <div className="text-danger small mt-1 animate__animated animate__fadeIn"><i className="bi bi-exclamation-circle me-1"></i> {amountError}</div>}
 
                                 {withdrawAmount && !amountError && parseFloat(withdrawAmount) > 0 && (
                                     <div className="mt-2 p-2 bg-black rounded border border-secondary" style={{ fontSize: '0.75rem' }}>
                                         <div className="d-flex justify-content-between text-white-50 mb-1">
-                                            <span>{t.withdraw_amount || "Withdrawal Amount"}:</span>
+                                            <span>{t('withdraw_amount')}:</span>
                                             <span>{withdrawAmount} NEAR</span>
                                         </div>
                                         <div className="d-flex justify-content-between text-warning mb-1">
-                                            <span>Secure Service Fee JOMO (0.1%):</span>
+                                            <span>{t('secureServiceFee')}</span>
                                             <span>-{(parseFloat(withdrawAmount) * 0.001).toFixed(5)} NEAR</span>
                                         </div>
                                         <div className="d-flex justify-content-between text-white fw-bold pt-1 border-top border-dark">
-                                            <span>{t.you_will_receive || "You will receive"}:</span>
+                                            <span>{t('you_will_receive')}:</span>
                                             <span className="text-success">{(parseFloat(withdrawAmount) * 0.999).toFixed(5)} NEAR</span>
                                         </div>
                                     </div>
@@ -434,12 +432,12 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                             {withdrawError && <div className="alert alert-danger py-2 small text-center">{withdrawError}</div>}
                             {withdrawSuccess && (
                                 <div className="alert alert-success py-3 small text-center animate__animated animate__fadeIn">
-                                    <div className="mb-2"> {t.withdrawSuccess}</div>
-                                    {txHash && <a href={`https://nearblocks.io/txns/${txHash}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-success fw-bold text-decoration-none" style={{ fontSize: '0.75rem' }}><i className="bi bi-box-arrow-up-right me-1"></i>{t.viewExplorer}</a>}
+                                    <div className="mb-2"> {t('withdrawSuccess')}</div>
+                                    {txHash && <a href={`https://nearblocks.io/txns/${txHash}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-success fw-bold text-decoration-none" style={{ fontSize: '0.75rem' }}><i className="bi bi-box-arrow-up-right me-1"></i>{t('viewExplorer')}</a>}
                                 </div>
                             )}
                             <button className="btn btn-warning w-100 fw-bold mt-2" disabled={loadingWithdraw || !withdrawAddress || !withdrawAmount || addressError !== null || amountError !== null} onClick={handleWithdraw}>
-                                {loadingWithdraw ? <span className="spinner-border spinner-border-sm"></span> : (t.sendAssetsBtn)}
+                                {loadingWithdraw ? <span className="spinner-border spinner-border-sm"></span> : t('sendAssetsBtn')}
                             </button>
                         </div>
                     )}
@@ -469,18 +467,18 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                 <div className="p-4 bg-dark rounded mb-4 border border-secondary text-center position-relative opacity-50 animate__animated animate__fadeIn" style={{ filter: 'grayscale(0.6)' }}>
                     <div className="d-flex flex-column align-items-center mb-3 gap-2">
                         <span className="badge bg-warning text-dark small" style={{fontSize: '0.6rem'}}>
-                            {t.wallet_types?.coming_soon || "IN DEVELOPMENT"}
+                            {t('wallet_types.coming_soon')}
                         </span>
-                        <h5 className="text-white m-0">{t.wallet_types?.non_custodial_title || "Private Wallet (Non-Custodial)"}</h5>
+                        <h5 className="text-white m-0">{t('wallet_types.non_custodial_title')}</h5>
                     </div>
 
                     <p className="small text-white-50 mb-3 mx-auto" style={{ maxWidth: '400px', lineHeight: '1.5' }}>
-                        {t.wallet_types?.non_custodial_desc || "You have full control over your keys. Encrypted with your password. Note: JOMO cannot recover your funds if you lose your password."}
+                        {t('wallet_types.non_custodial_desc')}
                     </p>
 
                     <div className="p-2 mx-auto rounded border border-danger-subtle bg-danger-subtle text-danger small d-inline-block" style={{fontSize: '0.75rem'}}>
                         <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                        <strong>{t.wallet_types?.security_note_title || "Security"}:</strong> {t.wallet_types?.security_note_desc || "Keep your Seed Phrase safe. Loss of both password AND Seed Phrase = loss of funds."}
+                        <strong>{t('wallet_types.security_note_title')}:</strong> {t('wallet_types.security_note_desc')}
                     </div>
                 </div>
             )}

@@ -28,22 +28,22 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
             const hasSpecial = /[\W_]/.test(password);
 
             if (password.length < 8) {
-                setError(t.passLength);
+                setError(t('passLength'));
                 setLoading(false); return;
             }
             if (!hasLetter || !hasNumber) {
-                setError(t.passAlphanumeric);
+                setError(t('passAlphanumeric'));
                 setLoading(false); return;
             }
             if (!hasSpecial) {
-                setError(t.passSpecial);
+                setError(t('passSpecial'));
                 setLoading(false); return;
             }
         }
 
         try {
-            let authError;
-            let userData;
+            let authError: any = null;
+            let userData: any = null;
 
             if (isLogin) {
                 // login
@@ -51,7 +51,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                 authError = error;
                 userData = data;
             } else {
-                // REGISTRATION WITH REDIRECT TO /AUTH
+                // REGISTRATION WITH REDIRECT TO /AUTH FOR 2FA SETUP
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
@@ -62,18 +62,18 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
 
                 if (error) {
                     if (error.message.toLowerCase().includes('already registered')) {
-                        throw new Error(t.emailInUse);
+                        throw new Error(t('emailInUse'));
                     }
                     authError = error;
                 }
                 else if (data?.user && data.user.identities && data.user.identities.length === 0) {
-                    throw new Error(t.emailInUse);
+                    throw new Error(t('emailInUse'));
                 }
                 else {
                     userData = data;
 
                     if (data?.user) {
-                        setSuccessMsg(t.generatingWallet || "Generating wallet...");
+                        setSuccessMsg(t('generatingWallet'));
                         try {
                             const { data: { session } } = await supabase.auth.getSession();
 
@@ -97,11 +97,13 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
 
             if (authError) throw authError;
 
-            setSuccessMsg(isLogin ? (t.loginSuccess) : (t.registerSuccess));
+            setSuccessMsg(isLogin ? t('loginSuccess') : t('registerSuccess'));
 
-            if (onSuccess && userData?.user) {
-                setTimeout(() => onSuccess(userData.user), 1000);
-            }
+            setTimeout(() => {
+                if (onSuccess && userData?.user) {
+                    onSuccess(userData.user);
+                }
+            }, 1000);
 
         } catch (err: any) {
             console.error("Auth error:", err);
@@ -115,17 +117,17 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
         <div className={styles.center} style={{ minHeight: 'auto', padding: '2rem 0' }}>
             <div className={`${styles.card} ${styles.stakingCard}`}>
                 <h3 className="text-center text-white mb-4">
-                    {isLogin ? (t.loginTitle) : (t.createAccount)}
+                    {isLogin ? t('loginTitle') : t('createAccount')}
                 </h3>
 
                 <form onSubmit={handleSubmit} className="d-flex flex-column gap-3">
                     <div className="form-group">
-                        <label className="text-white-50 mb-2">{t.emailLabel}</label>
+                        <label className="text-white-50 mb-2">{t('emailLabel')}</label>
                         <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={`form-control form-control-lg bg-dark text-white border-secondary ${styles.customInput}`} placeholder="your@email.com" />
                     </div>
 
                     <div className="form-group">
-                        <label className="text-white-50 mb-2">{t.passwordLabel}</label>
+                        <label className="text-white-50 mb-2">{t('passwordLabel')}</label>
                         <div className="position-relative">
                             <input
                                 type={showPassword ? "text" : "password"}
@@ -134,7 +136,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className={`form-control form-control-lg bg-dark text-white border-secondary pe-5 ${styles.customInput}`}
-                                placeholder={isLogin ? (t.passwordPlaceholder) : (t.newPasswordPlaceholder)}
+                                placeholder={isLogin ? t('passwordPlaceholder') : t('newPasswordPlaceholder')}
                             />
                             <button
                                 type="button"
@@ -160,12 +162,12 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                     {successMsg && <div className="alert alert-success py-2 mt-2">{successMsg}</div>}
 
                     <button type="submit" disabled={loading || !email || password.length < 8} className={`btn btn-lg w-100 fw-bold text-white mt-3 ${styles.gradientPrimary}`}>
-                        {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : (isLogin ? (t.loginBtn) : (t.registerBtn))}
+                        {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : (isLogin ? t('loginBtn') : t('registerBtn'))}
                     </button>
                 </form>
 
                 <div className="text-center mt-4">
-                    <span className="text-white-50 me-2">{isLogin ? (t.noAccount) : (t.haveAccount)}</span>
+                    <span className="text-white-50 me-2">{isLogin ? t('noAccount') : t('haveAccount')}</span>
                     <button
                         type="button"
                         onClick={() => {
@@ -177,7 +179,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                         }}
                         className="btn btn-link text-info p-0 text-decoration-none fw-bold"
                     >
-                        {isLogin ? (t.registerBtn) : (t.loginBtn)}
+                        {isLogin ? t('registerBtn') : t('loginBtn')}
                     </button>
                 </div>
             </div>
