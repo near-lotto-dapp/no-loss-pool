@@ -39,7 +39,10 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
     const GAS_RESERVE = 0.05;
 
     const safeTruncate = (value: string | number, decimals: number) => {
-        const str = typeof value === 'number' ? value.toFixed(10) : value.toString();
+        const str = typeof value === 'number'
+            ? value.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 18 })
+            : value.toString();
+
         const [whole, fraction] = str.split('.');
         if (!fraction) return whole;
         const truncated = fraction.slice(0, decimals);
@@ -57,14 +60,14 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
 
             if (data.result?.amount) {
                 const rawBalance = Number(data.result.amount) / 1e24;
-                // Subtract the safety buffer. If balance is less than buffer, display 0.
                 const spendableBalance = Math.max(0, rawBalance - GAS_RESERVE);
-                setBalance(spendableBalance.toFixed(UI_DISPLAY_DECIMALS));
+
+                setBalance(safeTruncate(spendableBalance, UI_DISPLAY_DECIMALS));
             } else {
-                setBalance((0).toFixed(UI_DISPLAY_DECIMALS));
+                setBalance("0");
             }
         } catch (err) {
-            setBalance((0).toFixed(UI_DISPLAY_DECIMALS));
+            setBalance("0");
         } finally {
             if (!isSilent) setLoadingBalance(false);
         }
