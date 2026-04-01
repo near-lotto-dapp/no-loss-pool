@@ -25,6 +25,22 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
     if (authError || !user) throw new Error('Unauthorized');
 
+    const { data: existingProfile, error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .select('near_account_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+    if (profileError) {
+      console.error("Database check error:", profileError.message);
+      throw new Error('Database error while verifying wallet status');
+    }
+
+    if (existingProfile && existingProfile.near_account_id) {
+      console.error(`[SECURITY ALERT] Blocked attempt to overwrite existing wallet for user ${user.id}. Wallet: ${existingProfile.near_account_id}`);
+      throw new Error('WALLET_ALREADY_EXISTS');
+    }
+
     const { KeyPair } = nearAPI;
     const keyPair = KeyPair.fromRandom('ed25519');
 
@@ -62,6 +78,14 @@ serve(async (req) => {
 
   } catch (error: any) {
     console.error("[ERROR] Wallet generation failed:", error.message);
+
+    if (error.message === 'WALLET_ALREADY_EXISTS') {
+      return new Response(
+          JSON.stringify({ error: "User already has a wallet. Overwriting is strictly prohibited." }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      )
+    }
+
     return new Response(
         JSON.stringify({ error: error.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
