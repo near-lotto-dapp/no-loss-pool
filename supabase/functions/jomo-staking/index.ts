@@ -76,11 +76,11 @@ serve(async (req) => {
           case 'stake': {
             if (!amount) throw new Error("Amount is required");
 
-            // Prevent staking the safety reserve
             const state = await account.state();
             const availableBalance = BigInt(state.amount);
-            const reserveYocto = BigInt(utils.format.parseNearAmount(GAS_RESERVE)!);
-            const requestedYocto = BigInt(toYocto(amount));
+
+            const reserveYocto = BigInt(utils.format.parseNearAmount(String(GAS_RESERVE))!);
+            const requestedYocto = BigInt(toYocto(String(amount)));
 
             if (requestedYocto + reserveYocto > availableBalance) {
               throw new Error("Insufficient balance. 0.05 NEAR is reserved to guarantee transaction stability.");
@@ -91,14 +91,14 @@ serve(async (req) => {
               methodName: 'deposit_and_stake',
               args: { provider_id: providerId },
               gas: MAX_GAS,
-              attachedDeposit: toYocto(amount),
+              attachedDeposit: toYocto(String(amount)),
             });
             break;
           }
 
           case 'unstake': {
             if (!amount) throw new Error("Amount is required");
-            const yoctoAmount = toYocto(amount);
+            const yoctoAmount = toYocto(String(amount));
 
             try {
               const storage = await account.viewFunction({
@@ -179,7 +179,7 @@ serve(async (req) => {
           }
 
           case 'instant_unstake': {
-            const yoctoAmount = toYocto(amount);
+            const yoctoAmount = toYocto(String(amount));
             result = await account.functionCall({
               contractId: PROXY_CONTRACT,
               methodName: 'instant_withdraw_shares',

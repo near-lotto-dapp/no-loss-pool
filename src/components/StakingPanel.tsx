@@ -176,7 +176,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         const numVal = parseFloat(val);
 
         if (currentTab === 'stake') {
-            // The balance prop is already the SAFE spendable amount (raw balance - 0.05)
             const maxStakeAllowed = parseFloat(balance || '0');
 
             if (numVal < MIN_STAKE_AMOUNT) {
@@ -228,7 +227,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                 let attempts = 0;
                 let isFound = false;
 
-                // Wait for blockchain indexing to catch up
                 while (!isFound && attempts < 4) {
                     await new Promise(res => setTimeout(res, 2000));
                     try {
@@ -293,8 +291,8 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         }
     };
 
-    const handleStake = () => invokeStakingAction({ action: 'stake', amount, providerId: selectedProvider });
-    const handleUnstake = () => invokeStakingAction({ action: 'unstake', amount, providerId: selectedProvider });
+    const handleStake = () => invokeStakingAction({ action: 'stake', amount: String(amount), providerId: selectedProvider });
+    const handleUnstake = () => invokeStakingAction({ action: 'unstake', amount: String(amount), providerId: selectedProvider });
     const handleClaimDirect = () => invokeStakingAction({ action: 'claim', claimType: 'direct', providerId: selectedProvider });
 
     const activeSharesNum = parseFloat(stakedBalance);
@@ -438,7 +436,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         onClick={() => {
                             let valToSet = '';
                             if (activeTab === 'stake') {
-                                // Balance is already pre-calculated to be the safe spendable amount
                                 const maxStakeNum = parseFloat(balance || '0');
                                 valToSet = maxStakeNum > 0 ? safeTruncate(maxStakeNum, UI_DISPLAY_DECIMALS) : '0';
                             } else {
