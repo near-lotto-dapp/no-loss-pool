@@ -270,5 +270,11 @@
     "shortDisclaimer": "JOMO Vault proporciona una interfaz segura para el almacenamiento custodial y el staking de NEAR. Las criptomonedas están sujetas a altos riesgos de mercado. El procedimiento estándar de retiro de la red tarda aproximadamente 3 días. Invierta de manera responsable.",
     "copyright": "© 2026 Crypto JOMO Vault. Todos los derechos reservados.",
     "fullTerms": "1. Naturaleza de los servicios: JOMO Vault proporciona una billetera custodial e interfaz a los contratos inteligentes de la red NEAR (incluido LiNEAR Protocol).\n2. Riesgos: Los depósitos en criptomonedas no están asegurados. Usted acepta todos los riesgos asociados con la volatilidad del mercado.\n3. Retiros: El proceso de retiro estándar (Delayed Unstake) es controlado por la blockchain y toma alrededor de 4 épocas (~48-72 horas). No podemos acelerar este proceso.\n4. Tarifas: JOMO cobra una tarifa de servicio fija del 0.3% al momento del retiro. Las tarifas de transacción de la red (Gas) son cubiertas por el usuario.\n5. Responsabilidad: La plataforma no se hace responsable de la pérdida de fondos debido al compromiso de sus credenciales (contraseña, 2FA)."
+  },
+  "wallet": {
+    "generating_secure": "Generando billetera segura...",
+    "loading": "Cargando billetera...",
+    "generating_btn": "Generando...",
+    "generate_btn": "Generar billetera"
   }
 }

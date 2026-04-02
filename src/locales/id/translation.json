@@ -282,5 +282,11 @@
     "shortDisclaimer": "JOMO Vault menyediakan antarmuka yang aman untuk penyimpanan kustodial dan staking NEAR. Mata uang kripto tunduk pada risiko pasar yang tinggi. Prosedur unstaking jaringan standar membutuhkan waktu sekitar 3 hari. Harap berinvestasi secara bertanggung jawab.",
     "copyright": "© 2026 Crypto JOMO Vault. Hak cipta dilindungi undang-undang.",
     "fullTerms": "1. Sifat Layanan: JOMO Vault menyediakan wallet kustodial dan antarmuka ke smart contract jaringan NEAR (termasuk LiNEAR Protocol).\n2. Risiko: Deposit mata uang kripto tidak diasuransikan. Anda menerima semua risiko yang terkait dengan volatilitas pasar.\n3. Penarikan: Proses unstaking standar (Delayed Unstake) dikendalikan oleh blockchain dan memakan waktu sekitar 4 epoch (~48-72 jam). Kami tidak dapat mempercepat proses ini.\n4. Biaya: JOMO membebankan biaya layanan tetap sebesar 0,3% saat penarikan. Biaya transaksi jaringan (Gas) ditanggung oleh pengguna.\n5. Tanggung Jawab: Platform tidak bertanggung jawab atas hilangnya dana akibat penyusupan kredensial Anda (kata sandi, 2FA)."
+  },
+  "wallet": {
+    "generating_secure": "Membuat dompet aman...",
+    "loading": "Memuat dompet...",
+    "generating_btn": "Membuat...",
+    "generate_btn": "Buat dompet"
   }
 }

@@ -282,5 +282,11 @@
     "shortDisclaimer": "JOMO Vault ofrece una interfaz segura para almacenamiento custodial y staking de NEAR. Las criptomonedas están sujetas a altos riesgos de mercado. El procedimiento de unstaking estándar de la red tarda aproximadamente 3 días. Por favor, invertí con responsabilidad.",
     "copyright": "© 2026 Crypto JOMO Vault. Todos los derechos reservados.",
     "fullTerms": "1. Naturaleza de los Servicios: JOMO Vault provee una wallet custodial y una interfaz para los smart contracts de la red NEAR (incluyendo el Protocolo LiNEAR).\n2. Riesgos: Los depósitos en criptomonedas no tienen seguro. Aceptás todos los riesgos asociados a la volatilidad del mercado.\n3. Retiros: El proceso estándar de unstaking (Delayed Unstake) está controlado por la blockchain y tarda unos 4 epochs (~48-72 horas). No podemos acelerar este proceso.\n4. Comisiones: JOMO cobra una comisión fija de servicio del 0.3% al momento del retiro. Las comisiones de red (Gas) corren por cuenta del usuario.\n5. Responsabilidad: La plataforma no se hace responsable por la pérdida de fondos si te comprometen tus credenciales (contraseña, 2FA)."
+  },
+  "wallet": {
+    "generating_secure": "Generando billetera segura...",
+    "loading": "Cargando billetera...",
+    "generating_btn": "Generando...",
+    "generate_btn": "Generar billetera"
   }
 }

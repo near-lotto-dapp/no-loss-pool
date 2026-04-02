@@ -345,15 +345,33 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                         {loadingWallet ? (
                             <div className="d-flex align-items-center mx-auto text-info small gap-2">
                                 <span className="spinner-border spinner-border-sm"></span>
-                                {isGeneratingWallet ? "Generating Secure Wallet..." : "Loading Wallet..."}
+                                {isGeneratingWallet ? t('wallet.generating_secure') : t('wallet.loading')}
                             </div>
                         ) : walletAddress ? (
                             <>
-                                {/* Mobile view */}
-                                <span className="text-info fw-bold font-monospace ps-2 d-md-none" style={{ fontSize: '0.85rem' }}>{formatAddressShort(walletAddress)}</span>
-                                {/* PC view */}
-                                <span className="text-info fw-bold font-monospace ps-2 d-none d-md-inline" style={{ fontSize: '0.85rem' }}>{formatAddressLong(walletAddress)}</span>
-                                <button onClick={() => { navigator.clipboard.writeText(walletAddress); setCopied(true); setTimeout(() => setCopied(false), 2000); }} className={`btn btn-sm ${copied ? 'btn-success' : 'btn-outline-secondary'}`}>
+                                <div className="d-flex align-items-center flex-grow-1 ps-2">
+                                    <div className="d-flex align-items-center gap-2">
+                                        {/* MOBILE VIEW */}
+                                        <span className="text-info fw-bold font-monospace d-md-none" style={{ fontSize: '0.85rem' }}>
+                        {formatAddressShort(walletAddress)}
+                    </span>
+                                        {/* PC VIEW */}
+                                        <span className="text-info fw-bold font-monospace d-none d-md-inline" style={{ fontSize: '0.85rem' }}>
+                        {formatAddressLong(walletAddress)}
+                    </span>
+
+                                        <InfoTooltip text={walletAddress} />
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(walletAddress);
+                                        setCopied(true);
+                                        setTimeout(() => setCopied(false), 2000);
+                                    }}
+                                    className={`btn btn-sm ${copied ? 'btn-success' : 'btn-outline-secondary'} flex-shrink-0 ms-2`}
+                                >
                                     {copied ? t('copiedBtn') : t('copyBtn')}
                                 </button>
                             </>
@@ -361,7 +379,11 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                             <div className="d-flex flex-column align-items-center justify-content-center gap-2 py-2 mx-auto w-100">
                                 <span className="text-warning small fw-bold">{t('walletError')}</span>
                                 <button className="btn btn-sm btn-outline-warning" onClick={handleRegenerateWallet} disabled={isGeneratingWallet} style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}>
-                                    {isGeneratingWallet ? <><span className="spinner-border spinner-border-sm me-1"></span> Generating...</> : <><i className="bi bi-arrow-clockwise me-1"></i> Generate Wallet</>}
+                                    {isGeneratingWallet ? (
+                                        <><span className="spinner-border spinner-border-sm me-1"></span> {t('wallet.generating_btn')}</>
+                                    ) : (
+                                        <><i className="bi bi-arrow-clockwise me-1"></i> {t('wallet.generate_btn')}</>
+                                    )}
                                 </button>
                             </div>
                         )}

@@ -282,5 +282,11 @@
     "shortDisclaimer": "JOMO Vault provide secure interface for custodial storage and NEAR staking. Cryptocurrencies dey subject to high market risks. The standard network unstaking procedure dey take approximately 3 days. Abeg invest responsibly.",
     "copyright": "© 2026 Crypto JOMO Vault. All rights reserved.",
     "fullTerms": "1. Nature of Services: JOMO Vault provide custodial wallet and interface to NEAR network smart contracts (including LiNEAR Protocol).\n2. Risks: Cryptocurrency deposits dem no dey insured. You accept all risks associated with market volatility.\n3. Withdrawals: The standard unstaking process (Delayed Unstake) na blockchain dey control am and e dey take about 4 epochs (~48-72 hours). We no fit expedite this process.\n4. Fees: JOMO charge fixed service fee of 0.3% upon withdrawal. Network transaction fees (Gas) na user dey cover am.\n5. Liability: The platform no dey liable for loss of funds due to the compromise of your credentials (password, 2FA)."
+  },
+  "wallet": {
+    "generating_secure": "Dey generate secure wallet...",
+    "loading": "Dey load wallet...",
+    "generating_btn": "Dey generate...",
+    "generate_btn": "Generate wallet"
   }
 }

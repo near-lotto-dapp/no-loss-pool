@@ -282,5 +282,11 @@
     "shortDisclaimer": "JOMO Vault inatoa kiolesura salama cha uhifadhi na staking ya NEAR. Fedha za Crypto zinakabiliwa na hatari kubwa za soko. Utaratibu wa kawaida wa mtandao wa unstaking unachukua takriban siku 3. Tafadhali wekeza kwa kuwajibika.",
     "copyright": "© 2026 Crypto JOMO Vault. Haki zote zimehifadhiwa.",
     "fullTerms": "1. Hali ya Huduma: JOMO Vault inatoa wallet ya custodial na kiolesura cha smart contracts za mtandao wa NEAR (ikiwa ni pamoja na Itifaki ya LiNEAR).\n2. Hatari: Amana za Cryptocurrency hazina bima. Unakubali hatari zote zinazohusiana na mabadiliko ya soko.\n3. Kutoa Pesa: Mchakato wa kawaida wa unstaking unadhibitiwa na blockchain na unachukua karibu epoch 4 (saa ~48-72). Hatuwezi kuharakisha mchakato huu.\n4. Ada: JOMO inatoza ada ya kudumu ya huduma ya 0.3% wakati wa kutoa pesa. Ada za miamala ya mtandao (Gas) zinalipwa na mtumiaji.\n5. Dhima: Jukwaa haliwajibikiwi kwa upotevu wa pesa unaosababishwa na kudukuliwa kwa taarifa zako za siri (nenosiri, 2FA)."
+  },
+  "wallet": {
+    "generating_secure": "Inazalisha pochi salama...",
+    "loading": "Inapakia pochi...",
+    "generating_btn": "Inazalisha...",
+    "generate_btn": "Tengeneza pochi"
   }
 }

@@ -282,5 +282,11 @@
     "shortDisclaimer": "JOMO Vault cung cấp một giao diện an toàn cho việc lưu trữ custodial và staking NEAR. Tiền điện tử chịu rủi ro thị trường cao. Thủ tục unstaking mạng tiêu chuẩn mất khoảng 3 ngày. Vui lòng đầu tư có trách nhiệm.",
     "copyright": "© 2026 Crypto JOMO Vault. Bảo lưu mọi quyền.",
     "fullTerms": "1. Bản chất của Dịch vụ: JOMO Vault cung cấp ví custodial và giao diện cho các hợp đồng thông minh của mạng NEAR (bao gồm LiNEAR Protocol).\n2. Rủi ro: Tiền gửi crypto không được bảo hiểm. Bạn chấp nhận mọi rủi ro liên quan đến sự biến động của thị trường.\n3. Rút tiền: Quá trình unstaking tiêu chuẩn (Delayed Unstake) được kiểm soát bởi blockchain và mất khoảng 4 epoch (~48-72 giờ). Chúng tôi không thể đẩy nhanh quá trình này.\n4. Phí: JOMO tính một khoản phí dịch vụ cố định là 0,3% khi rút tiền. Phí giao dịch mạng (Gas) do người dùng chi trả.\n5. Trách nhiệm pháp lý: Nền tảng không chịu trách nhiệm về việc mất tiền do lộ thông tin đăng nhập của bạn (mật khẩu, 2FA)."
+  },
+  "wallet": {
+    "generating_secure": "Đang tạo ví bảo mật...",
+    "loading": "Đang tải ví...",
+    "generating_btn": "Đang tạo...",
+    "generate_btn": "Tạo ví"
   }
 }
