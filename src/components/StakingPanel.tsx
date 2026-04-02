@@ -3,8 +3,11 @@ import { stakingService, UserMetrics } from '../services/near.ts';
 import { formatNearAmount } from "@near-js/utils";
 import { supabase } from '@/utils/supabaseClient';
 import Big from 'big.js';
-import {UI_DISPLAY_DECIMALS, PROFIT_DECIMALS, APY_VALUE, MIN_STAKE_AMOUNT} from '@/utils/constants';
+import { UI_DISPLAY_DECIMALS, PROFIT_DECIMALS, APY_VALUE, MIN_STAKE_AMOUNT } from '@/utils/constants';
 import { fetchWithFallback } from '@/utils/rpc';
+import { TxSuccessAlert } from "@/components/TxSuccessAlert.tsx";
+import { TxErrorAlert } from "@/components/TxErrorAlert.tsx";
+import { StakingStats } from "@/components/StakingStats.tsx";
 
 interface StakingPanelProps {
     balance: string | null;
@@ -13,7 +16,7 @@ interface StakingPanelProps {
     onSuccess: () => void;
 }
 
-const safeTruncate = (value: string | number, decimals: number) => {
+const safeTruncateStaking = (value: string | number, decimals: number) => {
     const str = typeof value === 'number' ? value.toFixed(10) : value.toString();
     const [whole, fraction] = str.split('.');
     if (!fraction) return whole;
@@ -31,6 +34,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const [directRequest, setDirectRequest] = useState<any>(null);
     const [directTimeStr, setDirectTimeStr] = useState<string>('');
     const [unstakeStartTime, setUnstakeStartTime] = useState<string | null>(null);
+    const [historicalWithdrawn, setHistoricalWithdrawn] = useState<string>('0');
     const [lifetimeProfit, setLifetimeProfit] = useState<string>((0).toFixed(PROFIT_DECIMALS));
     const [isProcessing, setIsProcessing] = useState(false);
     const [txError, setTxError] = useState<string | null>(null);
@@ -46,15 +50,22 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         try {
             const { data: { session } } = await supabase.auth.getSession();
             let dbStartTime = null;
+            let dbHistorical = "0";
+
             if (session?.user?.id) {
                 const { data: profile } = await supabase
                     .from('profiles')
-                    .select('unstake_start_time')
+                    .select('unstake_start_time, historical_withdrawn')
                     .eq('id', session.user.id)
                     .single();
+
                 dbStartTime = profile?.unstake_start_time;
+                if (profile?.historical_withdrawn) {
+                    dbHistorical = profile.historical_withdrawn;
+                }
             }
             setUnstakeStartTime(dbStartTime);
+            setHistoricalWithdrawn(dbHistorical);
 
             const [sharesYocto, userMetrics, priceYocto] = await Promise.all([
                 stakingService.getUserShares(walletAddress, selectedProvider),
@@ -99,16 +110,18 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             if (userMetrics) {
                 const price = new Big(priceYocto || '1000000000000000000000000').div(1e24);
                 const shares = new Big(sharesYocto || '0').div(1e24);
-
                 const directNearBig = activeDirect ? new Big(activeDirect.amount).div(1e24) : new Big(0);
 
                 const activeValueNEAR = shares.times(price);
                 const totalCurrentWealth = activeValueNEAR.plus(directNearBig);
 
-                const withdrawn = new Big(userMetrics.total_withdrawn || '0').div(1e24);
+                const withdrawnProxy = new Big(userMetrics.total_withdrawn || '0').div(1e24);
+                const withdrawnHistorical = new Big(dbHistorical).div(1e24);
+                const totalWithdrawnAll = withdrawnProxy.plus(withdrawnHistorical);
+
                 const deposited = new Big(userMetrics.total_deposited || '0').div(1e24);
 
-                let profit = totalCurrentWealth.plus(withdrawn).minus(deposited);
+                let profit = totalCurrentWealth.plus(totalWithdrawnAll).minus(deposited);
                 if (profit.lt(0)) profit = new Big(0);
 
                 setLifetimeProfit(profit.toFixed(PROFIT_DECIMALS));
@@ -177,7 +190,6 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
 
         if (currentTab === 'stake') {
             const maxStakeAllowed = parseFloat(balance || '0');
-
             if (numVal < MIN_STAKE_AMOUNT) {
                 setInputError(t('staking.min_stake_error'));
             } else if (numVal > maxStakeAllowed) {
@@ -210,6 +222,9 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
         setTxError(null);
         setSuccessHash(null);
 
+        // Save the amount BEFORE it resets post-transaction
+        const pendingClaimAmount = directRequest?.amount || "0";
+
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session?.access_token) throw new Error("Session expired. Please log in again.");
@@ -231,17 +246,10 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                     await new Promise(res => setTimeout(res, 2000));
                     try {
                         const txData = await fetchWithFallback({
-                            jsonrpc: "2.0",
-                            id: "dontcare",
-                            method: "EXPERIMENTAL_tx_status",
-                            params: [data.hash, walletAddress]
+                            jsonrpc: "2.0", id: "dontcare", method: "EXPERIMENTAL_tx_status", params: [data.hash, walletAddress]
                         });
 
-                        if (txData.error) {
-                            attempts++;
-                            continue;
-                        }
-
+                        if (txData.error) { attempts++; continue; }
                         isFound = true;
 
                         if (txData.result?.status?.Failure) {
@@ -267,6 +275,15 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                 }
 
                 setSuccessHash(data.hash);
+
+                // Add successful direct claim to DB historical withdrawn
+                if (payload.action === 'claim' && payload.claimType === 'direct') {
+                    const currentHist = new Big(historicalWithdrawn || "0");
+                    const newHist = currentHist.plus(new Big(pendingClaimAmount)).toString();
+
+                    await supabase.from('profiles').update({ historical_withdrawn: newHist }).eq('id', session.user.id);
+                    setHistoricalWithdrawn(newHist);
+                }
             }
 
             setAmount('');
@@ -276,9 +293,7 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
             await fetchStakingData(false);
         } catch (err: any) {
             console.error("Transaction failed:", err);
-
             const errMsg = err.message || "";
-
             if (errMsg.includes("not yet available due to unstaking delay") || errMsg.includes("Smart contract panicked")) {
                 setTxError(t('staking.epoch_sync_error'));
             } else if (errMsg.includes("TxOnChainFailure")) {
@@ -295,33 +310,24 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
     const handleUnstake = () => invokeStakingAction({ action: 'unstake', amount: String(amount), providerId: selectedProvider });
     const handleClaimDirect = () => invokeStakingAction({ action: 'claim', claimType: 'direct', providerId: selectedProvider });
 
-    const activeSharesNum = parseFloat(stakedBalance);
-    const directNearNum = directRequest ? parseFloat(formatNearAmount(directRequest.amount)) : 0;
+    // Shares
+    const totalSharesStr = new Big(stakedBalance || "0").toFixed(UI_DISPLAY_DECIMALS);
 
-    const totalShares = activeSharesNum;
-    const unstakedAmountNEAR = directNearNum;
-    const totalDeposited = metrics ? parseFloat(formatNearAmount(metrics.total_deposited)) : 0;
-    const totalWithdrawn = metrics ? parseFloat(formatNearAmount(metrics.total_withdrawn)) : 0;
+    // Unstaking (Direct Pool)
+    const directNearBig = directRequest ? new Big(directRequest.amount).div(1e24) : new Big(0);
+    const unstakedAmountNEARStr = directNearBig.toFixed(UI_DISPLAY_DECIMALS);
+
+    // Deposited
+    const depositedBig = metrics ? new Big(metrics.total_deposited || "0").div(1e24) : new Big(0);
+    const totalDepositedStr = depositedBig.toFixed(UI_DISPLAY_DECIMALS);
+
+    // Withdrawn (Proxy + DB Historical)
+    const withdrawnProxyBig = metrics ? new Big(metrics.total_withdrawn || "0").div(1e24) : new Big(0);
+    const withdrawnHistoricalBig = new Big(historicalWithdrawn || "0").div(1e24);
+    const totalWithdrawnStr = withdrawnProxyBig.plus(withdrawnHistoricalBig).toFixed(UI_DISPLAY_DECIMALS);
 
     return (
         <div className="mt-3 p-3 bg-black rounded border border-secondary animate__animated animate__fadeIn">
-            {successHash && (
-                <div className="alert alert-success py-2 small mb-3 animate__animated animate__bounceIn">
-                    <div className="d-flex justify-content-between align-items-center">
-                        <span><i className="bi bi-check-circle-fill me-2"></i>{t('successTx')}</span>
-                        <button type="button" className="btn-close btn-close-white" style={{fontSize: '0.6rem'}} onClick={() => setSuccessHash(null)}></button>
-                    </div>
-                    <a href={`https://nearblocks.io/txns/${successHash}`} target="_blank" rel="noopener noreferrer" className="text-decoration-underline text-success d-block mt-1">
-                        {t('viewExplorer')}
-                    </a>
-                </div>
-            )}
-
-            {txError && (
-                <div className="alert alert-danger py-2 small text-center mb-3 animate__animated animate__shakeX">
-                    <i className="bi bi-exclamation-octagon me-2"></i>{txError}
-                </div>
-            )}
 
             <div className="d-flex mb-3 border-bottom border-secondary">
                 <button
@@ -370,40 +376,14 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                         </div>
                     </div>
 
-                    <div className="mb-3 p-3 bg-dark rounded border border-secondary">
-                        <h6 className="text-white mb-3" style={{ fontSize: '0.85rem' }}>{t('staking.performance')}</h6>
-                        <div className="d-flex justify-content-between mb-1">
-                            <small className="text-white-50">{t('staking.total_deposited')}</small>
-                            <span className="text-white fw-bold">{totalDeposited.toFixed(UI_DISPLAY_DECIMALS)} NEAR</span>
-                        </div>
-
-                        {unstakedAmountNEAR > 0 && (
-                            <div className="d-flex justify-content-between mb-1">
-                                <small className="text-white-50">{t('inUnstakeProcess')}</small>
-                                <span className="text-warning fw-bold">{unstakedAmountNEAR.toFixed(UI_DISPLAY_DECIMALS)} NEAR</span>
-                            </div>
-                        )}
-
-                        <div className="d-flex justify-content-between mb-1">
-                            <small className="text-white-50">{t('staking.total_withdrawn')}</small>
-                            <span className="text-white fw-bold">{totalWithdrawn.toFixed(UI_DISPLAY_DECIMALS)} NEAR</span>
-                        </div>
-
-                        <div className="d-flex justify-content-between pt-1 mt-1">
-                            <small className="text-white-50">{t('staking.total_shares')}</small>
-                            <span className="text-info fw-bold">{totalShares.toFixed(UI_DISPLAY_DECIMALS)} LiNEAR</span>
-                        </div>
-
-                        <div className="d-flex justify-content-between pt-2 mt-2 border-top border-secondary">
-                            <small className="text-white-50">{t('staking.lifetime_profit')}</small>
-                            <span
-                                className="text-success fw-bold"
-                                style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '0.5px' }}
-                            >
-                                +{lifetimeProfit} NEAR
-                            </span>
-                        </div>
-                    </div>
+                    <StakingStats
+                        t={t}
+                        totalDeposited={totalDepositedStr}
+                        unstakedAmountNEAR={unstakedAmountNEARStr}
+                        totalWithdrawn={totalWithdrawnStr}
+                        totalShares={totalSharesStr}
+                        lifetimeProfit={lifetimeProfit}
+                    />
                 </>
             )}
 
@@ -437,10 +417,10 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                             let valToSet = '';
                             if (activeTab === 'stake') {
                                 const maxStakeNum = parseFloat(balance || '0');
-                                valToSet = maxStakeNum > 0 ? safeTruncate(maxStakeNum, UI_DISPLAY_DECIMALS) : '0';
+                                valToSet = maxStakeNum > 0 ? safeTruncateStaking(maxStakeNum, UI_DISPLAY_DECIMALS) : '0';
                             } else {
                                 const sharesNum = parseFloat(stakedBalance || '0');
-                                valToSet = sharesNum > 0 ? safeTruncate(sharesNum, UI_DISPLAY_DECIMALS) : '0';
+                                valToSet = sharesNum > 0 ? safeTruncateStaking(sharesNum, UI_DISPLAY_DECIMALS) : '0';
                             }
                             setAmount(valToSet);
                             validateInput(valToSet, activeTab);
@@ -513,6 +493,9 @@ export function StakingPanel({ balance, walletAddress, t, onSuccess }: StakingPa
                     </div>
                 </>
             )}
+
+            <TxErrorAlert error={txError} onClose={() => setTxError(null)} />
+            <TxSuccessAlert hash={successHash} message={t('successTx')} t={t} onClose={() => setSuccessHash(null)} />
         </div>
     );
 }

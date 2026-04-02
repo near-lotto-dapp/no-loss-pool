@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import QRCode from 'react-qr-code';
 import { supabase } from '@/utils/supabaseClient';
-import { StakingPanel } from "@/components/StakingPanel.tsx";
-import {GAS_RESERVE, UI_DISPLAY_DECIMALS} from '@/utils/constants';
-import {InfoTooltip} from "@/components/InfoTooltip.tsx";
+import { GAS_RESERVE, UI_DISPLAY_DECIMALS } from '@/utils/constants';
+import { InfoTooltip } from "@/components/InfoTooltip.tsx";
+import { TxSuccessAlert } from "@/components/TxSuccessAlert.tsx";
+import { TxErrorAlert } from "@/components/TxErrorAlert.tsx";
+import {StakingPanel} from "@/components/StakingPanel.tsx";
 
 interface WalletDashboardProps {
     user: any;
@@ -31,7 +33,6 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
     const [withdrawAmount, setWithdrawAmount] = useState('');
     const [loadingWithdraw, setLoadingWithdraw] = useState(false);
     const [withdrawError, setWithdrawError] = useState<string | null>(null);
-    const [withdrawSuccess, setWithdrawSuccess] = useState(false);
     const [txHash, setTxHash] = useState<string | null>(null);
     const [addressError, setAddressError] = useState<string | null>(null);
     const [amountError, setAmountError] = useState<string | null>(null);
@@ -155,7 +156,6 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
     const handleWithdraw = async () => {
         setLoadingWithdraw(true);
         setWithdrawError(null);
-        setWithdrawSuccess(false);
         setTxHash(null);
 
         try {
@@ -172,7 +172,6 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
 
             if (data?.hash) {
                 setTxHash(data.hash);
-                setWithdrawSuccess(true);
                 setWithdrawAmount('');
                 setWithdrawAddress('');
                 setTimeout(() => { if (walletAddress) fetchBalance(walletAddress, true); }, 2000);
@@ -209,7 +208,6 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
     const validateAmount = (val: string) => {
         if (!val) { setAmountError(null); return true; }
         const numVal = parseFloat(val);
-        // The balance state already represents the safe, spendable amount
         const maxBalance = parseFloat(balance || '0');
 
         if (isNaN(numVal) || numVal <= 0) { setAmountError(t('invalidAmountZero')); return false; }
@@ -302,9 +300,7 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                 </button>
             </div>
 
-            {/* ========================================== */}
-            {/* 1. CLOUD WALLET (CUSTODIAL) VIEW           */}
-            {/* ========================================== */}
+            {/* 1. CLOUD WALLET (CUSTODIAL) VIEW */}
             {currentView === 'cloud' && (
                 <div className="p-4 bg-dark rounded mb-4 border border-secondary text-start position-relative animate__animated animate__fadeIn">
                     <div className="d-flex justify-content-between align-items-center mb-3">
@@ -403,7 +399,6 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                                 <div className="input-group">
                                     <input type="text" inputMode="decimal" className={`form-control bg-dark text-white ${amountError ? 'border-danger' : 'border-secondary'}`} placeholder="0.0" value={withdrawAmount} onChange={handleAmountChange} />
                                     <button className="btn btn-outline-secondary" onClick={() => {
-                                        // The balance variable is strictly the spendable amount
                                         const maxAmountNum = parseFloat(balance || '0');
                                         const valToSet = maxAmountNum > 0 ? safeTruncate(maxAmountNum, UI_DISPLAY_DECIMALS) : '0';
                                         setWithdrawAmount(valToSet);
@@ -429,26 +424,24 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                                     </div>
                                 )}
                             </div>
-                            {withdrawError && <div className="alert alert-danger py-2 small text-center">{withdrawError}</div>}
-                            {withdrawSuccess && (
-                                <div className="alert alert-success py-3 small text-center animate__animated animate__fadeIn">
-                                    <div className="mb-2"> {t('withdrawSuccess')}</div>
-                                    {txHash && <a href={`https://nearblocks.io/txns/${txHash}`} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-outline-success fw-bold text-decoration-none" style={{ fontSize: '0.75rem' }}><i className="bi bi-box-arrow-up-right me-1"></i>{t('viewExplorer')}</a>}
-                                </div>
-                            )}
+
                             <button className="btn btn-warning w-100 fw-bold mt-2" disabled={loadingWithdraw || !withdrawAddress || !withdrawAmount || addressError !== null || amountError !== null} onClick={handleWithdraw}>
                                 {loadingWithdraw ? <span className="spinner-border spinner-border-sm"></span> : t('sendAssetsBtn')}
                             </button>
+
+                            {/* ALERTS */}
+                            <TxErrorAlert error={withdrawError} onClose={() => setWithdrawError(null)} />
+                            <TxSuccessAlert hash={txHash} message={t('withdrawSuccess')} t={t} onClose={() => { setTxHash(null) }} />
                         </div>
                     )}
                 </div>
             )}
 
-            {/* ========================================== */}
-            {/* 2. STAKING VIEW                            */}
-            {/* ========================================== */}
+            {/* 2. STAKING VIEW */}
             {currentView === 'stake' && walletAddress && (
+
                 <div className="p-4 bg-dark rounded mb-4 border border-secondary text-start position-relative animate__animated animate__fadeIn">
+
                     <StakingPanel
                         balance={balance}
                         walletAddress={walletAddress}
@@ -460,9 +453,7 @@ export function WalletDashboard({ user, t }: WalletDashboardProps) {
                 </div>
             )}
 
-            {/* ========================================== */}
-            {/* 3. PRIVATE WALLET (NON-CUSTODIAL) VIEW     */}
-            {/* ========================================== */}
+            {/* 3. PRIVATE WALLET (NON-CUSTODIAL) VIEW */}
             {currentView === 'private' && (
                 <div className="p-4 bg-dark rounded mb-4 border border-secondary text-center position-relative opacity-50 animate__animated animate__fadeIn" style={{ filter: 'grayscale(0.6)' }}>
                     <div className="d-flex flex-column align-items-center mb-3 gap-2">
