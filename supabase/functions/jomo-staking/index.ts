@@ -135,8 +135,7 @@ serve(async (req) => {
             }
 
             const amountBig = BigInt(yoctoAmount);
-            const feeBig = (amountBig * 30n) / 10000n;
-            const payoutSharesBig = amountBig - feeBig;
+            const payoutSharesBig = amountBig;
 
             const priceStr = await account.viewFunction({
               contractId: providerId,

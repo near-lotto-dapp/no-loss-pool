@@ -62,12 +62,12 @@ serve(async (req) => {
 
     const account = await near.account(profile.near_account_id);
 
-    // --- Ensure 0.05 NEAR buffer remains untouched ---
+    // Ensure 0.05 NEAR buffer remains untouched
     const SAFE_RESERVE_NEAR = "0.05";
     const reserveYocto = BigInt(utils.format.parseNearAmount(SAFE_RESERVE_NEAR)!);
 
-    // Calculate requested amount
-    const totalAmountYocto = BigInt(utils.format.parseNearAmount(amount.toString()) || "0");
+    // Calculate requested amount (using String to avoid type errors)
+    const totalAmountYocto = BigInt(utils.format.parseNearAmount(String(amount)) || "0");
     if (totalAmountYocto <= 0n) throw new Error('Invalid amount');
 
     // Verify state balance against the requested amount + our strict reserve buffer
@@ -81,24 +81,23 @@ serve(async (req) => {
       throw new Error(`Insufficient balance. Maximum allowed withdrawal is ${maxAvailableNear} NEAR.`);
     }
 
-    // --- Commission calculation (0.1% service security fee) ---
-    const jomoFeeYocto = totalAmountYocto / 1000n;
+    // Commission calculation (0.2% service fee) ---
+    // (Amount * 20) / 10000 = 0.2%
+    const jomoFeeYocto = (totalAmountYocto * 20n) / 10000n;
 
-    // 99.9% goes to the requested user address
+    // 99.8% goes to the requested user address
     const userReceiveYocto = totalAmountYocto - jomoFeeYocto;
 
     console.log(`Splitting payout: User gets ${userReceiveYocto}, JOMO gets ${jomoFeeYocto}`);
 
-    // Execute the main transaction
     const result = await account.sendMoney(recipientId, userReceiveYocto.toString());
     console.log("Main transfer success! Hash:", result.transaction.hash);
 
-    // Collect the fee
     if (jomoFeeYocto > 0n && recipientId !== JOMO_TREASURY) {
       try {
         await account.sendMoney(JOMO_TREASURY, jomoFeeYocto.toString());
         console.log(`Fee of ${utils.format.formatNearAmount(jomoFeeYocto.toString())} NEAR sent to treasury.`);
-      } catch (feeError) {
+      } catch (feeError: any) {
         console.error("Failed to collect JOMO fee:", feeError.message);
       }
     }
