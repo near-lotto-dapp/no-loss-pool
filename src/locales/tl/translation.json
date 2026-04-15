@@ -219,6 +219,10 @@
   "inUnstakeProcess": "Nasa Proseso ng Unstaking",
   "marketOverview": "Live NEAR Market",
   "marketOverviewDesc": "Sundan ang real-time price dynamics ng NEAR token.",
+  "acceptRiskError": "Pakikumpirma na nauunawaan mo ang mga panganib ng pagkawala ng password.",
+  "acceptRiskLabel": "Nauunawaan ko na ang system ay kasalukuyang hindi sumusuporta sa password recovery. Kung makalimutan ko ito, maaaring mawala ang access sa aking mga pondo.",
+  "genericError": "May naganap na error. Pakisubukang muli.",
+
   "wallet_types": {
     "custodial_title": "Cloud Wallet (Custodial)",
     "custodial_desc": "Pinamamahalaan ng JOMO para sa maximum na kasimplehan. Ligtas dahil sa 2FA at professional na imprastraktura. Kami na ang bahala sa teknikal na aspeto.",

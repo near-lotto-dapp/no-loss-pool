@@ -12,6 +12,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const [acceptRisk, setAcceptRisk] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -37,6 +38,11 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
             }
             if (!hasSpecial) {
                 setError(t('passSpecial'));
+                setLoading(false); return;
+            }
+
+            if (!acceptRisk) {
+                setError(t('acceptRiskError'));
                 setLoading(false); return;
             }
         }
@@ -107,7 +113,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
 
         } catch (err: any) {
             console.error("Auth error:", err);
-            setError(err.message || "An error occurred");
+            setError(err.message || t('genericError') || "An error occurred");
         } finally {
             setLoading(false);
         }
@@ -158,10 +164,29 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                         </div>
                     </div>
 
+                    {!isLogin && (
+                        <div className="form-check mt-1 text-start">
+                            <input
+                                className="form-check-input bg-dark border-secondary"
+                                type="checkbox"
+                                id="acceptRiskCheck"
+                                checked={acceptRisk}
+                                onChange={(e) => setAcceptRisk(e.target.checked)}
+                            />
+                            <label className="form-check-label text-warning small ms-2" htmlFor="acceptRiskCheck" style={{ lineHeight: '1.4' }}>
+                                {t('acceptRiskLabel')}
+                            </label>
+                        </div>
+                    )}
+
                     {error && <div className="alert alert-danger py-2 mt-2">{error}</div>}
                     {successMsg && <div className="alert alert-success py-2 mt-2">{successMsg}</div>}
 
-                    <button type="submit" disabled={loading || !email || password.length < 8} className={`btn btn-lg w-100 fw-bold text-white mt-3 ${styles.gradientPrimary}`}>
+                    <button
+                        type="submit"
+                        disabled={loading || !email || password.length < 8 || (!isLogin && !acceptRisk)}
+                        className={`btn btn-lg w-100 fw-bold text-white mt-3 ${styles.gradientPrimary}`}
+                    >
                         {loading ? <span className="spinner-border spinner-border-sm me-2"></span> : (isLogin ? t('loginBtn') : t('registerBtn'))}
                     </button>
                 </form>
@@ -176,6 +201,7 @@ export const AuthForm = ({ t, onSuccess }: AuthFormProps) => {
                             setSuccessMsg(null);
                             setPassword('');
                             setShowPassword(false);
+                            setAcceptRisk(false);
                         }}
                         className="btn btn-link text-info p-0 text-decoration-none fw-bold"
                     >

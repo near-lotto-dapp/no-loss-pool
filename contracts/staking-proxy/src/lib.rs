@@ -11,7 +11,7 @@ const GAS_FOR_CALLBACK: Gas = Gas::from_tgas(30);
 const GAS_FOR_FT_TRANSFER: Gas = Gas::from_tgas(15);
 
 // --- Constants ---
-const JOMO_FEE_BPS: u128 = 30;
+const JOMO_FEE_BPS: u128 = 0;
 
 // --- Cross-Contract Interfaces ---
 
@@ -133,9 +133,7 @@ impl JomoStakingProxy {
 
     fn calculate_fee(amount: Balance) -> (Balance, Balance) {
         if amount == 0 { return (0, 0); }
-        let jomo_fee = (amount * JOMO_FEE_BPS) / 10000;
-        let user_payout = amount - jomo_fee;
-        (user_payout, jomo_fee)
+        (amount, 0)
     }
 
     // --- 1. Deposit and Stake ---
@@ -515,8 +513,8 @@ mod tests {
     fn test_fee_calculation() {
         let amount = 100_000;
         let (user_payout, fee) = JomoStakingProxy::calculate_fee(amount);
-        assert_eq!(fee, 300); // 0.3% від 100_000
-        assert_eq!(user_payout, 99_700);
+        assert_eq!(fee, 0);
+        assert_eq!(user_payout, 100_000);
 
         let (user_payout_zero, fee_zero) = JomoStakingProxy::calculate_fee(0);
         assert_eq!(fee_zero, 0);
@@ -542,7 +540,6 @@ mod tests {
         let shares = contract.get_user_shares(user.clone(), provider.clone());
         assert_eq!(shares.0, received_shares);
 
-        // Перевіряємо TVL провайдера
         let tvl = contract.get_provider_tvl(provider.clone());
         assert_eq!(tvl.0, deposited_amount);
 
@@ -602,7 +599,6 @@ mod tests {
         let amount_to_unstake = 5 * ONE_NEAR;
         contract.on_delayed_unstake(Ok(()), user.clone(), provider.clone(), amount_to_unstake);
 
-        // Перевіряємо, що запит створено
         let request = contract.get_user_unstake_request(user.clone()).unwrap();
         assert_eq!(request.amount, amount_to_unstake);
         assert_eq!(request.unlock_epoch, 104); // поточна епоха (100) + 4

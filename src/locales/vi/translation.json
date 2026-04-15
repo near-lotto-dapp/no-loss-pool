@@ -219,6 +219,10 @@
   "inUnstakeProcess": "Đang Unstaking",
   "marketOverview": "Thị trường NEAR Trực tiếp",
   "marketOverviewDesc": "Theo dõi biến động giá theo thời gian thực của token NEAR.",
+  "acceptRiskError": "Vui lòng xác nhận rằng bạn hiểu các rủi ro khi mất mật khẩu.",
+  "acceptRiskLabel": "Tôi hiểu rằng hệ thống hiện không hỗ trợ khôi phục mật khẩu. Nếu tôi quên, tôi có thể mất quyền truy cập vào tài sản.",
+  "genericError": "Đã xảy ra lỗi. Vui lòng thử lại.",
+
   "wallet_types": {
     "custodial_title": "Ví đám mây (Custodial)",
     "custodial_desc": "Được quản lý bởi JOMO để mang lại sự đơn giản tối đa. Bảo mật bằng 2FA và cơ sở hạ tầng chuyên nghiệp. Chúng tôi sẽ lo phần kỹ thuật.",

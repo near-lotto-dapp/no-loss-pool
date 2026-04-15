@@ -219,6 +219,10 @@
   "inUnstakeProcess": "Katika Mchakato wa Unstaking",
   "marketOverview": "Soko la NEAR Live",
   "marketOverviewDesc": "Fuatilia mienendo ya bei ya wakati halisi ya tokeni ya NEAR.",
+  "acceptRiskError": "Tafadhali thibitisha kuwa unaelewa hatari za kupoteza nenosiri.",
+  "acceptRiskLabel": "Ninaelewa kuwa mfumo kwa sasa hauungi mkono urejeshaji wa nenosiri. Nikilisahau, ninaweza kupoteza ufikiaji wa fedha zangu.",
+  "genericError": "Hitilafu imetokea. Tafadhali jaribu tena.",
+
   "wallet_types": {
     "custodial_title": "Wallet ya Cloud (Custodial)",
     "custodial_desc": "Inadhibitiwa na JOMO kwa urahisi zaidi. Inalindwa na 2FA na miundombinu ya kitaalamu. Sisi tunashughulikia upande wa kiufundi.",

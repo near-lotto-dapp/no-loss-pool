@@ -219,6 +219,10 @@
   "inUnstakeProcess": "Dalam Proses Unstaking",
   "marketOverview": "Pasar NEAR Langsung",
   "marketOverviewDesc": "Lacak dinamika harga token NEAR secara real-time.",
+  "acceptRiskError": "Silakan konfirmasi bahwa Anda memahami risiko kehilangan kata sandi.",
+  "acceptRiskLabel": "Saya memahami bahwa sistem saat ini tidak mendukung pemulihan kata sandi. Jika saya lupa, saya dapat kehilangan akses ke dana saya.",
+  "genericError": "Terjadi kesalahan. Silakan coba lagi.",
+
   "wallet_types": {
     "custodial_title": "Wallet Cloud (Kustodial)",
     "custodial_desc": "Dikelola oleh JOMO untuk kesederhanaan maksimum. Diamankan oleh 2FA dan infrastruktur profesional. Kami mengurus sisi teknisnya.",

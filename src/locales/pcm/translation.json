@@ -219,6 +219,10 @@
   "inUnstakeProcess": "In Unstaking",
   "marketOverview": "Live NEAR Market",
   "marketOverviewDesc": "Track the real-time price dynamics of the NEAR token.",
+  "acceptRiskError": "Abeg confirm say you understand di risk wey dey for password loss.",
+  "acceptRiskLabel": "I understand say dis system no dey support password recovery for now. If I forget am, I fit lose access to my funds.",
+  "genericError": "Error don happen. Abeg try again.",
+
   "wallet_types": {
     "custodial_title": "Cloud Wallet (Custodial)",
     "custodial_desc": "Managed by JOMO for maximum simplicity. Secured by 2FA and professional infrastructure. We take care of the technical side.",

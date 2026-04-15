@@ -219,6 +219,10 @@
   "inUnstakeProcess": "Sedang Unstaking",
   "marketOverview": "Pasaran NEAR Langsung",
   "marketOverviewDesc": "Jejaki dinamik harga token NEAR masa nyata.",
+  "acceptRiskError": "Sila sahkan bahawa anda memahami risiko kehilangan kata laluan.",
+  "acceptRiskLabel": "Saya faham bahawa sistem ini pada masa ini tidak menyokong pemulihan kata laluan. Jika saya terlupa, saya mungkin kehilangan akses kepada dana saya.",
+  "genericError": "Ralat telah berlaku. Sila cuba lagi.",
+
   "wallet_types": {
     "custodial_title": "Wallet Awan (Kustodian)",
     "custodial_desc": "Diuruskan oleh JOMO untuk keringkasan maksimum. Dijamin oleh 2FA dan infrastruktur profesional. Kami menguruskan aspek teknikal.",

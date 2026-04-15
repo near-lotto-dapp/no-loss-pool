@@ -188,6 +188,31 @@ serve(async (req) => {
             });
             break;
           }
+
+          case 'rescue_linear': {
+            console.log(`[RESCUE] Checking LiNEAR balance for ${profile.near_account_id}`);
+
+            const linearBalance = await account.viewFunction({
+              contractId: providerId,
+              methodName: 'ft_balance_of',
+              args: { account_id: profile.near_account_id }
+            });
+
+            if (linearBalance === "0") {
+              throw new Error("No stray LiNEAR tokens found on this wallet.");
+            }
+
+            console.log(`[RESCUE] Found ${linearBalance} LiNEAR. Sending to unstake...`);
+
+            result = await account.functionCall({
+              contractId: providerId,
+              methodName: 'unstake',
+              args: { amount: linearBalance },
+              gas: "150000000000000",
+              attachedDeposit: "0",
+            });
+            break;
+          }
         }
 
         break;
